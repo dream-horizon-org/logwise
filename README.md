@@ -14,10 +14,6 @@ Open-source end-to-end logging system capable of handling 15+ Gbps log throughpu
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## Security
-
-If you discover a security vulnerability, please follow our [Security Policy](SECURITY.md) for reporting it.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
