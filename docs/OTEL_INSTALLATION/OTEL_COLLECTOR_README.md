@@ -31,7 +31,13 @@ Before configuring OTEL log shipping, ensure you have:
 ### Using Binary
 
 **1. Download binary:**
+ 
 ```bash
+
+# Choose the appropriate binary for your system:
+
+# Example for Linux AMD64:
+
 # Download latest release
 wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/latest/download/otelcol-contrib_linux_amd64.tar.gz
 

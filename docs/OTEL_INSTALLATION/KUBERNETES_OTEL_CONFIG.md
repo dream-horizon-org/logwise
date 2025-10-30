@@ -77,17 +77,17 @@ This is a complete, production-ready Kubernetes manifest (otel-testing.yaml) for
 
 ```yaml
 # ----------------------------------------
-# 1. Namespace for Observability Components
+# Full Kubernetes Manifest: OTel Collector Logging DaemonSet (Test Mode)
 # ----------------------------------------
+
+# 1. Namespace for Observability Components
 apiVersion: v1
 kind: Namespace
 metadata:
   name: observability
 
 ---
-# ----------------------------------------
-# 2. Secret: Bearer token for your log backend
-# ----------------------------------------
+# 2. Secret: Bearer token (Token is ignored for this local test)
 apiVersion: v1
 kind: Secret
 metadata:
@@ -95,12 +95,10 @@ metadata:
   namespace: observability
 type: Opaque
 stringData:
-  MY_LOGS_API_KEY: "REPLACE_WITH_REAL_TOKEN"
+  MY_LOGS_API_KEY: ${env:MY_LOGS_API_KEY}
 
 ---
-# ----------------------------------------
 # 3. ServiceAccount + RBAC for k8sattributes enrichment
-# ----------------------------------------
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -134,8 +132,7 @@ subjects:
     namespace: observability
 
 ---
-# ----------------------------------------
-# 4. ConfigMap: OpenTelemetry Collector Configuration
+# 4. ConfigMap: OpenTelemetry Collector Configuration (Fixed Syntax & Hardcoded Defaults)
 # ----------------------------------------
 apiVersion: v1
 kind: ConfigMap
@@ -146,34 +143,51 @@ data:
   otel-config.yaml: |
     extensions:
       file_storage:
-        directory: /var/lib/otelcol/storage
+        directory: /var/lib/otelcol
       health_check:
         endpoint: 0.0.0.0:13133
-      # Keep pprof on localhost for security
       pprof:
         endpoint: 127.0.0.1:1777
-      #  bearer token (read from env variable injected via Secret)
       bearertokenauth:
         token: ${env:MY_LOGS_API_KEY}
 
     receivers:
-      # Tail Kubernetes container logs via stable symlink path
       filelog/containers:
         include: [ /var/log/containers/*.log ]
-        # Skip system logs to save cost/reduce noise
         exclude: [ /var/log/containers/*_kube-system_*.log ]
         start_at: end
-        storage: file_storage # Used for checkpointing (offset and fingerprint)
+        storage: file_storage
         operators:
-          - type: container_parser # Parses container runtime JSON (CRI/Docker) and handles multiline logs
-          - type: move # Move the final log text into the standard OTel body field
-            from: attributes.log
-            to: body
-          - type: severity_parser # Attempts to map log text (e.g., 'INFO') to OTel severity
-            parse_from: body
+          - type: regex_parser
+            regex: '^((?P<time>\S+)\s+(?P<stream>stdout|stderr)\s+(?P<logtag>[^ ]*)\s+(?P<log>.*))$'
+            timestamp:
+              parse_from: attributes.time
+              # FIX 1: Corrected layout for container timestamp (nanoseconds + Z)
+              layout: "%Y-%m-%dT%H:%M:%S.%9fZ" 
+          
+          # 1. NEW: Parse the content of the 'log' attribute as JSON
+          - type: json_parser
+            parse_from: attributes.log
+            parse_to: body # Overwrite the 'body' with the structured JSON map
+            
+          # 2. Extract Application Fields: Move original JSON keys to OTel standard fields
+          - type: move
+            from: body."log.level" # The field name inside the JSON body
+            to: attributes.app.level # Custom attribute to store original level
+
+          # 3. Clean up (Optional, since you're using K8s attributes anyway)
+          - type: move
+            from: body.message
+            to: body # Set the main message field as the body
+
+          # 4. Set Severity from JSON level (Requires Transform processor, but we'll use a simple move for now)
+          - type: severity_parser # Use stream/default parsing
+            parse_from: attributes.stream
+            mapping:
+              stderr: ERROR
+              stdout: INFO
 
     processors:
-      # Enriches logs with Kubernetes metadata by querying the API
       k8sattributes:
         auth_type: serviceAccount
         passthrough: false
@@ -183,7 +197,6 @@ data:
             - k8s.pod.name
             - k8s.container.name
             - k8s.node.name
-          # Promote common labels to OTel Semantic Conventions
           labels:
             - key: app.kubernetes.io/name
               from: pod
@@ -191,52 +204,41 @@ data:
             - key: app.kubernetes.io/version
               from: pod
               tag_name: service.version
-        filter:
-          # Uncomment this to scope the enrichment lookup to a specific namespace
-          # namespace: ["my-namespace"]
-          pass:
-            - key: k8s.namespace.name
-              values: [ "observability", "default" ] # Example: Only process logs from these namespaces
-
-      # Fallback defaults for enrichment
+    
       resource:
         attributes:
-          - { key: service.name, action: upsert, value: ${env:SERVICE_NAME} }
-          - { key: environment, action: upsert, value: ${env:ENVIRONMENT} }
+          - key: service.name
+            action: upsert
+            value: "demo-service"
+          - key: environment
+            action: upsert
+            value: "test"
 
-      # Memory protection
       memory_limiter:
         limit_mib: 1500
         spike_limit_mib: 500
         check_interval: 5s
 
-      # Performance and efficiency
       batch:
         timeout: 10s 
         send_batch_size: 1024
         send_batch_max_size: 2048
 
     exporters:
-      # Reliable OTLP/HTTP exporter
       otlphttp:
-        # !!! CHANGE THIS ENDPOINT !!!
         endpoint: "https://log-endpoint.example.com"
         compression: gzip
         auth:
           authenticator: bearertokenauth
-        retry_on_failure:
-          enabled: true
-          initial_interval: 1s
-          max_elapsed_time: 300s
-        sending_queue: # Durable disk queue for At-Least-Once delivery
-          enabled: true
-          storage: file_storage
-          num_consumers: 10
-          queue_size: 1000
-
-      # Debugging output (view in kubectl logs)
+        sending_queue: 
+          enabled: false
+      #  for writing logs in file from collector    
+      file:
+        path: /tmp/otel-logs-output.jsonl
+        format: json
+        
       debug:
-        verbosity: basic
+        verbosity: detailed
 
     service:
       extensions: [file_storage, health_check, pprof, bearertokenauth]
@@ -244,12 +246,10 @@ data:
         logs:
           receivers: [filelog/containers]
           processors: [k8sattributes, resource, memory_limiter, batch]
-          exporters: [otlphttp, debug]
+          exporters: [otlphttp,file, debug]
 
 ---
-# ----------------------------------------
 # 5. DaemonSet: Deploys Collector as Agent on Each Node
-# ----------------------------------------
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -268,8 +268,7 @@ spec:
       labels:
         app.kubernetes.io/name: otel-collector
     spec:
-      serviceAccountName: otel-collector # Grants RBAC permissions
-      # Mount host paths to access logs and state
+      serviceAccountName: otel-collector
       volumes:
         - name: varlog
           hostPath: { path: /var/log, type: Directory }
@@ -278,25 +277,24 @@ spec:
         - name: varlibkubeletpods
           hostPath: { path: /var/lib/kubelet/pods, type: Directory }
         - name: otel-storage
-          hostPath: { path: /var/lib/otelcol, type: DirectoryOrCreate } # Durable storage mount
+          hostPath: { path: /var/lib/otelcol, type: DirectoryOrCreate }
         - name: otel-config
           configMap:
             name: otel-collector-config
             items: [{ key: otel-config.yaml, path: otel-config.yaml }]
       containers:
         - name: otel-collector
-          image: otel/opentelemetry-collector-contrib:latest
+          #  Use stable, versioned image
+          image: otel/opentelemetry-collector-contrib:0.90.1 
           imagePullPolicy: IfNotPresent
           args: ["--config=/conf/otel-config.yaml"]
-          # Inject API key from Secret
+          # Inject API key from Secret (Still required to pass checks)
           env:
             - name: MY_LOGS_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: logs-api-key
                   key: MY_LOGS_API_KEY
-            - { name: SERVICE_NAME, value: "k8s-workload" }
-            - { name: ENVIRONMENT, value: "production" }
           ports:
             - { name: healthz, containerPort: 13133 }
           volumeMounts:
@@ -304,8 +302,7 @@ spec:
             - { name: varlog, mountPath: /var/log, readOnly: true }
             - { name: varlibdockercontainers, mountPath: /var/lib/docker/containers, readOnly: true }
             - { name: varlibkubeletpods, mountPath: /var/lib/kubelet/pods, readOnly: true }
-            - { name: otel-storage, mountPath: /var/lib/otelcol } # Writable mount for persistence
-          # Health checks
+            - { name: otel-storage, mountPath: /var/lib/otelcol }
           livenessProbe:
             httpGet: { path: /healthz, port: healthz }
             initialDelaySeconds: 10
@@ -314,13 +311,11 @@ spec:
             httpGet: { path: /healthz, port: healthz }
             initialDelaySeconds: 5
             periodSeconds: 5
-          # Resource constraints
           resources:
             requests: { cpu: 100m, memory: 256Mi }
             limits: { cpu: 1000m, memory: 1Gi }
-          # Security Context (necessary for host log access)
           securityContext:
-            runAsUser: 0 # Needs root to read host logs
+            runAsUser: 0
             runAsGroup: 0
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
