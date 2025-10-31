@@ -1,0 +1,68 @@
+# Vector.dev configuration for log endpoint service
+# Replaces the Flask app for receiving OTLP logs from OTEL collector
+
+# Data directory for Vector's internal state (must be at root level)
+data_dir = "/var/lib/vector"
+
+# Debug logging not supported in this Vector version
+
+[api]
+enabled = true
+address = "0.0.0.0:8686"
+playground = false
+
+# OpenTelemetry source to receive logs from OTEL collector  
+[sources.otlp_logs]
+type = "opentelemetry"
+
+# Not getting used but required in config
+[sources.otlp_logs.grpc]
+address = "0.0.0.0:4317"
+
+[sources.otlp_logs.http]
+address = "0.0.0.0:4318"
+
+# Note: Vector has built-in health checks available on the API port (8686)
+# No separate health check source needed
+
+# Transform to enrich OTLP data with additional metadata
+[transforms.enrich_otlp]
+type = "remap"
+inputs = ["otlp_logs.logs"]
+drop_on_abort = true
+source = '''
+
+if !is_string(.resources."service.name") { abort }
+if !is_string(.resources.environment)    { abort }
+
+# Normalize as strings (infallible)
+.service_name     = to_string(.resources."service.name") ?? "unknown"
+.environment_name = to_string(.resources.environment)    ?? "unknown"
+
+# sanitize service_name and environment_name
+.service_name = replace(.service_name, r'[^a-zA-Z0-9._-]', "_")
+.environment_name = replace(.environment_name, r'[^a-zA-Z0-9._-]', "_")
+
+# Handle attributes with fallible assignments and defaults
+.message    = to_string(.attributes.message) ?? "no_message"
+.log_level  = to_string(.attributes.level) ?? "unknown"
+.timestamp  = to_string(.attributes.time) ?? "unknown"
+
+'''
+
+[sinks.app-logs-kafka]
+type = "kafka"
+inputs = [ "enrich_otlp" ]
+bootstrap_servers = "kafka:29092"
+topic = "logs.app.{{.environment_name}}_{{.service_name}}"
+compression = "zstd"
+
+# Protobuf codec - Only .desc file needed at runtime
+# Note: protoc is build-time only; runtime can be distroless if .desc is baked in
+encoding.codec = "protobuf"
+encoding.protobuf.message_type = "logwise.vector.logs.VectorLogs"
+encoding.protobuf.desc_file = "/etc/vector/logwise-vector.desc"
+
+[sinks.app-logs-kafka.librdkafka_options]
+"linger.ms" = "100"
+"batch.size" = "2500000"

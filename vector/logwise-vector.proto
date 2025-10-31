@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package logwise.vector.logs;
+
+message VectorLogs {
+  string service_name = 1;
+  string environment_name = 2;
+  string message = 3;
+  string log_level = 4;
+  string timestamp = 5;
+}
