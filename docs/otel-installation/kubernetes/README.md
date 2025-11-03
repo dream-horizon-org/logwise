@@ -17,9 +17,6 @@ Kubernetes setup guide for the OpenTelemetry Collector log shipping system. In o
 1. **Prepare Configuration**
 
     (a). Download or copy the manifest file:
-   ```bash
-   # The manifest file contains all required Kubernetes resources
-   ```
 
     (b). Customize the configuration as needed (see [`what-you-need-to-provide`](#what-you-need-to-provide) section below)
 

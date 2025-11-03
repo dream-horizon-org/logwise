@@ -31,10 +31,8 @@ chmod +x otelcol-contrib
 
 **2. Prepare Configuration:**
 
-  (a). Download or copy the configuration file:
-      ```bash
-      # The configuration file should be in the same directory as the collector binary
-      ```
+  (a). Download or copy the configuration file. The configuration file should be in the same directory as the collector binary
+     
   (b). Customize the configuration as needed (see [`what-you-need-to-provide`](#what-you-need-to-provide) section below)
 
 **3. Run collector:**
@@ -56,17 +54,6 @@ curl http://localhost:13133
 ps aux | grep otelcol
 ```
 
-**To use this configuration:**
-
-1. Download or copy the configuration file:
-   ```bash
-   # The configuration file should be in the same directory as the collector binary
-   ```
-
-2. Run the collector with this configuration:
-   ```bash
-   ./otelcol-contrib --config=otel-collector-config.yaml
-   ```
 
 The configuration includes:
 - **Extensions**: File storage for persistent queues and health check endpoint
