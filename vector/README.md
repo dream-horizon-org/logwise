@@ -12,10 +12,12 @@ Vector handles:
 - **Ingestion**: Receives OTLP logs via gRPC (4317) and HTTP (4318)
 - **Transformation**: Validates, normalizes, and enriches log data
 - **Routing**: Publishes logs to Kafka topics organized by type, environment, and service
+- **Topic Naming:** `logs.{type}_{environment}_{service}`  
+Example: `logs.application_production_api-gateway`
 
 ## Prerequisites
 
-Install required dependencies:
+Install required dependencies using mentioned guide links:
 
 ```bash
 # Vector (choose your platform)
@@ -27,87 +29,36 @@ Install required dependencies:
 
 ## Setup
 
-### 1. Compile Protobuf Schema
+### 1. Create a Working Directory and Copy Configuration Files
+
+```bash
+mkdir -p ~/logwise-vector-setup
+cd ~/logwise-vector-setup
+
+# Copy files from repository
+cp /path/to/repo/vector/logwise-vector.proto .
+cp /path/to/repo/vector/vector.toml .
+```
+
+### 2. Update Kafka Broker Address in `vector.toml`
+
+Update the Kafka broker address in the sink configuration. If using multiple brokers, use comma-separated values:
+
+```toml
+# Before
+bootstrap_servers = "kafka:29092"
+
+# After
+bootstrap_servers = "<YOUR_KAFKA_ADDRESS>:<KAFKA_PORT>"
+```
+
+### 3. Compile Protobuf Schema
 
 ```bash
 protoc --include_imports --descriptor_set_out=logwise-vector.desc logwise-vector.proto
 ```
 
-### 2. Configure Vector Pipeline
-
-Create `vector.toml` with the following components:
-
-#### Source: OpenTelemetry Logs
-
-```toml
-[sources.otlp_logs]
-type = "opentelemetry"
-
-[sources.otlp_logs.grpc]
-address = "0.0.0.0:4317"
-
-[sources.otlp_logs.http]
-address = "0.0.0.0:4318"
-```
-
-[Component Reference](https://vector.dev/docs/reference/configuration/sources/opentelemetry/)
-
-#### Transform: Validate and Enrich
-
-```toml
-[transforms.enrich_otlp]
-type = "remap"
-inputs = ["otlp_logs.logs"]
-drop_on_abort = true
-source = '''
-# Validate required fields
-if !is_string(.resources.service_name) { abort }
-if !is_string(.resources.environment) { abort }
-if !is_string(.resources.type) { abort }
-
-# Extract and normalize resource attributes
-.service_name = to_string(.resources.service_name) ?? "unknown"
-.environment_name = to_string(.resources.environment) ?? "unknown"
-.type = to_string(.resources.type) ?? "unknown"
-
-# Sanitize for Kafka topic names (alphanumeric, dot, dash, underscore only)
-.service_name = replace(.service_name, r'[^a-zA-Z0-9._-]', "_")
-.environment_name = replace(.environment_name, r'[^a-zA-Z0-9._-]', "_")
-.type = replace(.type, r'[^a-zA-Z0-9._-]', "_")
-
-# Extract log attributes
-.message = to_string(.attributes.message) ?? "no_message"
-.log_level = to_string(.attributes.level) ?? "unknown"
-.timestamp = to_string(.attributes.time) ?? "unknown"
-'''
-```
-
-[Component Reference](https://vector.dev/docs/reference/configuration/transforms/remap/)
-
-#### Sink: Kafka Output
-
-```toml
-[sinks.app-logs-kafka]
-type = "kafka"
-inputs = ["enrich_otlp"]
-bootstrap_servers = "kafka:29092"
-topic = "logs.{{.type}}.{{.environment_name}}_{{.service_name}}"
-compression = "zstd"
-
-encoding.codec = "protobuf"
-encoding.protobuf.message_type = "logwise.vector.logs.VectorLogs"
-encoding.protobuf.desc_file = "/etc/vector/logwise-vector.desc"
-
-[sinks.app-logs-kafka.librdkafka_options]
-"linger.ms" = "100"           # Batch window for throughput
-"batch.size" = "2500000"      # Max batch size (bytes)
-```
-
-**Topic naming**: Logs route to `logs.<type>_<env>_<service>` (e.g., `logs.application_prod_api-server`)
-
-[Component Reference](https://vector.dev/docs/reference/configuration/sinks/kafka/)
-
-### 3. Deploy Configuration
+### 4. Deploy Configuration
 
 ```bash
 sudo mkdir -p /etc/vector
@@ -128,6 +79,24 @@ sudo systemctl enable vector
 vector --config /etc/vector/vector.toml
 ```
 
+### Send OpenTelemetry Data to Vector
+
+Configure your OpenTelemetry Collector to export logs to the Vector instance:
+
+```yaml
+# otel-collector-config.yaml
+exporters:
+  otlphttp:
+    endpoint: "http://<VECTOR_HOST_ADDRESS>:4318"
+    
+service:
+  pipelines:
+    logs:
+      exporters: [otlphttp]
+```
+
+Replace `<VECTOR_HOST_ADDRESS>` with the IP address or hostname where Vector is running.
+
 ### Verify Operation
 
 Check Vector is processing logs:
@@ -140,8 +109,27 @@ sudo systemctl status vector
 sudo journalctl -u vector -f
 
 # Check Kafka topics are being created/populated
-kafka-topics --bootstrap-server kafka:29092 --list | grep "^logs\."
+# Install: brew install kcat (macOS) or apt install kafkacat (Linux)
+kcat -b <YOUR_KAFKA_ADDRESS> -L | grep "topic"
 ```
+
+## Configuration Overview
+
+| Component | Port | Purpose |
+|-----------|------|---------|
+| OTLP gRPC | 4317 | Receives logs from OpenTelemetry collectors* |
+| OTLP HTTP | 4318 | Alternative HTTP endpoint for OTLP logs |
+| Vector API | 8686 | Health checks and monitoring |
+
+> **Note:** *gRPC endpoint (4317) is a required configuration in Vector but not actively used in the LogWise setup. All logs are sent via HTTP (4318).
+
+**Key Configuration Points** (in `vector.toml`):
+- `bootstrap_servers`: Kafka broker address 
+- `topic`: Dynamic topic routing based on log metadata
+- `encoding.codec`: Set to `protobuf` (requires Vector v0.45.0+) to optimize network usage
+- `compression`: Set to `zstd` - optimal compression algorithm for protobuf data
+- `linger.ms`: Set to `100` - batches logs for up to 100ms before sending to improve throughput
+- `batch.size`: Set to `2500000` bytes (~2.5 MB) - sends batch when size limit is reached
 
 ## Troubleshooting
 
@@ -179,22 +167,29 @@ ERROR vector::sinks::kafka: Failed to produce message: BrokerTransportFailure
 ```bash
 # Kafka must advertise its reachable hostname/IP, not localhost
 # ❌ WRONG: advertised.listeners=PLAINTEXT://localhost:9092
-# ✅ CORRECT: advertised.listeners=PLAINTEXT://kafka.example.com:9092
+# ✅ CORRECT: advertised.listeners=PLAINTEXT://<YOUR_KAFKA_ADDRESS>
 
 # Verify Kafka's advertised address
-kcat -b kafka:29092 -L
+kcat -b <YOUR_KAFKA_ADDRESS> -L
 
 # Look for broker metadata:
 # broker 1 at localhost:9092         ← Problem: clients outside container can't connect
-# broker 1 at kafka.example.com:9092 ← Good: resolvable hostname
+# broker 1 at <YOUR_KAFKA_ADDRESS> ← Good: resolvable hostname
 ```
 
 **Other checks:**
 - Verify `bootstrap_servers` in `vector.toml` matches Kafka's network address
 - Ensure firewall allows connections to Kafka ports
-- Test connectivity: `telnet kafka 29092`
+- Test connectivity: `telnet <YOUR_KAFKA_ADDRESS> <KAFKA_PORT>`
 
-## Reference Files
+## References 
 
-- **[`vector.toml`](vector.toml)** - Complete Vector pipeline configuration
-- **[`logwise-vector.proto`](logwise-vector.proto)** - Protobuf schema defining log message structure
+### Files
+- **[`vector.toml`](vector.toml)** - Production ready Vector pipeline configuration
+- **[`logwise-vector.proto`](logwise-vector.proto)** - Production ready Protobuf schema defining log message structure
+
+### Vector Components
+
+- [**OpenTelemetry Receiver**](https://vector.dev/docs/reference/configuration/sources/opentelemetry/)
+- [**Remap Transformer**](https://vector.dev/docs/reference/configuration/transforms/remap/)
+- [**Kafka Sink**](https://vector.dev/docs/reference/configuration/sinks/kafka/)
