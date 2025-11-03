@@ -20,10 +20,10 @@ Example: `logs.application_production_api-gateway`
 Install required dependencies using mentioned guide links:
 
 ```bash
-# Vector (choose your platform)
-# See: https://vector.dev/docs/setup/installation/
+# Vector (choose your operating-system)
+# See: https://vector.dev/docs/setup/installation/operating-systems/
 
-# Protocol Buffers compiler
+# Protocol Buffers compiler for your Operating System
 # See: https://protobuf.dev/installation/
 ```
 
@@ -66,6 +66,15 @@ protoc --include_imports --descriptor_set_out=logwise-vector.desc logwise-vector
 sudo mkdir -p /etc/vector
 sudo cp vector.toml /etc/vector/vector.toml
 sudo cp logwise-vector.desc /etc/vector/logwise-vector.desc
+```
+### 6. Set Vector Environment Configuration
+```bash
+FILE="/etc/default/vector"
+
+/bin/cat <<EOM >$FILE
+VECTOR_WATCH_CONFIG=true
+VECTOR_CONFIG=/etc/vector/vector.toml
+EOM
 ```
 
 ## Running Vector
