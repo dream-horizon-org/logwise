@@ -29,18 +29,20 @@ Install required dependencies using mentioned guide links:
 
 ## Setup
 
-### 1. Create a Working Directory and Copy Configuration Files
+### 1. Clone the current repository on instance
+```bash
+git clone https://github.com/ds-horizon/logwise.git
+```
+### 2. Create a Working Directory and Copy Configuration Files
 
 ```bash
-mkdir -p ~/logwise-vector-setup
-cd ~/logwise-vector-setup
 
 # Copy files from repository
-cp /path/to/repo/vector/logwise-vector.proto .
-cp /path/to/repo/vector/vector.toml .
+cp ./logwise/vector/logwise-vector.proto .
+cp ./logwise/vector/vector.toml .
 ```
 
-### 2. Update Kafka Broker Address in `vector.toml`
+### 3. Update Kafka Broker Address in `vector.toml`
 
 Update the Kafka broker address in the sink configuration. If using multiple brokers, use comma-separated values:
 
@@ -52,13 +54,13 @@ bootstrap_servers = "kafka:29092"
 bootstrap_servers = "<YOUR_KAFKA_ADDRESS>:<KAFKA_PORT>"
 ```
 
-### 3. Compile Protobuf Schema
+### 4. Compile Protobuf Schema
 
 ```bash
 protoc --include_imports --descriptor_set_out=logwise-vector.desc logwise-vector.proto
 ```
 
-### 4. Deploy Configuration
+### 5. Deploy Configuration
 
 ```bash
 sudo mkdir -p /etc/vector
@@ -79,24 +81,6 @@ sudo systemctl enable vector
 vector --config /etc/vector/vector.toml
 ```
 
-### Send OpenTelemetry Data to Vector
-
-Configure your OpenTelemetry Collector to export logs to the Vector instance:
-
-```yaml
-# otel-collector-config.yaml
-exporters:
-  otlphttp:
-    endpoint: "http://<VECTOR_HOST_ADDRESS>:4318"
-    
-service:
-  pipelines:
-    logs:
-      exporters: [otlphttp]
-```
-
-Replace `<VECTOR_HOST_ADDRESS>` with the IP address or hostname where Vector is running.
-
 ### Verify Operation
 
 Check Vector is processing logs:
@@ -108,9 +92,6 @@ sudo systemctl status vector
 # View live logs
 sudo journalctl -u vector -f
 
-# Check Kafka topics are being created/populated
-# Install: brew install kcat (macOS) or apt install kafkacat (Linux)
-kcat -b <YOUR_KAFKA_ADDRESS> -L | grep "topic"
 ```
 
 ## Configuration Overview
