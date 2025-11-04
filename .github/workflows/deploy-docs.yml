@@ -43,6 +43,11 @@ jobs:
       - name: Build with VitePress
         working-directory: docs
         run: npm run build
+    
+      - name: Create .nojekyll file
+        working-directory: docs/.vitepress/dist
+        run: touch .nojekyll
+
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
