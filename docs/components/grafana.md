@@ -32,7 +32,7 @@ We provide a ready-to-use dashboard JSON that already includes tag-based filters
 - In Grafana, add an Athena datasource and name it exactly `athena`.
 
 3) Import the provided dashboard JSON
-- Use the JSON at `grafana/application-logs-dashboard.json` from this repo and import it into Grafana (Dashboards → Import → Upload JSON).
+- Use the JSON at [application-logs-dashboard.json](../../grafana/application-logs-dashboard.json) from this repo and import it into Grafana (Dashboards → Import → Upload JSON).
 
 4) Start querying
 - The imported dashboard comes with dropdowns powered by the Orchestrator metadata. With the `athena` datasource configured and the Orchestrator URL set, you can start filtering and querying logs immediately.

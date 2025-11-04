@@ -28,33 +28,25 @@ Access Grafana at http://localhost:3000 (default login: `admin` / `admin`).
 
 Alternative installs: refer to Grafana docs for Linux packages or Kubernetes Helm charts.
 
-## 2) Add your logs datasource
+## 2) Add the Athena datasource
 
 1. In Grafana → Connections → Data sources → Add data source
-2. Choose your backend:
-   - Loki: set URL to your Loki endpoint
-   - Elasticsearch: set the HTTP URL and index pattern
-3. Save & test
+2. Choose Amazon Athena and configure it for your AWS account
+3. Name the datasource exactly `athena`
+4. Save & test
 
-## 3) Create variables for tag-based filters
+## 3) Configure Orchestrator URL
 
-Create dashboard variables matching Orchestrator tags (e.g., `source`, `team`, `env`).
+1. Update the Orchestrator backend service URL used by the dashboard:
+   - Option A: Edit the JSON file [application-logs-dashboard.json](../../grafana/application-logs-dashboard.json) before importing to set your service URL
+   - Option B: After import, update dashboard links/variables that reference the Orchestrator backend
+2. Ensure the `athena` datasource will be used for panels/variables
 
-- Loki example: Type = Query, Query = `label_values(source)`
-- Elasticsearch example: Terms on `source.keyword`
+## 4) Import the provided dashboard JSON and start querying
 
-Enable Multi-value and Include All if helpful.
+1. In Grafana: Dashboards → Import → Upload JSON → select the file and import
+2. Use the dropdowns to filter by `type`, `env`, `service_name` and start querying logs
 
-## 4) Build a logs dashboard
-
-1. Dashboards → New → New dashboard → Add a panel
-2. Use your variables in queries, e.g. `$source`, `$team`, `$env`
-3. Pick a Logs or Table panel to display entries
-
-## 5) Secure and persist
-
-- Change admin password via Configuration → Users
-- Persist Grafana data by mounting a volume to `/var/lib/grafana` in Docker
-- Restrict access (reverse proxy, network rules) for production
+ 
 
 
