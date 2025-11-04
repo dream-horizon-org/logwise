@@ -40,7 +40,11 @@ export default defineConfig({
                             text: 'Self-Host Logwise',
                             collapsed: true,
                             items: [
-                                { text: 'Self-Host Setup Guide', link: '/setup/self-host' }
+                                { text: 'Vector', link: '/setup-guides/self-host/vector-setup' },
+                                { text: 'Kafka + Kafka Manager', link: '/setup-guides/self-host/kafka-setup' },
+                                { text: 'Spark', link: '/setup-guides/self-host/spark-setup' },
+                                { text: 'Grafana', link: '/setup-guides/self-host/grafana-setup' },
+                                { text: 'Orchestrator Service', link: '/setup-guides/self-host/orchestrator-service-setup' },
                             ]
                         }
                     ]
