@@ -67,8 +67,8 @@ Logwise is ideal for:
 Ready to get started with Logwise? Check out:
 
 - [Architecture Overview](/architecture-overview) - Understand the system design
-- [Docker Setup Guide](/setup/docker) - Quick start with Docker
-- [Self-Host Setup Guide](/setup/self-host) - Deploy on your infrastructure
+- [Docker Setup Guide](/setup-guides/docker/) - Quick start with Docker
+- [Self-Host Setup Guide](/setup-guides/self-host/grafana-setup) - Deploy on your infrastructure
 - [Component Documentation](/components/vector) - Detailed component guides
 
 
