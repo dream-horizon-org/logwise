@@ -12,7 +12,7 @@ This repository contains a Spark application that streams log data from Kafka an
 
 ## Setup
 
-Main Class: ```com.logwise.MainApplication```
+Main Class: ```com.logwise.spark.MainApplication```
 
 Run Tests: ```mvn clean verify```
 
@@ -58,7 +58,7 @@ curl --location '<SPARK_MASTER_HOST>:6066/v1/submissions/create' \
   ],
   "appResource": "<SPARK_JAR_S3_URL>",
   "clientSparkVersion": "3.1.2",
-  "mainClass": "com.logwise.MainApplication",
+  "mainClass": "com.logwise.spark.MainApplication",
   "environmentVariables": {
     "SPARK_ENV_LOADED": "1",
     "X-Tenant-Name": "<TENANT_NAME>"
