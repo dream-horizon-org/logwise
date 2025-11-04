@@ -165,4 +165,7 @@ kubectl logs -n observability -l app.kubernetes.io/name=otel-collector | grep "f
 **Export failures**: Check the endpoint URL and network connectivity to your log backend.
 
 ## Related Documentation
-- [OpenTelemetry Collector Documentation](https://opentelemetry.io/docs/collector/)
+
+- [OpenTelemetry Documentation](https://opentelemetry.io/docs/)
+- [Collector Configuration Reference](https://opentelemetry.io/docs/collector/configuration/)
+- [File Log Receiver Documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver)
