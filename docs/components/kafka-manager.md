@@ -246,6 +246,6 @@ The orchestrator service integrates with Kafka Manager as follows:
 
 ## Related Documentation
 
-- [Kafka Setup](/setup/kafka) - Kafka configuration and setup
+- [Kafka Setup](/setup-guides/self-host/kafka-setup) - Kafka configuration and setup
 - [Architecture Overview](/architecture-overview) - Complete system architecture
 

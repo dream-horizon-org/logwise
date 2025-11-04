@@ -90,7 +90,7 @@ kafka-configs.sh --alter \
 
 ## Configuration
 
-See the [Kafka Setup Guide](/setup/kafka) for detailed configuration instructions.
+See the [Kafka Setup Guide](/setup-guides/self-host/kafka-setup) for detailed configuration instructions.
 
 **Important**: We require **Zookeeper-based Kafka** because we use Kafka Manager APIs for metrics, which require Zookeeper.
 
@@ -104,8 +104,7 @@ See the [Kafka Setup Guide](/setup/kafka) for detailed configuration instruction
 
 - **[Vector](/components/vector)** - Sends logs to Kafka
 - **[Kafka Manager](/components/kafka-manager)** - Monitors and manages Kafka cluster
-- **[Apache Spark](/components/spark)** - Consumes logs from Kafka
-- **[Orchestrator Service](/components/orchestrator)** - Automatically scales Kafka partitions
+
 
 ## Verification
 
