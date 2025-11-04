@@ -103,7 +103,7 @@ Fix memory leak in log aggregation module
 Update documentation for deployment guide
 ```
 
-### Commit Message Format
+### Commit Message Format (Conventional Commits)
 
 ```
 type(scope): subject
@@ -121,6 +121,15 @@ Types:
 - `refactor`: Code refactoring
 - `test`: Adding or updating tests
 - `chore`: Maintenance tasks
+
+All commits should be GPG-signed. Configure Git to sign commits and add your public key to your GitHub account.
+
+## Roles and Responsibilities
+
+- **Triager**: Reviews and labels new issues, requests missing details, deduplicates, and assigns initial priority.
+- **Maintainer**: Reviews and merges PRs, ensures tests/docs/quality gates, manages releases, and enforces branch protection.
+
+These roles may be held by the same person in small teams but must be documented for accountability.
 
 ## Review Process
 

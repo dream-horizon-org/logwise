@@ -15,93 +15,7 @@ Vector handles:
 - **Topic Naming:** `logs.{type}_{environment}_{service}`  
 Example: `logs.application_production_api-gateway`
 
-## Prerequisites
-
-Install required dependencies using mentioned guide links:
-
-```bash
-# Vector (choose your operating-system)
-# See: https://vector.dev/docs/setup/installation/operating-systems/
-
-# Protocol Buffers compiler for your Operating System
-# See: https://protobuf.dev/installation/
-```
-
-## Setup
-
-### 1. Clone the current repository on instance
-```bash
-git clone https://github.com/ds-horizon/logwise.git
-```
-### 2. Create a Working Directory and Copy Configuration Files
-
-```bash
-
-# Copy files from repository
-cp ./logwise/vector/logwise-vector.proto .
-cp ./logwise/vector/vector.toml .
-```
-
-### 3. Update Kafka Broker Address in `vector.toml`
-
-Update the Kafka broker address in the sink configuration. If using multiple brokers, use comma-separated values:
-
-```toml
-# Before
-bootstrap_servers = "kafka:29092"
-
-# After
-bootstrap_servers = "<YOUR_KAFKA_ADDRESS>:<KAFKA_PORT>"
-```
-
-### 4. Compile Protobuf Schema
-
-```bash
-protoc --include_imports --descriptor_set_out=logwise-vector.desc logwise-vector.proto
-```
-
-### 5. Deploy Configuration
-
-```bash
-sudo mkdir -p /etc/vector
-sudo cp vector.toml /etc/vector/vector.toml
-sudo cp logwise-vector.desc /etc/vector/logwise-vector.desc
-```
-### 6. Set Vector Environment Configuration
-```bash
-FILE="/etc/default/vector"
-
-/bin/cat <<EOM >$FILE
-VECTOR_WATCH_CONFIG=true
-VECTOR_CONFIG=/etc/vector/vector.toml
-EOM
-```
-
-## Running Vector
-
-Start Vector as a service or run manually:
-
-```bash
-# Production: Run as systemd service (Linux)
-sudo systemctl start vector
-sudo systemctl enable vector
-
-# Development: Run manually
-vector --config /etc/vector/vector.toml
-```
-
-### Verify Operation
-
-Check Vector is processing logs:
-
-```bash
-# Check service status
-sudo systemctl status vector
-
-# View live logs
-sudo journalctl -u vector -f
-
-```
+##
 
 ## Configuration Overview
 
@@ -175,11 +89,12 @@ kcat -b <YOUR_KAFKA_ADDRESS> -L
 ## References 
 
 ### Files
-- **[`vector.toml`](vector.toml)** - Production ready Vector pipeline configuration
-- **[`logwise-vector.proto`](logwise-vector.proto)** - Production ready Protobuf schema defining log message structure
+- **[`vector.toml`](https://github.com/ds-horizon/logwise/blob/main/vector/vector.toml)** - Production ready Vector pipeline configuration
+- **[`logwise-vector.proto`](https://github.com/ds-horizon/logwise/blob/main/vector/logwise-vector.proto)** - Production ready Protobuf schema defining log message structure
 
 ### Vector Components
 
 - [**OpenTelemetry Receiver**](https://vector.dev/docs/reference/configuration/sources/opentelemetry/)
 - [**Remap Transformer**](https://vector.dev/docs/reference/configuration/transforms/remap/)
 - [**Kafka Sink**](https://vector.dev/docs/reference/configuration/sinks/kafka/)
+

@@ -52,7 +52,7 @@ By default, Kafka Manager runs on port **9000**. Access the web interface at `ht
 
 Configure Kafka Manager by editing `conf/application.conf`:
 
-```conf
+```properties
 kafka-manager.zkhosts="localhost:2181"
 application.secret="changeme"
 basicAuthentication.enabled=false
@@ -197,7 +197,7 @@ curl http://localhost:9000/api/clusters/Logwise%20Cluster/topics
 
 Complete `conf/application.conf` example:
 
-```conf
+```properties
 # Zookeeper hosts (comma-separated)
 kafka-manager.zkhosts="localhost:2181"
 
@@ -246,6 +246,6 @@ The orchestrator service integrates with Kafka Manager as follows:
 
 ## Related Documentation
 
-- [Kafka Setup](../kafka/README.md) - Kafka configuration and setup
-- [Main Logwise README](../README.md) - Complete system documentation
+- [Kafka Setup](/setup/kafka) - Kafka configuration and setup
+- [Architecture Overview](/architecture-overview) - Complete system architecture
 
