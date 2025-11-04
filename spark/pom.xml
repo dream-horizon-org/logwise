@@ -373,7 +373,7 @@
                             <!-- workaround to https://issues.apache.org/jira/browse/SUREFIRE-1831 -->
                             <useModulePath>false</useModulePath>
                             <!-- Runner class file path -->
-                            <test>com.logwise.runners.TestRunner</test>
+                            <test>runners.com.logwise.spark.TestRunner</test>
                             <!-- Ensures root cause ends up in the console -->
                             <trimStackTrace>false</trimStackTrace>
                             <!-- To ignore no junit integration test run failure -->
