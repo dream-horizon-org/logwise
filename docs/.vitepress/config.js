@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
     title: 'Logwise',
     description: 'Open-source end-to-end logging system capable of handling 15+ Gbps log throughput',
-
+    site: 'https://ds-horizon.github.io/logwise/',
     // GitHub Pages config
     base: '/logwise/',
 
