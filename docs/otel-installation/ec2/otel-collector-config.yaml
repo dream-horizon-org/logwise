@@ -1,0 +1,61 @@
+extensions:
+  file_storage:
+    directory: /var/lib/otelcol/storage  
+
+  health_check:
+    endpoint: 0.0.0.0:13133                   
+
+receivers:
+  filelog:
+    include: [ /var/log/my-app/*.log, /var/log/my-app/*.log.gz ]  
+    start_at: beginning                       
+    compression: auto                                         
+
+processors:
+  memory_limiter:
+    limit_mib: 1500                      
+    spike_limit_mib: 500                  
+    check_interval: 5s   
+
+  resource:
+    attributes:
+      - key: service_name
+        value: ${env:SERVICE_NAME}
+        action: upsert
+      - key: environment
+        value: ${env:ENVIRONMENT}
+        action: upsert
+      - key: type
+        value: application
+        action: upsert
+
+  batch:
+    timeout: 10s                        
+    send_batch_size: 1024                
+    send_batch_max_size: 2048            
+
+exporters:
+  otlphttp:
+    endpoint: "http://log-endpoint:5000"  
+    compression: gzip                       
+    timeout: 30s                         
+    retry_on_failure:                    
+      enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+      max_elapsed_time: 300s
+      multiplier: 2.0
+    sending_queue:                       
+      enabled: true
+      storage: file_storage               
+      num_consumers: 10                  
+      queue_size: 1000                                   
+
+service:
+  extensions: [file_storage, health_check] 
+  pipelines:
+    logs:
+      receivers: [filelog]                        
+      processors: [memory_limiter, resource, batch]    
+      exporters: [otlphttp]                     
+
