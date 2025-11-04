@@ -24,7 +24,7 @@ docker run -d \
   grafana/grafana:latest
 ```
 
-Access Grafana at http://localhost:3000 (default login: `admin` / `admin`).
+Access Grafana at `http://localhost:3000` (default login: `admin` / `admin`).
 
 Alternative installs: refer to Grafana docs for Linux packages or Kubernetes Helm charts.
 
