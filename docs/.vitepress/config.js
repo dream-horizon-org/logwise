@@ -48,9 +48,8 @@ export default defineConfig({
                 {
                     text: 'Send Logs',
                     items: [
-                        { text: 'OpenTelemetry Collector', link: '/otel-installation/custom-otel-collector-config' },
-                        { text: 'EC2 Deployment', link: '/otel-installation/ec2/README' },
-                        { text: 'Kubernetes Deployment', link: '/otel-installation/kubernetes/README' }
+                        { text: 'OpenTelemetry - EC2', link: '/send-logs/ec2/opentelemetry' },
+                        { text: 'OpenTelemetry - Kubernetes', link: '/send-logs/kubernetes/opentelemetry' }
                     ]
                 },
                 {
@@ -58,7 +57,6 @@ export default defineConfig({
                     items: [
                         { text: 'Vector', link: '/components/vector' },
                         { text: 'Kafka', link: '/components/kafka' },
-                        { text: 'Kafka Manager', link: '/components/kafka-manager' },
                         { text: 'Apache Spark', link: '/components/spark' },
                         { text: 'Grafana', link: '/components/grafana' },
                         { text: 'Orchestrator Service', link: '/components/orchestrator' }

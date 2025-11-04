@@ -100,7 +100,6 @@ receivers:
 
 ## Related Documentation
 
-- [OTEL Agent Installation Guide](OTEL_AGENT_INSTALLATION.md)
 - [OpenTelemetry Documentation](https://opentelemetry.io/docs/)
 - [Collector Configuration Reference](https://opentelemetry.io/docs/collector/configuration/)
 - [File Log Receiver Documentation](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver)
