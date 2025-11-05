@@ -60,16 +60,11 @@ public class MockConfigHelper {
     public static Config createMinimalSparkConfig() {
         Map<String, Object> configMap = new HashMap<>();
         configMap.put("app.job.name", "PUSH_LOGS_TO_S3");
-        configMap.put("spark.master.host", "http://localhost:8080");
-        configMap.put("kafka.manager.host", "http://localhost:9000");
         configMap.put("logCentral.orchestrator.url", "http://localhost:8081");
         configMap.put("kafka.bootstrap.servers.port", "9092");
         configMap.put("tenant.name", "test-tenant");
         configMap.put("spark.streamingquery.timeout.minutes", 60);
         configMap.put("spark.streams.name", java.util.Arrays.asList("APPLICATION_LOGS_STREAM_TO_S3"));
-        configMap.put("spark.scale.downscale.enable", false);
-        configMap.put("spark.scale.upscale.enable", false);
-        configMap.put("kafka.activeTopicsRatio", 0.5);
         return createNestedConfig(configMap);
     }
 

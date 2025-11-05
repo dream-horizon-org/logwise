@@ -47,12 +47,9 @@ curl --location '<SPARK_MASTER_HOST>:6066/v1/submissions/create' \
   "action": "CreateSubmissionRequest",
   "appArgs": [
     "kafka.cluster.dns=<KAFKA_BROKER_DNS>",
-    "kafka.cluster.name=<CLUSTER_NAME_ON_KAFKA_MANAGER>",
-    "kafka.manager.host=\"http://<KAFKA_MANAGER_HOST>:9000\"",
     "kafka.maxRatePerPartition=4000",
     "kafka.startingOffsets=latest",
-    "kafka.subscribePattern=\"logs.*\"",
-    "spark.master.host=\"http://<SPARK_MASTER_HOST>:8080\"",
+    "kafka.topic.prefix.application=\"^logs.*\"",
     "s3.bucket=<S3_BUCKET_NAME>",
     "logCentral.orchestrator.url = <LOG_CENTRAL_ORCHESTRATOR_URL>",
   ],

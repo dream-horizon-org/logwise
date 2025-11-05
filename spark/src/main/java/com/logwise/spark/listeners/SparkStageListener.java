@@ -2,9 +2,7 @@ package com.logwise.spark.listeners;
 
 import com.google.inject.Inject;
 import com.logwise.spark.constants.Constants;
-import com.logwise.spark.dto.entity.SparkStageHistory;
 import com.logwise.spark.jobs.impl.PushLogsToS3SparkJob;
-import com.logwise.spark.services.SparkStageHistoryService;
 import com.logwise.spark.singleton.CurrentSparkSession;
 import java.util.Map;
 import java.util.Set;
@@ -19,14 +17,14 @@ import org.apache.spark.sql.streaming.StreamingQueryManager;
 import scala.Option;
 
 /**
- * SparkStageListener listens to Spark stage events and manages the execution of streaming queries.
- * It tracks stage submission and completion, updates metrics, and stops queries when necessary.
+ * SparkStageListener listens to Spark stage events and manages the execution of
+ * streaming queries.
+ * It tracks stage submission and completion, updates metrics, and stops queries
+ * when necessary.
  */
 @Slf4j
-@RequiredArgsConstructor(onConstructor = @__({@Inject}))
+@RequiredArgsConstructor(onConstructor = @__({ @Inject }))
 public class SparkStageListener extends SparkListener {
-
-  private final SparkStageHistoryService sparkStageHistoryService;
 
   private static class StageMetrics {
     Long inputRecords = 0L;
@@ -80,10 +78,8 @@ public class SparkStageListener extends SparkListener {
         status,
         STAGE_COMPLETION_MAP);
     if (status.equals("succeeded")) {
-      long currentInputRecords =
-          stageCompleted.stageInfo().taskMetrics().inputMetrics().recordsRead();
-      long currentOutputBytes =
-          stageCompleted.stageInfo().taskMetrics().outputMetrics().bytesWritten();
+      long currentInputRecords = stageCompleted.stageInfo().taskMetrics().inputMetrics().recordsRead();
+      long currentOutputBytes = stageCompleted.stageInfo().taskMetrics().outputMetrics().bytesWritten();
       Option<Object> completionTime = stageCompleted.stageInfo().completionTime();
       Option<Object> submissionTime = stageCompleted.stageInfo().submissionTime();
 
@@ -96,15 +92,14 @@ public class SparkStageListener extends SparkListener {
       stageMetrics.inputRecords = Math.max(currentInputRecords, stageMetrics.inputRecords);
       stageMetrics.outputBytes = Math.max(currentOutputBytes, stageMetrics.outputBytes);
       if (completionTime.nonEmpty() && completionTime.isDefined()) {
-        stageMetrics.completionTime =
-            Math.max(stageMetrics.completionTime, Long.parseLong(completionTime.get().toString()));
+        stageMetrics.completionTime = Math.max(stageMetrics.completionTime,
+            Long.parseLong(completionTime.get().toString()));
       }
       if (submissionTime.nonEmpty() && submissionTime.isDefined()) {
         long currentSubmissionTime = Long.parseLong(submissionTime.get().toString());
-        stageMetrics.submissionTime =
-            stageMetrics.submissionTime.equals(0L)
-                ? currentSubmissionTime
-                : Math.min(stageMetrics.submissionTime, currentSubmissionTime);
+        stageMetrics.submissionTime = stageMetrics.submissionTime.equals(0L)
+            ? currentSubmissionTime
+            : Math.min(stageMetrics.submissionTime, currentSubmissionTime);
       }
     }
   }
@@ -116,37 +111,39 @@ public class SparkStageListener extends SparkListener {
    */
   private void stopStage(String stageName, int stageId) {
     new Thread(
-            () -> {
-              StreamingQueryManager streamingQueryManager =
-                  CurrentSparkSession.getInstance().getSparkSession().streams();
-              StreamingQuery[] activeQueries = streamingQueryManager.active();
+        () -> {
+          StreamingQueryManager streamingQueryManager = CurrentSparkSession.getInstance().getSparkSession().streams();
+          StreamingQuery[] activeQueries = streamingQueryManager.active();
 
-              PENDING_STOP_STAGE_IDS.add(stageId);
-              for (StreamingQuery query : activeQueries) {
-                String queryName = query.name();
-                String expectedStageName = Constants.QUERY_NAME_TO_STAGE_MAP.get(queryName);
-                if (stageName.equals(expectedStageName)) {
-                  log.info("Stopping stream query: [{}] for stage: [{}]", queryName, stageName);
-                  try {
-                    query.stop();
-                    query.awaitTermination();
-                    streamingQueryManager.resetTerminated();
-                  } catch (Exception e) {
-                    log.error(
-                        "Error stopping stream query: [{}] for stage: [{}]",
-                        queryName,
-                        stageName,
-                        e);
-                  }
-                  break;
-                }
+          PENDING_STOP_STAGE_IDS.add(stageId);
+          for (StreamingQuery query : activeQueries) {
+            String queryName = query.name();
+            String expectedStageName = Constants.QUERY_NAME_TO_STAGE_MAP.get(queryName);
+            if (stageName.equals(expectedStageName)) {
+              log.info("Stopping stream query: [{}] for stage: [{}]", queryName, stageName);
+              try {
+                query.stop();
+                query.awaitTermination();
+                streamingQueryManager.resetTerminated();
+              } catch (Exception e) {
+                log.error(
+                    "Error stopping stream query: [{}] for stage: [{}]",
+                    queryName,
+                    stageName,
+                    e);
               }
-              PENDING_STOP_STAGE_IDS.remove(stageId);
-            })
+              break;
+            }
+          }
+          PENDING_STOP_STAGE_IDS.remove(stageId);
+        })
         .start();
   }
 
-  /** Completes the execution by waiting for all stages to finish and updating the stage history. */
+  /**
+   * Completes the execution by waiting for all stages to finish and updating the
+   * stage history.
+   */
   private void completeExecution() {
     log.info("All stages completed at least once. Waiting for all stages to finish...");
     while (true) {
@@ -154,14 +151,6 @@ public class SparkStageListener extends SparkListener {
         break;
       }
     }
-
-    SparkStageHistory sparkStageHistory = sparkStageHistoryService.getCurrentSparkStageHistory();
-    sparkStageHistory.setInputRecords(stageMetrics.inputRecords);
-    sparkStageHistory.setOutputBytes(stageMetrics.outputBytes);
-    sparkStageHistory.setSubmissionTime(stageMetrics.submissionTime);
-    sparkStageHistory.setCompletionTime(stageMetrics.completionTime);
-    sparkStageHistory.setStatus("succeeded");
-    sparkStageHistoryService.updateStageHistory(sparkStageHistory);
     PushLogsToS3SparkJob.stopAllRunningJobs();
   }
 
@@ -172,15 +161,13 @@ public class SparkStageListener extends SparkListener {
    */
   private static Boolean isAllStagesCompletedAtLeastOnce() {
     if (STAGE_COMPLETION_MAP.isEmpty()
-        || STAGE_COMPLETION_MAP.keySet().size()
-            != PushLogsToS3SparkJob.getStreamingQueriesCount()) {
+        || STAGE_COMPLETION_MAP.keySet().size() != PushLogsToS3SparkJob.getStreamingQueriesCount()) {
       return false;
     }
     return STAGE_SUBMITTED_MAP.entrySet().stream()
         .allMatch(
-            entry ->
-                STAGE_COMPLETION_MAP.containsKey(entry.getKey())
-                    && STAGE_COMPLETION_MAP.get(entry.getKey()) > 0);
+            entry -> STAGE_COMPLETION_MAP.containsKey(entry.getKey())
+                && STAGE_COMPLETION_MAP.get(entry.getKey()) > 0);
   }
 
   /**
