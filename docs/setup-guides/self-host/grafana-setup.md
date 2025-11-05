@@ -26,6 +26,10 @@ docker run -d \
 
 Access Grafana at `http://localhost:3000` (default login: `admin` / `admin`).
 
+::: warning Important
+The default Grafana Docker image uses **SQLite** as its embedded database. The database file is stored at `/var/lib/grafana/grafana.db` inside the container. For production deployments or multi-instance setups, configure an external database (PostgreSQL, MySQL) using environment variables like `GF_DATABASE_TYPE`, `GF_DATABASE_HOST`, etc.
+:::
+
 Alternative installs: refer to Grafana docs for Linux packages or Kubernetes Helm charts.
 
 ## 2) Add the Athena datasource

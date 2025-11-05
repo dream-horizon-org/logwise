@@ -95,3 +95,4 @@ credentials/
 id_rsa*
 *.p12
 
+docs/yarn.lock

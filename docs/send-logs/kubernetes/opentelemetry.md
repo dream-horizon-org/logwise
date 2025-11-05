@@ -21,8 +21,8 @@ Kubernetes setup guide for the OpenTelemetry Collector log shipping system. In o
     (b). Customize the configuration as needed (see [`what-you-need-to-provide`](#what-you-need-to-provide) section below)
 
 2. **Deploy to Cluster**
-   - Apply the complete manifest: `kubectl apply -f otel-collector-k8s.yaml`
-     The configuration file is available at [`otel-collector-k8s.yaml`](./otel-collector-k8s.yaml).
+   - Apply the complete manifest: `kubectl apply -f otel-collector-config.yaml`
+     The configuration file is available at [`otel-collector-config.yaml`](./otel-collector-config.yaml).
    - Verify deployment: `kubectl get pods -n observability`
 
 3. **Verify Log Collection**
@@ -41,7 +41,7 @@ The configuration includes:
 
 ### 1. Log Endpoint Configuration
 
-Update the endpoint in `otel-collector-k8s.yaml`:
+Update the endpoint in `otel-collector-config.yaml`:
 
 ```yaml
 exporters:
@@ -51,7 +51,7 @@ exporters:
 
 ### 2. Environment Variables
 
-Set these environment variables in the DaemonSet section of `otel-collector-k8s.yaml`:
+Set these environment variables in the DaemonSet section of `otel-collector-config.yaml`:
 
 ```yaml
 env:
@@ -69,7 +69,7 @@ These environment variables are used by the resource processor to add metadata t
 
 ### 3. File Paths
 
-Update the file paths in the ConfigMap section of `otel-collector-k8s.yaml` to match your application log locations:
+Update the file paths in the ConfigMap section of `otel-collector-config.yaml` to match your application log locations:
 
 ```yaml
 receivers:

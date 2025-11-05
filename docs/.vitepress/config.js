@@ -42,6 +42,7 @@ export default defineConfig({
                             items: [
                                 { text: 'Vector', link: '/setup-guides/self-host/vector-setup' },
                                 { text: 'Kafka + Kafka Manager', link: '/setup-guides/self-host/kafka-setup' },
+                                { text: 'S3 + Athena', link: '/setup-guides/self-host/s3-athena-setup' },
                                 { text: 'Spark', link: '/setup-guides/self-host/spark-setup' },
                                 { text: 'Grafana', link: '/setup-guides/self-host/grafana-setup' },
                                 { text: 'Orchestrator Service', link: '/setup-guides/self-host/orchestrator-service-setup' },
@@ -60,7 +61,8 @@ export default defineConfig({
                     text: 'Components',
                     items: [
                         { text: 'Vector', link: '/components/vector' },
-                        { text: 'Kafka', link: '/components/kafka' },
+                        { text: 'Kafka + Kafka Manager', link: '/components/kafka' },
+                        { text: 'S3 + Athena', link: '/components/s3-athena' },
                         { text: 'Apache Spark', link: '/components/spark' },
                         { text: 'Grafana', link: '/components/grafana' },
                         { text: 'Orchestrator Service', link: '/components/orchestrator' }
