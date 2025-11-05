@@ -9,13 +9,26 @@
     <version>2.0.4-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Central Repository</name>
+            <url>https://repo1.maven.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <properties>
         <!-- Dependency Versions -->
 
         <!-- Main -->
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <spark.version>3.1.2</spark.version>
         <scala.version>2.12.10</scala.version>
         <hadoop.version>3.1.2</hadoop.version>
@@ -27,9 +40,9 @@
         <protobuf.version>4.33.0</protobuf.version>
 
         <!-- GCP -->
-        <hadoop.bigquery.version>0.32.0</hadoop.bigquery.version>
-        <guava.version>27.1-jre</guava.version>
-        <gcs-connector.version>hadoop3-2.2.5</gcs-connector.version>
+        <hadoop.bigquery.version>0.30.0</hadoop.bigquery.version>
+        <guava.version>31.1-jre</guava.version>
+        <gcs-connector.version>hadoop3-2.2.12</gcs-connector.version>
 
         <!-- Test -->
         <mockito.version>4.8.0</mockito.version>
@@ -91,7 +104,7 @@
                 <dependency>
                     <groupId>com.google.cloud.bigdataoss</groupId>
                     <artifactId>gcs-connector</artifactId>
-                    <version>${gcs-connector.version}</version>
+                    <version>hadoop3-2.2.12</version>
                     <exclusions>
                         <exclusion>
                             <groupId>com.google.protobuf</groupId>
@@ -270,8 +283,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
+                    <source>11</source>
+                    <target>11</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -484,9 +497,6 @@
                 <groupId>com.spotify.fmt</groupId>
                 <artifactId>fmt-maven-plugin</artifactId>
                 <version>2.21.1</version>
-                <configuration>
-                    <googleJavaFormatVersion>${google-java-format.version}</googleJavaFormatVersion>
-                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -14,12 +14,6 @@ public class Constants {
   public final String APPLICATION_CONFIG_DIR = "application-config";
   public final String X_TENANT_NAME = "X-Tenant-Name";
 
-  public final int FEIGN_DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS = 5;
-  public final int FEIGN_DEFAULT_READ_TIMEOUT_IN_SECONDS = 10;
-  public final int FEIGN_DEFAULT_RETRY_COUNT = 3;
-  public final int FEIGN_DEFAULT_RETRY_MAX_PERIOD_IN_MILLIS = 3000;
-  public final int FEIGN_DEFAULT_RETRY_PERIOD_IN_MILLIS = 1000;
-
   public final String APPLICATION_LOGS_TO_S3_QUERY_NAME = "Export Application Logs To S3";
 
   public final String APPLICATION_LOGS_KAFKA_GROUP_ID = "app-spark-" + randomAlphanumeric(5);
@@ -28,7 +22,6 @@ public class Constants {
   public final String WRITE_STREAM_BQ_FORMAT = "com.google.cloud.spark.bigquery";
   public final String WRITE_STREAM_GZIP_COMPRESSION = "gzip";
 
-  public final Integer SPARK_STAGE_HISTORY_LIMIT = 1;
 
   // Config Keys
   public final String CONFIG_KEY_SPARK_CONFIG = "sparkConfig";
