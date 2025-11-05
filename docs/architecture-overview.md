@@ -35,7 +35,7 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
 
 ---
 
-### **3. [Kafka Manager](/components/kafka-manager)**
+### **3. Kafka Manager**
 
 - Responsible for **monitoring Kafka cluster health** and **performance**.  
 - Offers **APIs** used by the **Orchestrator Service** for:
