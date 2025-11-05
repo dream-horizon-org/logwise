@@ -1,0 +1,39 @@
+# Spring Boot externalized config (mounted at /config/application.yml)
+
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/${MYSQL_DATABASE}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # For local; prefer migrations in production
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  sql:
+    init:
+      mode: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  # Optional Kafka config if app consumes/produces later
+  kafka:
+    brokers: ${KAFKA_BROKERS:kafka:9092}
+    topic: ${KAFKA_TOPIC:logs_topic}
+  internalBaseUrl: ${ORCH_INTERNAL_BASE_URL:http://orchestrator:8080}
+
+

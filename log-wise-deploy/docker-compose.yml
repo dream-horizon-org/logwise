@@ -1,0 +1,388 @@
+version: "3.9"
+
+# Log Central local stack: Vector → Kafka (KRaft) → Spark (to S3/Athena),
+# Spring Boot Orchestrator + MySQL, Grafana, and Cron jobs.
+
+name: log-central
+
+networks:
+  lc_net:
+    name: lc_net
+
+volumes:
+  kafka_data: {}
+  zookeeper_data: {}
+  mysql_data: {}
+  grafana_data: {}
+  spark_checkpoint: {}
+  spark_logs: {}
+  db_data: {}
+
+services:
+  vector:
+    image: timberio/vector:0.45.0-alpine
+    container_name: lc_vector
+    env_file:
+      - .env
+    environment:
+      # Vector → Kafka parameters (provided in .env)
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      # Enable Vector internal API (not exposed outside network)
+      - VECTOR_API_VERSION=2
+      - VECTOR_API_ADDRESS=0.0.0.0:8686
+      - VECTOR_WATCH_CONFIG=true
+    volumes:
+      - ./vector/vector.yaml:/etc/vector/vector.yaml:ro
+      - ./vector/logcentral_logs.desc:/etc/vector/logwise-vector.desc:ro
+
+    expose:
+      - "8686" # internal-only Vector API
+    networks:
+      - lc_net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-lc", "curl -fsS http://127.0.0.1:8686/health || vector --version"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.50"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: lc_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: srvr,ruok,stat,conf
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper
+    expose:
+      - "2181"
+    networks:
+      - lc_net
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "zookeeper-shell localhost:2181 ls / >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.50"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: lc_kafka
+    env_file:
+      - .env
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    expose:
+      - "9092"
+    networks:
+      - lc_net
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.00"
+
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: lc_mysql
+  #   env_file:
+  #     - .env
+  #   command: >
+  #     --default-authentication-plugin=mysql_native_password
+  #     --character-set-server=utf8mb4
+  #     --collation-server=utf8mb4_0900_ai_ci
+  #   environment:
+  #     MYSQL_DATABASE: ${MYSQL_DATABASE:-myapp}
+  #     MYSQL_USER: ${MYSQL_USER:-myapp}
+  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD:-myapp_pass}
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_pass}
+  #   ports:
+  #     - "3306:3306"
+  #   networks:
+  #     - lc_net
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #     - ./db/init:/docker-entrypoint-initdb.d:ro
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root_pass}"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 20
+
+  db:
+    image: mysql:8.0
+    container_name: lc_mysql
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_0900_ai_ci
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-myapp}
+      MYSQL_USER: ${MYSQL_USER:-myapp}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-myapp_pass}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_pass}
+      DB_HOST: db
+    ports:
+      - "3306:3306"
+    networks:
+      - lc_net
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root_pass}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    mem_limit: 768m
+    cpus: "0.75"
+    
+
+  orchestrator:
+    # Uses existing Dockerfile in module: log-central-orchestror
+    build:
+      context: ./log-central-orchestrator
+      dockerfile: Dockerfile
+    container_name: lc_orchestrator
+    env_file:
+      - .env
+    environment:
+      # Database envs consumed by application.yml placeholders
+      - DB_NAME=${MYSQL_DATABASE:-myapp}
+      - DB_USER=${MYSQL_USER:-myapp}
+      - DB_PASS=${MYSQL_PASSWORD:-myapp_pass}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-myapp_pass}
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      # Optional Kafka params if the app ever needs them
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_TOPIC=${KAFKA_TOPIC}
+      # Internal base URL (used by cron jobs)
+      - ORCH_INTERNAL_BASE_URL=http://orchestrator:8080
+    volumes:
+      - ./orchestrator/application.yml:/config/application.yml:ro
+    ports:
+      - "${ORCH_PORT:-8080}:8080" # user-facing (optional for local dev)
+    networks:
+      - lc_net
+    depends_on:
+      db:
+        condition: service_healthy
+      # kafka:
+      #   condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "curl -fsS http://localhost:8080/actuator/health | grep 'UP' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+    mem_limit: 768m
+    cpus: "0.75"
+
+  kafka-manager:
+    image: hlebalbau/kafka-manager:stable
+    platform: linux/amd64
+    container_name: lc_kafka_manager
+    environment:
+      ZK_HOSTS: zookeeper:2181
+      APPLICATION_SECRET: change_me_secret
+      KM_ARGS: -Dpidfile.path=/dev/null
+    networks:
+      - lc_net
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "${KAFKA_MANAGER_PORT:-9000}:9000"
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "wget -qO- http://localhost:9000 | grep -i kafka >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.50"
+
+  spark-master:
+    image: apache/spark:latest
+    container_name: lc_spark_master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_OPTS=-Dspark.master.rest.enabled=true
+    command: ["bash", "-lc", 
+      "/opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host spark-master --port 7077 --webui-port 8080"]
+    expose:
+      - "7077"
+      - "8080"
+      - "6066"
+    ports:
+      - "${SPARK_MASTER_UI_PORT:-18080}:8080"
+    volumes:
+      - ./d11-log-management-spark/central-log-management-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
+    networks:
+      - lc_net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    # healthcheck:
+    #   test: ["CMD", "bash", "-lc", ": </dev/tcp/127.0.0.1/7077"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 20
+    #   start_period: 10s
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.00"
+
+  spark-worker:
+    image: apache/spark:latest
+    container_name: lc_spark_worker
+    environment:
+      - SPARK_MODE=worker
+    command: ["bash", "-lc", 
+      "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8081"]
+    networks:
+      - lc_net
+    volumes:
+      - ./d11-log-management-spark/central-log-management-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
+    depends_on:
+      spark-master:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "wget -qO- http://localhost:8081 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+    mem_limit: 2g
+    cpus: "2.00"
+
+  # spark-build:
+  #   image: maven:3-eclipse-temurin-17
+  #   container_name: lc_spark_build
+  #   working_dir: /workspace
+  #   volumes:
+  #     - ./d11-log-managament-spark:/workspace
+  #   command: ["bash", "-lc", "mvn -B -T 4 clean package -Dmaven.test.skip -Dmaven.artifact.threads=10 -Paws && cd target && set -e; JAR=$(ls -1 *.jar | grep -v sources | head -n1); ln -sf \"$JAR\" app.jar; echo Built $JAR and linked app.jar"]
+  #   networks:
+  #     - lc_net
+  #   restart: "no"
+
+  spark-client:
+    image: apache/spark:latest
+    container_name: lc_spark_client
+    env_file:
+      - .env
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - KAFKA_TOPIC=${KAFKA_TOPIC}
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_PREFIX=${S3_PREFIX}
+      - CHECKPOINT_DIR=/opt/checkpoints
+      - SPARK_STREAMING=${SPARK_STREAMING}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SPARK_VERSION_MATCH=${SPARK_VERSION_MATCH}
+      - HADOOP_AWS_VERSION=${HADOOP_AWS_VERSION}
+      - AWS_SDK_VERSION=${AWS_SDK_VERSION}
+      - APP_JAR=/opt/app/app.jar
+      - MAIN_CLASS=${MAIN_CLASS}
+    volumes:
+      - ./spark/submit.sh:/opt/submit.sh:ro
+      - ./spark/rest-submit.sh:/opt/rest-submit.sh:ro
+      - ./d11-log-management-spark/central-log-management-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
+      - spark_checkpoint:/opt/checkpoints
+      - spark_logs:/opt/spark/logs
+    command: ["bash", "-lc", "chmod +x /opt/rest-submit.sh /opt/submit.sh || true; if [ \"${AUTO_SPARK_REST_SUBMIT:-false}\" = \"true\" ]; then bash /opt/rest-submit.sh; elif [ \"${AUTO_SPARK_SUBMIT:-false}\" = \"true\" ]; then bash /opt/submit.sh; else sleep infinity; fi"]
+    networks:
+      - lc_net
+    depends_on:
+      spark-master:
+        condition: service_started
+      spark-worker:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.00"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: lc_grafana
+    env_file:
+      - .env
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000" # only user-facing port
+    networks:
+      - lc_net
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "wget -qO- http://localhost:3000/api/health | grep 'ok' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.50"
+
+  scheduler:
+    image: alpine:3.20
+    depends_on:
+      orchestrator: { condition: service_started }
+    environment:
+      TZ: Asia/Kolkata
+    volumes:
+      - ./cron/crontab:/crontab:ro
+    networks:
+      - lc_net
+    entrypoint: [ "/bin/sh","-lc" ]
+    command: >
+      'apk add --no-cache curl tzdata &&
+       crontab /crontab &&
+       crond -f -l 8'
+  
+
+

@@ -1,0 +1,33 @@
+# m h dom mon dow  command
+# Every 1 minute - POST
+*/1 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: dream11" \
+  http://orchestrator:8080/api/v1/component/sync || echo "$(date -Is) Component Sync failed" >&2
+
+*/5 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: dream11" \
+  http://orchestrator:8080/update-logs-delete-policy || echo "$(date -Is) Update Logs Delete Policy failed" >&2
+
+*/5 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: dream11" \
+  http://orchestrator:8080/sync-livelogs-host || echo "$(date -Is) Sync Livelogs Host failed" >&2
+
+*/5 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: dream11" \
+  http://orchestrator:8080/api/v1/metric/object-store/sync-delay || echo "$(date -Is) Object Store Sync Delay failed" >&2
+
+*/1 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: dream11" \
+  http://orchestrator:8080/monitor-spark-job || echo "$(date -Is) Monitor Spark Job failed" >&2
+
+*/5 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: dream11" \
+  http://orchestrator:8080/scale-kafka-partitions || echo "$(date -Is) Scale Kafka Partitions failed" >&2
+
+*/5 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: dream11" \
+  http://orchestrator:8080/clean-spark-compact-file || echo "$(date -Is) Clean Spark Compact File failed" >&2
+
+*/5 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: dream11" \
+  http://orchestrator:8080/api/v1/grafana/log || echo "$(date -Is) Grafana Log failed" >&2

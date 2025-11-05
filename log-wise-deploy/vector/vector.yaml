@@ -1,0 +1,53 @@
+api:
+  enabled: true
+  address: "0.0.0.0:8686"
+  playground: false
+
+sources:
+  otlp_logs:
+    type: "opentelemetry"
+    grpc:
+      address: "0.0.0.0:4317"
+    http:
+      address: "0.0.0.0:4318"
+
+transforms:
+  enrich_otlp:
+    type: "remap"
+    inputs: ["otlp_logs.logs"]
+    drop_on_abort: true
+    source: |
+      if !is_string(.resources."service.name") { abort }
+      if !is_string(.resources.environment)    { abort }
+      if !is_string(.resources.type)           { abort }
+
+      # Normalize as strings (infallible)
+      .service_name     = to_string(.resources."service.name") ?? "unknown"
+      .environment_name = to_string(.resources.environment)    ?? "unknown"
+      .type             = to_string(.resources.type)           ?? "unknown"
+
+      # sanitize service_name and environment_name
+      .service_name     = replace(.service_name, r'[^a-zA-Z0-9._-]', "_")
+      .environment_name = replace(.environment_name, r'[^a-zA-Z0-9._-]', "_")
+      .type             = replace(.type, r'[^a-zA-Z0-9._-]', "_")
+
+      # Handle attributes with fallible assignments and defaults
+      .message    = to_string(.attributes.message) ?? "no_message"
+      .log_level  = to_string(.attributes.level) ?? "unknown"
+      .timestamp  = to_string(.attributes.time) ?? "unknown"
+
+sinks:
+  app-logs-kafka:
+    type: "kafka"
+    inputs: ["enrich_otlp"]
+    bootstrap_servers: "${KAFKA_BROKERS}"
+    topic: "logs.{{.type}}_{{.environment_name}}_{{.service_name}}"
+    compression: "zstd"
+    encoding:
+      codec: "protobuf"
+      protobuf:
+        message_type: "logcentral.logs.VectorLogs"
+        desc_file: "/etc/vector/logwise-vector.desc"
+    librdkafka_options:
+      "linger.ms": "100"
+      "batch.size": "2500000"
