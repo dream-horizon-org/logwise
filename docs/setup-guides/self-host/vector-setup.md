@@ -6,13 +6,8 @@ Vector will accept OTLP HTTP logs on port 4318 and forward to Kafka using your c
 
 Install the following on your instance:
 
-```bash
-# Vector (choose your operating system)
-# See: https://vector.dev/docs/setup/installation/operating-systems/
-
-# Protocol Buffers compiler (protoc)
-# See: https://protobuf.dev/installation/
-```
+- **Vector**: [Installation Guide](https://vector.dev/docs/setup/installation/operating-systems/) (choose your operating system)
+- **Protocol Buffers compiler (protoc)**: [Installation Guide](https://protobuf.dev/installation/) (only required at build time, not runtime)
 
 ## Network Configuration
 
