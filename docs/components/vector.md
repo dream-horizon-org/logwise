@@ -64,4 +64,4 @@ Key configuration points in `vector.toml`:
 
 ## Requirements and Setup
 
-See the [Vector Setup Guide](/setup-guides/self-host/vector-setup) for installation and configuration.
+See the [Vector Setup Guide](/docs/setup-guides/self-host/vector-setup) for installation and configuration.
