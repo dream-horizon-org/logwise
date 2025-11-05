@@ -8,9 +8,9 @@ import com.logwise.spark.utils.ApplicationUtils;
 import com.typesafe.config.Config;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -18,11 +18,24 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 
 @Slf4j
-@RequiredArgsConstructor(onConstructor = @__({@Inject}))
 public class KafkaService {
   private final Config config;
+  private final Function<Map<String, Object>, KafkaConsumer<String, String>> kafkaConsumerFactory;
 
-  private static StartingOffsetsByTimestampOption getStartingOffsetsByTimestamp(
+  @Inject
+  public KafkaService(Config config) {
+    this(config, KafkaConsumer::new);
+  }
+
+  // Package-private constructor for testing
+  KafkaService(
+      Config config,
+      Function<Map<String, Object>, KafkaConsumer<String, String>> kafkaConsumerFactory) {
+    this.config = config;
+    this.kafkaConsumerFactory = kafkaConsumerFactory;
+  }
+
+  private StartingOffsetsByTimestampOption getStartingOffsetsByTimestamp(
       long timestamp, String topicRegexPattern, String bootstrapServers) {
 
     Map<String, Object> configs =
@@ -40,7 +53,7 @@ public class KafkaService {
 
     Pattern pattern = Pattern.compile(topicRegexPattern);
     StartingOffsetsByTimestampOption option = new StartingOffsetsByTimestampOption();
-    try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(configs)) {
+    try (KafkaConsumer<String, String> consumer = kafkaConsumerFactory.apply(configs)) {
       Map<String, List<PartitionInfo>> topicsMetadata =
           consumer.listTopics(Constants.KAFKA_CONSUMER_TIMEOUT);
       List<TopicPartition> partitions =

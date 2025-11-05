@@ -1,138 +1,138 @@
 package com.logwise.spark.utils;
 
+import static org.mockito.Mockito.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logwise.spark.base.MockSparkSessionHelper;
 import com.logwise.spark.dto.entity.KafkaReadStreamOptions;
 import com.logwise.spark.listeners.SparkStageListener;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import org.apache.spark.scheduler.SparkListenerInterface;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.streaming.DataStreamReader;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/** Unit tests for SparkUtils utility class. */
+/** Unit tests for SparkUtils class. */
 public class SparkUtilsTest {
 
-    @Test
-    public void testGetSparkListeners_ReturnsListenerList() {
-        // Arrange
-        SparkStageListener mockListener = Mockito.mock(SparkStageListener.class);
+  private SparkUtils sparkUtils;
+  private Supplier<SparkListenerInterface> mockListenerSupplier;
+  private SparkListenerInterface mockListener;
+  private ObjectMapper objectMapper;
 
-        try (MockedStatic<com.logwise.spark.guice.injectors.ApplicationInjector> injectorMock = Mockito
-                .mockStatic(com.logwise.spark.guice.injectors.ApplicationInjector.class)) {
-            injectorMock
-                    .when(
-                            () -> com.logwise.spark.guice.injectors.ApplicationInjector.getInstance(
-                                    SparkStageListener.class))
-                    .thenReturn(mockListener);
+  @BeforeMethod
+  public void setUp() {
+    mockListener = mock(SparkStageListener.class);
+    mockListenerSupplier = mock(Supplier.class);
+    when(mockListenerSupplier.get()).thenReturn(mockListener);
+    objectMapper = new ObjectMapper();
+    sparkUtils = new SparkUtils(objectMapper, mockListenerSupplier);
+  }
 
-            // Act
-            List<SparkListenerInterface> listeners = SparkUtils.getSparkListeners();
+  @Test
+  public void testGetSparkListeners_ReturnsListenerList() {
+    // Act
+    List<SparkListenerInterface> listeners = sparkUtils.getSparkListenersInstance();
 
-            // Assert
-            Assert.assertNotNull(listeners);
-            Assert.assertEquals(listeners.size(), 1);
-            Assert.assertTrue(listeners.contains(mockListener));
-        }
-    }
+    // Assert
+    Assert.assertNotNull(listeners);
+    Assert.assertEquals(listeners.size(), 1);
+    Assert.assertTrue(listeners.contains(mockListener));
+    verify(mockListenerSupplier, times(1)).get();
+  }
 
-    @Test
-    public void testGetKafkaReadStream_WithValidOptions_ReturnsDataset() {
-        // Arrange
-        SparkSession mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
-        DataStreamReader mockDataStreamReader = Mockito.mock(DataStreamReader.class);
-        Dataset<Row> mockDataset = Mockito.mock(Dataset.class);
+  @Test
+  public void testGetKafkaReadStream_WithValidOptions_ReturnsDataset() {
+    // Arrange
+    SparkSession mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
+    Dataset<Row> mockDataset = mock(Dataset.class);
+    Function<SparkSession, Dataset<Row>> mockStreamReaderFunction = mock(Function.class);
+    when(mockStreamReaderFunction.apply(mockSparkSession)).thenReturn(mockDataset);
 
-        Mockito.when(mockSparkSession.readStream()).thenReturn(mockDataStreamReader);
-        Mockito.when(mockDataStreamReader.format("kafka")).thenReturn(mockDataStreamReader);
-        Mockito.when(mockDataStreamReader.options(Mockito.any(java.util.Map.class)))
-                .thenReturn(mockDataStreamReader);
-        Mockito.when(mockDataStreamReader.load()).thenReturn(mockDataset);
+    KafkaReadStreamOptions options =
+        KafkaReadStreamOptions.builder()
+            .kafkaBootstrapServers("localhost:9092")
+            .maxOffsetsPerTrigger("1000")
+            .startingOffsets("latest")
+            .failOnDataLoss("false")
+            .maxRatePerPartition("100")
+            .groupIdPrefix("test-group")
+            .build();
 
-        KafkaReadStreamOptions options = KafkaReadStreamOptions.builder()
-                .kafkaBootstrapServers("localhost:9092")
-                .maxOffsetsPerTrigger("1000")
-                .startingOffsets("latest")
-                .build();
+    // Act
+    Dataset<Row> result =
+        sparkUtils.getKafkaReadStream(mockSparkSession, options, mockStreamReaderFunction);
 
-        // Act
-        Dataset<Row> result = SparkUtils.getKafkaReadStream(mockSparkSession, options);
+    // Assert
+    Assert.assertNotNull(result);
+    Assert.assertEquals(result, mockDataset);
+    verify(mockStreamReaderFunction, times(1)).apply(mockSparkSession);
+  }
 
-        // Assert
-        Assert.assertNotNull(result);
-        Mockito.verify(mockDataStreamReader).format("kafka");
-        Mockito.verify(mockDataStreamReader).options(Mockito.any(java.util.Map.class));
-        Mockito.verify(mockDataStreamReader).load();
-    }
+  @Test
+  public void testGetKafkaReadStream_WithNullValues_FiltersNullValues() {
+    // Arrange
+    SparkSession mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
+    Dataset<Row> mockDataset = mock(Dataset.class);
+    Function<SparkSession, Dataset<Row>> mockStreamReaderFunction = mock(Function.class);
+    when(mockStreamReaderFunction.apply(mockSparkSession)).thenReturn(mockDataset);
 
-    @Test
-    public void testGetKafkaReadStream_WithNullValues_FiltersNullValues() {
-        // Arrange
-        SparkSession mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
-        DataStreamReader mockDataStreamReader = Mockito.mock(DataStreamReader.class);
-        Dataset<Row> mockDataset = Mockito.mock(Dataset.class);
+    KafkaReadStreamOptions options =
+        KafkaReadStreamOptions.builder()
+            .kafkaBootstrapServers("localhost:9092")
+            .maxOffsetsPerTrigger("1000")
+            .startingOffsets("latest")
+            .failOnDataLoss("false")
+            .maxRatePerPartition("100")
+            .groupIdPrefix("test-group")
+            .assign(null) // null value should be filtered
+            .startingOffsetsByTimestamp(null) // null value should be filtered
+            .build();
 
-        Mockito.when(mockSparkSession.readStream()).thenReturn(mockDataStreamReader);
-        Mockito.when(mockDataStreamReader.format("kafka")).thenReturn(mockDataStreamReader);
-        Mockito.when(mockDataStreamReader.options(Mockito.any(java.util.Map.class)))
-                .thenReturn(mockDataStreamReader);
-        Mockito.when(mockDataStreamReader.load()).thenReturn(mockDataset);
+    // Act
+    Dataset<Row> result =
+        sparkUtils.getKafkaReadStream(mockSparkSession, options, mockStreamReaderFunction);
 
-        KafkaReadStreamOptions options = KafkaReadStreamOptions.builder()
-                .kafkaBootstrapServers("localhost:9092")
-                .maxOffsetsPerTrigger("1000")
-                .startingOffsets("latest")
-                .assign(null) // null value should be filtered
-                .startingOffsetsByTimestamp(null) // null value should be filtered
-                .build();
+    // Assert
+    Assert.assertNotNull(result);
+    Assert.assertEquals(result, mockDataset);
+    verify(mockStreamReaderFunction, times(1)).apply(mockSparkSession);
+  }
 
-        // Act
-        Dataset<Row> result = SparkUtils.getKafkaReadStream(mockSparkSession, options);
+  @Test
+  public void testGetKafkaReadStream_WithAllOptions_IncludesAllNonNullOptions() {
+    // Arrange
+    SparkSession mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
+    Dataset<Row> mockDataset = mock(Dataset.class);
+    Function<SparkSession, Dataset<Row>> mockStreamReaderFunction = mock(Function.class);
+    when(mockStreamReaderFunction.apply(mockSparkSession)).thenReturn(mockDataset);
 
-        // Assert
-        Assert.assertNotNull(result);
-        Mockito.verify(mockDataStreamReader).format("kafka");
-        Mockito.verify(mockDataStreamReader).options(Mockito.any(java.util.Map.class));
-        Mockito.verify(mockDataStreamReader).load();
-    }
+    KafkaReadStreamOptions options =
+        KafkaReadStreamOptions.builder()
+            .kafkaBootstrapServers("localhost:9092")
+            .maxOffsetsPerTrigger("1000")
+            .startingOffsets("latest")
+            .assign("{\"topics\":[\"test-topic\"]}")
+            .startingOffsetsByTimestamp("{\"topic\":{\"0\":1000}}")
+            .subscribePattern("logs.*")
+            .maxRatePerPartition("100")
+            .minPartitions("5")
+            .groupIdPrefix("test-group")
+            .failOnDataLoss("false")
+            .build();
 
-    @Test
-    public void testGetKafkaReadStream_WithAllOptions_IncludesAllNonNullOptions() {
-        // Arrange
-        SparkSession mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
-        DataStreamReader mockDataStreamReader = Mockito.mock(DataStreamReader.class);
-        Dataset<Row> mockDataset = Mockito.mock(Dataset.class);
+    // Act
+    Dataset<Row> result =
+        sparkUtils.getKafkaReadStream(mockSparkSession, options, mockStreamReaderFunction);
 
-        Mockito.when(mockSparkSession.readStream()).thenReturn(mockDataStreamReader);
-        Mockito.when(mockDataStreamReader.format("kafka")).thenReturn(mockDataStreamReader);
-        Mockito.when(mockDataStreamReader.options(Mockito.any(java.util.Map.class)))
-                .thenReturn(mockDataStreamReader);
-        Mockito.when(mockDataStreamReader.load()).thenReturn(mockDataset);
-
-        KafkaReadStreamOptions options = KafkaReadStreamOptions.builder()
-                .kafkaBootstrapServers("localhost:9092")
-                .maxOffsetsPerTrigger("1000")
-                .startingOffsets("latest")
-                .assign("{\"topics\":[\"test-topic\"]}")
-                .startingOffsetsByTimestamp("{\"topic\":{\"0\":1000}}")
-                .subscribePattern("logs.*")
-                .maxRatePerPartition("100")
-                .minPartitions("5")
-                .groupIdPrefix("test-group")
-                .failOnDataLoss("false")
-                .build();
-
-        // Act
-        Dataset<Row> result = SparkUtils.getKafkaReadStream(mockSparkSession, options);
-
-        // Assert
-        Assert.assertNotNull(result);
-        Mockito.verify(mockDataStreamReader).format("kafka");
-        Mockito.verify(mockDataStreamReader).options(Mockito.any(java.util.Map.class));
-        Mockito.verify(mockDataStreamReader).load();
-    }
+    // Assert
+    Assert.assertNotNull(result);
+    Assert.assertEquals(result, mockDataset);
+    verify(mockStreamReaderFunction, times(1)).apply(mockSparkSession);
+  }
 }
