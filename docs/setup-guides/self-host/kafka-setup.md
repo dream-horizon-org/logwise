@@ -87,7 +87,7 @@ Then open `http://<server>:9000`, add a cluster:
 ## Notes for LogWise
 
 - `auto.create.topics.enable=true` is required so Vector can publish to new topics.
-- `num.partitions=3` is the base; partition scaling is handled by the orchestrator.
+- `num.partitions=3` sets the default number of partitions for new topics.
 - If Vector cannot connect, verify `advertised.listeners` is reachable from the Vector host.
 
 

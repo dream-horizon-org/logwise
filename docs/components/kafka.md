@@ -25,8 +25,7 @@ Kafka enables:
 
 - **High throughput** - Handles massive log volumes efficiently with parallel processing across partitions
 - **Fault tolerance** - Replicated data across brokers with automatic failover
-- **Scalability** - Horizontal scaling by adding brokers with partition-based parallelism
-- **Dynamic partition scaling** - Automatically increases partitions via Orchestrator Service based on throughput
+- **Scalability** - Horizontal expansion by adding brokers with partition-based parallelism
 
 ## Topic Management
 
@@ -45,10 +44,8 @@ This automatic topic creation enables organized log routing and processing.
 
 ## Partition Management
 
-- Topics start with **3 partitions** (base count from `num.partitions`)
-- The orchestrator service automatically monitors message throughput per topic
-- Partitions are automatically increased based on defined rate thresholds
-- No manual partition adjustment needed - orchestrator handles scaling
+- Topics start with **3 partitions** (base count from `num.partitions` configuration)
+- Partitions can be manually adjusted if needed based on your throughput requirements
 
 ## Message Retention
 
@@ -61,11 +58,11 @@ Increase retention beyond 1 hour for:
 
 ## Kafka Manager
 
-Kafka Manager provides management and monitoring for Kafka clusters. Logwise uses Kafka Manager APIs to retrieve per-topic message rates that drive the orchestrator's automatic partition scaling.
+Kafka Manager provides management and monitoring for Kafka clusters. Logwise uses Kafka Manager for cluster monitoring and management operations.
 
 **Features:**
 - Central UI and API for Kafka operations
-- Exposes per-topic metrics (messages/sec) consumed by the orchestrator
+- Exposes per-topic metrics (messages/sec, partitions, replication factor)
 - Requires JMX enabled on Kafka brokers
 
 **API Used:**
@@ -73,17 +70,11 @@ Kafka Manager provides management and monitoring for Kafka clusters. Logwise use
 - Method: GET
 - Returns metrics for all topics including `messagesPerSec`, `partitions`, and `replicationFactor`
 
-**How the Orchestrator Uses It:**
-1. Periodically queries the topics API
-2. Compares messages/sec with configured thresholds
-3. Increases partitions via Kafka admin APIs when needed
-4. Monitors utilization and performance
-
 ## Integration with Other Components
 
 - **Vector** - Publishes logs to Kafka topics
 - **Spark** - Consumes logs from Kafka topics for processing
-- **Orchestrator Service** - Monitors topic metrics and scales partitions automatically
+- **Orchestrator Service** - Monitors topic metrics and cluster health
 
 ## Requirements and Setup
 

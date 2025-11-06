@@ -26,7 +26,6 @@ Spark handles:
 - **Real-time processing** - Consumes logs from Kafka topics continuously in micro-batch and streaming modes
 - **Partitioned storage** - Writes logs to S3 in hierarchical partition format
 - **Fault tolerance** - Checkpointing ensures no data loss with exactly-once processing
-- **Automatic scaling** - Adjusts worker count based on historical stage metrics via Orchestrator Service
 
 ## Partitioned Storage in S3
 
@@ -36,24 +35,6 @@ Spark writes logs in partitioned directories for efficient query and retrieval. 
 ```
 
 This structure allows fast filtering based on environment, service, or time ranges when querying with Athena.
-
-## Autoscaling Logic
-
-Spark automatically adjusts worker count based on historical stage metrics:
-
-1. **Stage History Collection** - After each job, metrics for completed stages are collected:
-   - `inputRecords` - number of records processed
-   - `outputBytes` - size of output data
-   - `coresUsed` - CPU cores utilized
-   - Submission & completion timestamps
-
-2. **Input Growth Analysis** - The orchestrator inspects the last N stages to determine if input records are incremental or consistent across stages, and computes an incremental buffer to anticipate growth
-
-3. **Worker Calculation** - Using tenant configuration (`perCoreLogsProcess`), calculates expected executor cores: `expectedExecutorCores = ceil(maxInputRecordsWithBuffer / perCoreLogsProcess)`, then converts to worker count while respecting tenant min/max limits
-
-4. **Scaling Decisions** - Orchestrator decides worker scaling for next job based on metrics. Upscales if workload exceeds capacity, downscales if below thresholds (only if configured conditions are met)
-
-This ensures efficient resource usage and handles variable log volumes without manual intervention.
 
 ## Kafka Integration
 
@@ -65,7 +46,7 @@ This ensures efficient resource usage and handles variable log volumes without m
 
 - **Kafka** - Consumes logs from topics
 - **S3** - Writes processed logs in Parquet format with partition structure
-- **Orchestrator Service** - Sends stage metrics and receives scaling decisions
+- **Orchestrator Service** - Monitors job health and manages Spark drivers
 
 ## Requirements and Setup
 

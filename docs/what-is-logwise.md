@@ -1,6 +1,6 @@
 # What is Logwise?
 
-**Logwise** is an open-source, end-to-end logging system designed to handle high-volume log data with enterprise-grade performance and scalability. It provides a complete pipeline for log ingestion, processing, storage, and viewing, capable of handling **15+ Gbps log throughput**.
+**Logwise** is an open-source, end-to-end logging system designed to handle high-volume log data with enterprise-grade performance and scalability. It provides a complete pipeline for log ingestion, processing, storage, and viewing.
 
 
 ## Overview
@@ -11,13 +11,12 @@ Logwise (also known as **Log-Central**) is a centralized and scalable log proces
 - **Transform** and normalize log data efficiently
 - **Store** logs in a cost-effective, durable format
 - **View** and explore logs through interactive dashboards
-- **Scale** automatically based on log volume and throughput
 
 
 ## Key Features
 
 ### 🚀 High Performance
-- Process **15+ Gbps** of log throughput
+- High-throughput log processing
 - Real-time log ingestion and processing
 - Optimized data pipeline with minimal latency
 
@@ -27,19 +26,14 @@ Logwise (also known as **Log-Central**) is a centralized and scalable log proces
 - Custom filters and metadata-based search
 
 ### 🔧 Production Ready
-- Automated scaling for Kafka partitions and Spark clusters
 - Self-healing orchestration service
 - Production-tested architecture with setup guides
+- Reliable and fault-tolerant design
 
 ### 🐳 Flexible Deployment
 - Docker and Kubernetes support
 - Self-hosted deployment options
 - Cloud-native architecture compatible with AWS S3
-
-### 📈 Auto-Scaling
-- Dynamic partition scaling based on message throughput
-- Automatic Spark cluster sizing
-- Intelligent resource management
 
 
 ## Use Cases

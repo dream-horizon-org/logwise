@@ -35,12 +35,12 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
 
 ---
 
-### **3. [Kafka Manager](/components/kafka-manager)**
+### **3. Kafka Manager**
 
 - Responsible for **monitoring Kafka cluster health** and **performance**.  
 - Offers **APIs** used by the **Orchestrator Service** for:
-  - Scaling partitions automatically based on message rate.
   - Balancing load across Kafka brokers.
+  - Monitoring topic metrics and cluster status.
 - Ensures continuous high availability of Kafka topics and data streams.
 
 
@@ -55,8 +55,7 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
   ```
   env/service_name/year/month/day/hour/minute
   ```
-- **Auto-scales** processing based on previous data volume.
-- The **Orchestrator Service** manages Spark scaling and monitors job health.
+- The **Orchestrator Service** monitors job health and manages Spark drivers.
 
 ---
 
@@ -75,19 +74,17 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
 - Performs several background operations:
   - **Spark Monitoring:** Keeps Spark drivers healthy and restarts them if needed.
   - **Cleanup:** Removes compacted Spark output files periodically to manage storage.
-  - **Kafka Scaling:** Automatically increases Kafka partitions as log volume grows.
-  - **Dynamic Spark Scaling:** Adjusts Spark cluster size dynamically based on input rate and service load.
   - **Metadata Management:** Generates metadata used by Grafana and enforces **log retention policies** on S3 for archival.
 - Ensures consistent, automated orchestration across all components.
 
 
 ## Key Advantages
 
-- Fully **scalable** and **automated** architecture.
+- Fully **automated** architecture.
 - Supports **real-time ingestion** and **batch transformation**.
 - Uses **S3** for cost-efficient, durable log storage.
 - Integrates seamlessly with **Grafana** for log viewing and analytics.
-- Provides **dynamic scaling** for both Kafka and Spark components through the Orchestrator Service.
+- Provides reliable orchestration and monitoring through the Orchestrator Service.
 
 
 ## Summary
