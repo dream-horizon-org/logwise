@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Logwise"
   text: "High-Performance Log Processing"
-  tagline: Open-source end-to-end logging system capable of handling 15+ Gbps log throughput
+  tagline: Open-source end-to-end logging system for high-volume log processing
   actions:
     - theme: brand
       text: Get Started
@@ -16,13 +16,13 @@ hero:
 features:
   - icon: 🚀
     title: High Throughput
-    details: Handle 15+ Gbps log processing with scalable architecture
+    details: Handle high-volume log processing with efficient architecture
   - icon: 📊
     title: Real-time Dashboards
     details: Monitor and view logs with Grafana integration
   - icon: 🔧
     title: Production Ready
-    details: Includes setup scripts, dashboards, and scaling guides
+    details: Includes setup scripts, dashboards, and configuration guides
   - icon: 🐳
     title: Container Support
     details: Docker and Kubernetes configurations included
