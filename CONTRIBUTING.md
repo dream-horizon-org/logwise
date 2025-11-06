@@ -87,6 +87,15 @@ Use the [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md).
 - **Write tests** for new functionality
 - **Ensure all tests pass** before submitting
 
+### Code Formatting
+
+For contributions to the Spark project, please ensure your code is properly formatted using Google Java Format:
+
+- **Before opening a PR**, run `mvn fmt:format` in the `spark` directory to automatically format your code
+- The formatting check runs automatically on pull requests via GitHub Actions
+- PRs with formatting issues will fail the formatting check and cannot be merged until fixed
+- You can verify formatting locally by running `mvn fmt:check` in the `spark` directory
+
 ## Commit Guidelines
 
 Use clear and descriptive commit messages:
