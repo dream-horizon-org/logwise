@@ -50,15 +50,13 @@ curl --location '<SPARK_MASTER_HOST>:6066/v1/submissions/create' \
     "kafka.maxRatePerPartition=4000",
     "kafka.startingOffsets=latest",
     "kafka.topic.prefix.application=\"^logs.*\"",
-    "s3.bucket=<S3_BUCKET_NAME>",
-    "logCentral.orchestrator.url = <LOG_CENTRAL_ORCHESTRATOR_URL>",
+    "s3.bucket=<S3_BUCKET_NAME>"
   ],
-  "appResource": "<SPARK_JAR_S3_URL>",
+  "appResource": "<SPARK_JAR_URL>",
   "clientSparkVersion": "3.1.2",
   "mainClass": "com.logwise.spark.MainApplication",
   "environmentVariables": {
-    "SPARK_ENV_LOADED": "1",
-    "X-Tenant-Name": "<TENANT_NAME>"
+    "SPARK_ENV_LOADED": "1"
   },
   "sparkProperties": {
     "spark.app.name": ""logWise"",
@@ -73,7 +71,7 @@ curl --location '<SPARK_MASTER_HOST>:6066/v1/submissions/create' \
     "spark.master": "spark://<SPARK_MASTER_HOST>:7077",
     "spark.submit.deployMode": "cluster",
     "spark.scheduler.mode": "FAIR",
-    "spark.jars": "<SPARK_JAR_S3_URL>",
+    "spark.jars": "<SPARK_JAR_URL>",
     "spark.scheduler.pool": "production",
     "spark.dynamicAllocation.enabled": true,
     "spark.shuffle.service.enabled": true,
