@@ -8,6 +8,10 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class StreamFactory {
   public Stream getStream(StreamName streamName) {
+    if (streamName == null) {
+      throw new IllegalArgumentException("Stream name cannot be null");
+    }
+    
     switch (streamName) {
       case APPLICATION_LOGS_STREAM_TO_S3:
         return ApplicationInjector.getInstance(ApplicationLogsStreamToS3.class);

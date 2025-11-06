@@ -1,0 +1,152 @@
+package com.logwise.spark.stream;
+
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
+
+import com.google.inject.AbstractModule;
+import com.logwise.spark.constants.StreamName;
+import com.logwise.spark.guice.injectors.ApplicationInjector;
+import com.logwise.spark.services.KafkaService;
+import com.logwise.spark.stream.impl.ApplicationLogsStreamToS3;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+/**
+ * Unit tests for StreamFactory.
+ *
+ * <p>Tests verify that the factory correctly creates stream instances based on stream name.
+ */
+public class StreamFactoryTest {
+
+  @BeforeMethod
+  public void setUp() {
+    // Reset the ApplicationInjector before each test
+    ApplicationInjector.reset();
+    
+    // Create a test module with mocked dependencies
+    AbstractModule testModule = new AbstractModule() {
+      @Override
+      protected void configure() {
+        // Create a mock config
+        Config mockConfig = ConfigFactory.parseString(
+            "spark.processing.time.seconds = 60\n" +
+            "s3.path.checkpoint.application = \"/test/checkpoint\"\n" +
+            "s3.path.logs.application = \"/test/logs\""
+        );
+        
+        // Create a mock KafkaService
+        KafkaService mockKafkaService = mock(KafkaService.class);
+        
+        // Bind the mocked dependencies
+        bind(Config.class).toInstance(mockConfig);
+        bind(KafkaService.class).toInstance(mockKafkaService);
+      }
+    };
+    
+    // Initialize the ApplicationInjector with the test module
+    ApplicationInjector.initInjection(testModule);
+  }
+
+  @AfterMethod
+  public void tearDown() {
+    // Clean up the ApplicationInjector after each test
+    ApplicationInjector.reset();
+  }
+
+  @Test
+  public void testGetStream_WithApplicationLogsStreamToS3_ReturnsCorrectStream() {
+    // Act
+    Stream stream = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
+
+    // Assert
+    assertNotNull(stream, "Stream should not be null");
+    assertTrue(
+        stream instanceof ApplicationLogsStreamToS3,
+        "Stream should be instance of ApplicationLogsStreamToS3");
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testGetStream_WithNullStreamName_ThrowsException() {
+    // Act - should throw IllegalArgumentException
+    StreamFactory.getStream(null);
+  }
+
+  @Test
+  public void testGetStream_WithValidStreamName_ReturnsNonNullStream() {
+    // Act
+    Stream stream = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
+
+    // Assert
+    assertNotNull(stream, "Stream should not be null");
+  }
+
+  @Test
+  public void testGetStream_CalledMultipleTimes_ReturnsSameOrNewInstances() {
+    // Act - Get streams multiple times
+    Stream stream1 = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
+    Stream stream2 = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
+
+    // Assert - Both should be non-null
+    assertNotNull(stream1, "First stream should not be null");
+    assertNotNull(stream2, "Second stream should not be null");
+
+    // Note: Whether they are the same instance or not depends on Guice configuration
+    // (singleton vs prototype scope). We just verify they are created successfully.
+    assertTrue(
+        stream1 instanceof ApplicationLogsStreamToS3,
+        "First stream should be correct type");
+    assertTrue(
+        stream2 instanceof ApplicationLogsStreamToS3,
+        "Second stream should be correct type");
+  }
+
+  @Test
+  public void testGetStream_WithEnumValue_CreatesCorrectStreamType() {
+    // Act
+    Stream stream = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
+
+    // Assert
+    assertNotNull(stream, "Stream should not be null");
+    assertEquals(
+        stream.getClass(),
+        ApplicationLogsStreamToS3.class,
+        "Should create ApplicationLogsStreamToS3 instance");
+  }
+
+  @Test
+  public void testStreamFactory_IsUtilityClass() {
+    // Assert - Verify that StreamFactory follows utility class pattern
+    // A utility class should not be instantiable (constructor is private)
+    // This is enforced by Lombok's @UtilityClass annotation
+
+    try {
+      // Try to get constructor - should fail or be inaccessible
+      java.lang.reflect.Constructor<?> constructor = StreamFactory.class.getDeclaredConstructor();
+
+      // If we got here, verify constructor is not public
+      assertFalse(
+          java.lang.reflect.Modifier.isPublic(constructor.getModifiers()),
+          "Utility class constructor should not be public");
+    } catch (NoSuchMethodException e) {
+      // This is also acceptable - no public constructor exists
+      // Test passes
+    }
+  }
+
+  @Test
+  public void testGetStream_ReturnsStreamImplementation() {
+    // Act
+    Stream stream = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
+
+    // Assert
+    assertNotNull(stream, "Stream should not be null");
+    assertTrue(
+        stream instanceof Stream,
+        "Returned object should implement Stream interface");
+  }
+}
+
+
