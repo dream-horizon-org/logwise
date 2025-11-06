@@ -8,88 +8,100 @@ package com.logwise.spark.protobuf;
 @com.google.protobuf.Generated
 public final class VectorLogsOuterClass extends com.google.protobuf.GeneratedFile {
   private VectorLogsOuterClass() {}
+
   static {
     com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
-      com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
-      /* major= */ 4,
-      /* minor= */ 33,
-      /* patch= */ 0,
-      /* suffix= */ "",
-      "VectorLogsOuterClass");
-  }
-  public static void registerAllExtensions(
-      com.google.protobuf.ExtensionRegistryLite registry) {
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 33,
+        /* patch= */ 0,
+        /* suffix= */ "",
+        "VectorLogsOuterClass");
   }
 
-  public static void registerAllExtensions(
-      com.google.protobuf.ExtensionRegistry registry) {
-    registerAllExtensions(
-        (com.google.protobuf.ExtensionRegistryLite) registry);
+  public static void registerAllExtensions(com.google.protobuf.ExtensionRegistryLite registry) {}
+
+  public static void registerAllExtensions(com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions((com.google.protobuf.ExtensionRegistryLite) registry);
   }
+
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_logcentral_logs_VectorLogs_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_logcentral_logs_VectorLogs_descriptor;
+  static final com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_logcentral_logs_VectorLogs_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_logcentral_logs_VectorLogs_DdtagsEntry_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_logcentral_logs_VectorLogs_DdtagsEntry_descriptor;
+  static final com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_logcentral_logs_VectorLogs_DdtagsEntry_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_logcentral_logs_VectorLogs_ExtraEntry_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_logcentral_logs_VectorLogs_ExtraEntry_descriptor;
+  static final com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_logcentral_logs_VectorLogs_ExtraEntry_fieldAccessorTable;
 
-  public static com.google.protobuf.Descriptors.FileDescriptor
-      getDescriptor() {
+  public static com.google.protobuf.Descriptors.FileDescriptor getDescriptor() {
     return descriptor;
   }
-  private static  com.google.protobuf.Descriptors.FileDescriptor
-      descriptor;
+
+  private static com.google.protobuf.Descriptors.FileDescriptor descriptor;
+
   static {
     java.lang.String[] descriptorData = {
-      "\n\021vector_logs.proto\022\017logcentral.logs\032\037go" +
-      "ogle/protobuf/timestamp.proto\"\346\003\n\nVector" +
-      "Logs\022\017\n\007message\030\001 \001(\t\0227\n\006ddtags\030\002 \003(\0132\'." +
-      "logcentral.logs.VectorLogs.DdtagsEntry\022-" +
-      "\n\ttimestamp\030\003 \001(\0132\032.google.protobuf.Time" +
-      "stamp\022\013\n\003env\030\004 \001(\t\022\024\n\014service_name\030\005 \001(\t" +
-      "\022\026\n\016component_name\030\006 \001(\t\022\025\n\010hostname\030\007 \001" +
-      "(\tH\000\210\001\001\022\025\n\010ddsource\030\010 \001(\tH\001\210\001\001\022\030\n\013source" +
-      "_type\030\t \001(\tH\002\210\001\001\022\023\n\006status\030\n \001(\tH\003\210\001\001\0225\n" +
-      "\005extra\030\013 \003(\0132&.logcentral.logs.VectorLog" +
-      "s.ExtraEntry\032-\n\013DdtagsEntry\022\013\n\003key\030\001 \001(\t" +
-      "\022\r\n\005value\030\002 \001(\t:\0028\001\032,\n\nExtraEntry\022\013\n\003key" +
-      "\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001B\013\n\t_hostnameB\013" +
-      "\n\t_ddsourceB\016\n\014_source_typeB\t\n\007_statusB1" +
-      "\n\032com.logwise.spark.protobufP\001Z\021livelogs" +
-      "/protobufb\006proto3"
+      "\n\021vector_logs.proto\022\017logcentral.logs\032\037go"
+          + "ogle/protobuf/timestamp.proto\"\346\003\n\nVector"
+          + "Logs\022\017\n\007message\030\001 \001(\t\0227\n\006ddtags\030\002 \003(\0132\'."
+          + "logcentral.logs.VectorLogs.DdtagsEntry\022-"
+          + "\n\ttimestamp\030\003 \001(\0132\032.google.protobuf.Time"
+          + "stamp\022\013\n\003env\030\004 \001(\t\022\024\n\014service_name\030\005 \001(\t"
+          + "\022\026\n\016component_name\030\006 \001(\t\022\025\n\010hostname\030\007 \001"
+          + "(\tH\000\210\001\001\022\025\n\010ddsource\030\010 \001(\tH\001\210\001\001\022\030\n\013source"
+          + "_type\030\t \001(\tH\002\210\001\001\022\023\n\006status\030\n \001(\tH\003\210\001\001\0225\n"
+          + "\005extra\030\013 \003(\0132&.logcentral.logs.VectorLog"
+          + "s.ExtraEntry\032-\n\013DdtagsEntry\022\013\n\003key\030\001 \001(\t"
+          + "\022\r\n\005value\030\002 \001(\t:\0028\001\032,\n\nExtraEntry\022\013\n\003key"
+          + "\030\001 \001(\t\022\r\n\005value\030\002 \001(\t:\0028\001B\013\n\t_hostnameB\013"
+          + "\n\t_ddsourceB\016\n\014_source_typeB\t\n\007_statusB1"
+          + "\n\032com.logwise.spark.protobufP\001Z\021livelogs"
+          + "/protobufb\006proto3"
     };
-    descriptor = com.google.protobuf.Descriptors.FileDescriptor
-      .internalBuildGeneratedFileFrom(descriptorData,
-        new com.google.protobuf.Descriptors.FileDescriptor[] {
-          com.google.protobuf.TimestampProto.getDescriptor(),
-        });
-    internal_static_logcentral_logs_VectorLogs_descriptor =
-      getDescriptor().getMessageType(0);
-    internal_static_logcentral_logs_VectorLogs_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_logcentral_logs_VectorLogs_descriptor,
-        new java.lang.String[] { "Message", "Ddtags", "Timestamp", "Env", "ServiceName", "ComponentName", "Hostname", "Ddsource", "SourceType", "Status", "Extra", });
+    descriptor =
+        com.google.protobuf.Descriptors.FileDescriptor.internalBuildGeneratedFileFrom(
+            descriptorData,
+            new com.google.protobuf.Descriptors.FileDescriptor[] {
+              com.google.protobuf.TimestampProto.getDescriptor(),
+            });
+    internal_static_logcentral_logs_VectorLogs_descriptor = getDescriptor().getMessageType(0);
+    internal_static_logcentral_logs_VectorLogs_fieldAccessorTable =
+        new com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+            internal_static_logcentral_logs_VectorLogs_descriptor,
+            new java.lang.String[] {
+              "Message",
+              "Ddtags",
+              "Timestamp",
+              "Env",
+              "ServiceName",
+              "ComponentName",
+              "Hostname",
+              "Ddsource",
+              "SourceType",
+              "Status",
+              "Extra",
+            });
     internal_static_logcentral_logs_VectorLogs_DdtagsEntry_descriptor =
-      internal_static_logcentral_logs_VectorLogs_descriptor.getNestedType(0);
-    internal_static_logcentral_logs_VectorLogs_DdtagsEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_logcentral_logs_VectorLogs_DdtagsEntry_descriptor,
-        new java.lang.String[] { "Key", "Value", });
+        internal_static_logcentral_logs_VectorLogs_descriptor.getNestedType(0);
+    internal_static_logcentral_logs_VectorLogs_DdtagsEntry_fieldAccessorTable =
+        new com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+            internal_static_logcentral_logs_VectorLogs_DdtagsEntry_descriptor,
+            new java.lang.String[] {
+              "Key", "Value",
+            });
     internal_static_logcentral_logs_VectorLogs_ExtraEntry_descriptor =
-      internal_static_logcentral_logs_VectorLogs_descriptor.getNestedType(1);
-    internal_static_logcentral_logs_VectorLogs_ExtraEntry_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_logcentral_logs_VectorLogs_ExtraEntry_descriptor,
-        new java.lang.String[] { "Key", "Value", });
+        internal_static_logcentral_logs_VectorLogs_descriptor.getNestedType(1);
+    internal_static_logcentral_logs_VectorLogs_ExtraEntry_fieldAccessorTable =
+        new com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+            internal_static_logcentral_logs_VectorLogs_ExtraEntry_descriptor,
+            new java.lang.String[] {
+              "Key", "Value",
+            });
     descriptor.resolveAllFeaturesImmutable();
     com.google.protobuf.TimestampProto.getDescriptor();
   }

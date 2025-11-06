@@ -5,28 +5,29 @@
 
 package com.logwise.spark.protobuf;
 
-/**
- * Protobuf type {@code logcentral.logs.VectorLogs}
- */
+/** Protobuf type {@code logcentral.logs.VectorLogs} */
 @com.google.protobuf.Generated
-public final class VectorLogs extends
-    com.google.protobuf.GeneratedMessage implements
+public final class VectorLogs extends com.google.protobuf.GeneratedMessage
+    implements
     // @@protoc_insertion_point(message_implements:logcentral.logs.VectorLogs)
     VectorLogsOrBuilder {
-private static final long serialVersionUID = 0L;
+  private static final long serialVersionUID = 0L;
+
   static {
     com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
-      com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
-      /* major= */ 4,
-      /* minor= */ 33,
-      /* patch= */ 0,
-      /* suffix= */ "",
-      "VectorLogs");
+        com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+        /* major= */ 4,
+        /* minor= */ 33,
+        /* patch= */ 0,
+        /* suffix= */ "",
+        "VectorLogs");
   }
+
   // Use VectorLogs.newBuilder() to construct.
   private VectorLogs(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
   }
+
   private VectorLogs() {
     message_ = "";
     env_ = "";
@@ -38,9 +39,9 @@ private static final long serialVersionUID = 0L;
     status_ = "";
   }
 
-  public static final com.google.protobuf.Descriptors.Descriptor
-      getDescriptor() {
-    return com.logwise.spark.protobuf.VectorLogsOuterClass.internal_static_logcentral_logs_VectorLogs_descriptor;
+  public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+    return com.logwise.spark.protobuf.VectorLogsOuterClass
+        .internal_static_logcentral_logs_VectorLogs_descriptor;
   }
 
   @SuppressWarnings({"rawtypes"})
@@ -53,24 +54,29 @@ private static final long serialVersionUID = 0L;
       case 11:
         return internalGetExtra();
       default:
-        throw new RuntimeException(
-            "Invalid map field number: " + number);
+        throw new RuntimeException("Invalid map field number: " + number);
     }
   }
+
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.logwise.spark.protobuf.VectorLogsOuterClass.internal_static_logcentral_logs_VectorLogs_fieldAccessorTable
+    return com.logwise.spark.protobuf.VectorLogsOuterClass
+        .internal_static_logcentral_logs_VectorLogs_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.logwise.spark.protobuf.VectorLogs.class, com.logwise.spark.protobuf.VectorLogs.Builder.class);
+            com.logwise.spark.protobuf.VectorLogs.class,
+            com.logwise.spark.protobuf.VectorLogs.Builder.class);
   }
 
   private int bitField0_;
   public static final int MESSAGE_FIELD_NUMBER = 1;
+
   @SuppressWarnings("serial")
   private volatile java.lang.Object message_ = "";
+
   /**
    * <code>string message = 1;</code>
+   *
    * @return The message.
    */
   @java.lang.Override
@@ -79,25 +85,24 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
+      com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       message_ = s;
       return s;
     }
   }
+
   /**
    * <code>string message = 1;</code>
+   *
    * @return The bytes for message.
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getMessageBytes() {
+  public com.google.protobuf.ByteString getMessageBytes() {
     java.lang.Object ref = message_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
       message_ = b;
       return b;
     } else {
@@ -106,78 +111,74 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int DDTAGS_FIELD_NUMBER = 2;
+
   private static final class DdtagsDefaultEntryHolder {
-    static final com.google.protobuf.MapEntry<
-        java.lang.String, java.lang.String> defaultEntry =
-            com.google.protobuf.MapEntry
-            .<java.lang.String, java.lang.String>newDefaultInstance(
-                com.logwise.spark.protobuf.VectorLogsOuterClass.internal_static_logcentral_logs_VectorLogs_DdtagsEntry_descriptor, 
-                com.google.protobuf.WireFormat.FieldType.STRING,
-                "",
-                com.google.protobuf.WireFormat.FieldType.STRING,
-                "");
+    static final com.google.protobuf.MapEntry<java.lang.String, java.lang.String> defaultEntry =
+        com.google.protobuf.MapEntry.<java.lang.String, java.lang.String>newDefaultInstance(
+            com.logwise.spark.protobuf.VectorLogsOuterClass
+                .internal_static_logcentral_logs_VectorLogs_DdtagsEntry_descriptor,
+            com.google.protobuf.WireFormat.FieldType.STRING,
+            "",
+            com.google.protobuf.WireFormat.FieldType.STRING,
+            "");
   }
+
   @SuppressWarnings("serial")
-  private com.google.protobuf.MapField<
-      java.lang.String, java.lang.String> ddtags_;
-  private com.google.protobuf.MapField<java.lang.String, java.lang.String>
-  internalGetDdtags() {
+  private com.google.protobuf.MapField<java.lang.String, java.lang.String> ddtags_;
+
+  private com.google.protobuf.MapField<java.lang.String, java.lang.String> internalGetDdtags() {
     if (ddtags_ == null) {
-      return com.google.protobuf.MapField.emptyMapField(
-          DdtagsDefaultEntryHolder.defaultEntry);
+      return com.google.protobuf.MapField.emptyMapField(DdtagsDefaultEntryHolder.defaultEntry);
     }
     return ddtags_;
   }
+
   public int getDdtagsCount() {
     return internalGetDdtags().getMap().size();
   }
-  /**
-   * <code>map&lt;string, string&gt; ddtags = 2;</code>
-   */
+
+  /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
   @java.lang.Override
-  public boolean containsDdtags(
-      java.lang.String key) {
-    if (key == null) { throw new NullPointerException("map key"); }
+  public boolean containsDdtags(java.lang.String key) {
+    if (key == null) {
+      throw new NullPointerException("map key");
+    }
     return internalGetDdtags().getMap().containsKey(key);
   }
-  /**
-   * Use {@link #getDdtagsMap()} instead.
-   */
+
+  /** Use {@link #getDdtagsMap()} instead. */
   @java.lang.Override
   @java.lang.Deprecated
   public java.util.Map<java.lang.String, java.lang.String> getDdtags() {
     return getDdtagsMap();
   }
-  /**
-   * <code>map&lt;string, string&gt; ddtags = 2;</code>
-   */
+
+  /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
   @java.lang.Override
   public java.util.Map<java.lang.String, java.lang.String> getDdtagsMap() {
     return internalGetDdtags().getMap();
   }
-  /**
-   * <code>map&lt;string, string&gt; ddtags = 2;</code>
-   */
+
+  /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
   @java.lang.Override
-  public /* nullable */
-java.lang.String getDdtagsOrDefault(
+  public /* nullable */ java.lang.String getDdtagsOrDefault(
       java.lang.String key,
       /* nullable */
-java.lang.String defaultValue) {
-    if (key == null) { throw new NullPointerException("map key"); }
-    java.util.Map<java.lang.String, java.lang.String> map =
-        internalGetDdtags().getMap();
+      java.lang.String defaultValue) {
+    if (key == null) {
+      throw new NullPointerException("map key");
+    }
+    java.util.Map<java.lang.String, java.lang.String> map = internalGetDdtags().getMap();
     return map.containsKey(key) ? map.get(key) : defaultValue;
   }
-  /**
-   * <code>map&lt;string, string&gt; ddtags = 2;</code>
-   */
+
+  /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
   @java.lang.Override
-  public java.lang.String getDdtagsOrThrow(
-      java.lang.String key) {
-    if (key == null) { throw new NullPointerException("map key"); }
-    java.util.Map<java.lang.String, java.lang.String> map =
-        internalGetDdtags().getMap();
+  public java.lang.String getDdtagsOrThrow(java.lang.String key) {
+    if (key == null) {
+      throw new NullPointerException("map key");
+    }
+    java.util.Map<java.lang.String, java.lang.String> map = internalGetDdtags().getMap();
     if (!map.containsKey(key)) {
       throw new java.lang.IllegalArgumentException();
     }
@@ -186,35 +187,41 @@ java.lang.String defaultValue) {
 
   public static final int TIMESTAMP_FIELD_NUMBER = 3;
   private com.google.protobuf.Timestamp timestamp_;
+
   /**
    * <code>.google.protobuf.Timestamp timestamp = 3;</code>
+   *
    * @return Whether the timestamp field is set.
    */
   @java.lang.Override
   public boolean hasTimestamp() {
     return ((bitField0_ & 0x00000001) != 0);
   }
+
   /**
    * <code>.google.protobuf.Timestamp timestamp = 3;</code>
+   *
    * @return The timestamp.
    */
   @java.lang.Override
   public com.google.protobuf.Timestamp getTimestamp() {
     return timestamp_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : timestamp_;
   }
-  /**
-   * <code>.google.protobuf.Timestamp timestamp = 3;</code>
-   */
+
+  /** <code>.google.protobuf.Timestamp timestamp = 3;</code> */
   @java.lang.Override
   public com.google.protobuf.TimestampOrBuilder getTimestampOrBuilder() {
     return timestamp_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : timestamp_;
   }
 
   public static final int ENV_FIELD_NUMBER = 4;
+
   @SuppressWarnings("serial")
   private volatile java.lang.Object env_ = "";
+
   /**
    * <code>string env = 4;</code>
+   *
    * @return The env.
    */
   @java.lang.Override
@@ -223,25 +230,24 @@ java.lang.String defaultValue) {
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
+      com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       env_ = s;
       return s;
     }
   }
+
   /**
    * <code>string env = 4;</code>
+   *
    * @return The bytes for env.
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getEnvBytes() {
+  public com.google.protobuf.ByteString getEnvBytes() {
     java.lang.Object ref = env_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
       env_ = b;
       return b;
     } else {
@@ -250,10 +256,13 @@ java.lang.String defaultValue) {
   }
 
   public static final int SERVICE_NAME_FIELD_NUMBER = 5;
+
   @SuppressWarnings("serial")
   private volatile java.lang.Object serviceName_ = "";
+
   /**
    * <code>string service_name = 5;</code>
+   *
    * @return The serviceName.
    */
   @java.lang.Override
@@ -262,25 +271,24 @@ java.lang.String defaultValue) {
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
+      com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       serviceName_ = s;
       return s;
     }
   }
+
   /**
    * <code>string service_name = 5;</code>
+   *
    * @return The bytes for serviceName.
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getServiceNameBytes() {
+  public com.google.protobuf.ByteString getServiceNameBytes() {
     java.lang.Object ref = serviceName_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
       serviceName_ = b;
       return b;
     } else {
@@ -289,10 +297,13 @@ java.lang.String defaultValue) {
   }
 
   public static final int COMPONENT_NAME_FIELD_NUMBER = 6;
+
   @SuppressWarnings("serial")
   private volatile java.lang.Object componentName_ = "";
+
   /**
    * <code>string component_name = 6;</code>
+   *
    * @return The componentName.
    */
   @java.lang.Override
@@ -301,25 +312,24 @@ java.lang.String defaultValue) {
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
+      com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       componentName_ = s;
       return s;
     }
   }
+
   /**
    * <code>string component_name = 6;</code>
+   *
    * @return The bytes for componentName.
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getComponentNameBytes() {
+  public com.google.protobuf.ByteString getComponentNameBytes() {
     java.lang.Object ref = componentName_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
       componentName_ = b;
       return b;
     } else {
@@ -328,18 +338,23 @@ java.lang.String defaultValue) {
   }
 
   public static final int HOSTNAME_FIELD_NUMBER = 7;
+
   @SuppressWarnings("serial")
   private volatile java.lang.Object hostname_ = "";
+
   /**
    * <code>optional string hostname = 7;</code>
+   *
    * @return Whether the hostname field is set.
    */
   @java.lang.Override
   public boolean hasHostname() {
     return ((bitField0_ & 0x00000002) != 0);
   }
+
   /**
    * <code>optional string hostname = 7;</code>
+   *
    * @return The hostname.
    */
   @java.lang.Override
@@ -348,25 +363,24 @@ java.lang.String defaultValue) {
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
+      com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       hostname_ = s;
       return s;
     }
   }
+
   /**
    * <code>optional string hostname = 7;</code>
+   *
    * @return The bytes for hostname.
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getHostnameBytes() {
+  public com.google.protobuf.ByteString getHostnameBytes() {
     java.lang.Object ref = hostname_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
       hostname_ = b;
       return b;
     } else {
@@ -375,18 +389,23 @@ java.lang.String defaultValue) {
   }
 
   public static final int DDSOURCE_FIELD_NUMBER = 8;
+
   @SuppressWarnings("serial")
   private volatile java.lang.Object ddsource_ = "";
+
   /**
    * <code>optional string ddsource = 8;</code>
+   *
    * @return Whether the ddsource field is set.
    */
   @java.lang.Override
   public boolean hasDdsource() {
     return ((bitField0_ & 0x00000004) != 0);
   }
+
   /**
    * <code>optional string ddsource = 8;</code>
+   *
    * @return The ddsource.
    */
   @java.lang.Override
@@ -395,25 +414,24 @@ java.lang.String defaultValue) {
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
+      com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       ddsource_ = s;
       return s;
     }
   }
+
   /**
    * <code>optional string ddsource = 8;</code>
+   *
    * @return The bytes for ddsource.
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getDdsourceBytes() {
+  public com.google.protobuf.ByteString getDdsourceBytes() {
     java.lang.Object ref = ddsource_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
       ddsource_ = b;
       return b;
     } else {
@@ -422,18 +440,23 @@ java.lang.String defaultValue) {
   }
 
   public static final int SOURCE_TYPE_FIELD_NUMBER = 9;
+
   @SuppressWarnings("serial")
   private volatile java.lang.Object sourceType_ = "";
+
   /**
    * <code>optional string source_type = 9;</code>
+   *
    * @return Whether the sourceType field is set.
    */
   @java.lang.Override
   public boolean hasSourceType() {
     return ((bitField0_ & 0x00000008) != 0);
   }
+
   /**
    * <code>optional string source_type = 9;</code>
+   *
    * @return The sourceType.
    */
   @java.lang.Override
@@ -442,25 +465,24 @@ java.lang.String defaultValue) {
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
+      com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       sourceType_ = s;
       return s;
     }
   }
+
   /**
    * <code>optional string source_type = 9;</code>
+   *
    * @return The bytes for sourceType.
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getSourceTypeBytes() {
+  public com.google.protobuf.ByteString getSourceTypeBytes() {
     java.lang.Object ref = sourceType_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
       sourceType_ = b;
       return b;
     } else {
@@ -469,18 +491,23 @@ java.lang.String defaultValue) {
   }
 
   public static final int STATUS_FIELD_NUMBER = 10;
+
   @SuppressWarnings("serial")
   private volatile java.lang.Object status_ = "";
+
   /**
    * <code>optional string status = 10;</code>
+   *
    * @return Whether the status field is set.
    */
   @java.lang.Override
   public boolean hasStatus() {
     return ((bitField0_ & 0x00000010) != 0);
   }
+
   /**
    * <code>optional string status = 10;</code>
+   *
    * @return The status.
    */
   @java.lang.Override
@@ -489,25 +516,24 @@ java.lang.String defaultValue) {
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
+      com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       status_ = s;
       return s;
     }
   }
+
   /**
    * <code>optional string status = 10;</code>
+   *
    * @return The bytes for status.
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getStatusBytes() {
+  public com.google.protobuf.ByteString getStatusBytes() {
     java.lang.Object ref = status_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
+      com.google.protobuf.ByteString b =
+          com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
       status_ = b;
       return b;
     } else {
@@ -516,78 +542,74 @@ java.lang.String defaultValue) {
   }
 
   public static final int EXTRA_FIELD_NUMBER = 11;
+
   private static final class ExtraDefaultEntryHolder {
-    static final com.google.protobuf.MapEntry<
-        java.lang.String, java.lang.String> defaultEntry =
-            com.google.protobuf.MapEntry
-            .<java.lang.String, java.lang.String>newDefaultInstance(
-                com.logwise.spark.protobuf.VectorLogsOuterClass.internal_static_logcentral_logs_VectorLogs_ExtraEntry_descriptor, 
-                com.google.protobuf.WireFormat.FieldType.STRING,
-                "",
-                com.google.protobuf.WireFormat.FieldType.STRING,
-                "");
+    static final com.google.protobuf.MapEntry<java.lang.String, java.lang.String> defaultEntry =
+        com.google.protobuf.MapEntry.<java.lang.String, java.lang.String>newDefaultInstance(
+            com.logwise.spark.protobuf.VectorLogsOuterClass
+                .internal_static_logcentral_logs_VectorLogs_ExtraEntry_descriptor,
+            com.google.protobuf.WireFormat.FieldType.STRING,
+            "",
+            com.google.protobuf.WireFormat.FieldType.STRING,
+            "");
   }
+
   @SuppressWarnings("serial")
-  private com.google.protobuf.MapField<
-      java.lang.String, java.lang.String> extra_;
-  private com.google.protobuf.MapField<java.lang.String, java.lang.String>
-  internalGetExtra() {
+  private com.google.protobuf.MapField<java.lang.String, java.lang.String> extra_;
+
+  private com.google.protobuf.MapField<java.lang.String, java.lang.String> internalGetExtra() {
     if (extra_ == null) {
-      return com.google.protobuf.MapField.emptyMapField(
-          ExtraDefaultEntryHolder.defaultEntry);
+      return com.google.protobuf.MapField.emptyMapField(ExtraDefaultEntryHolder.defaultEntry);
     }
     return extra_;
   }
+
   public int getExtraCount() {
     return internalGetExtra().getMap().size();
   }
-  /**
-   * <code>map&lt;string, string&gt; extra = 11;</code>
-   */
+
+  /** <code>map&lt;string, string&gt; extra = 11;</code> */
   @java.lang.Override
-  public boolean containsExtra(
-      java.lang.String key) {
-    if (key == null) { throw new NullPointerException("map key"); }
+  public boolean containsExtra(java.lang.String key) {
+    if (key == null) {
+      throw new NullPointerException("map key");
+    }
     return internalGetExtra().getMap().containsKey(key);
   }
-  /**
-   * Use {@link #getExtraMap()} instead.
-   */
+
+  /** Use {@link #getExtraMap()} instead. */
   @java.lang.Override
   @java.lang.Deprecated
   public java.util.Map<java.lang.String, java.lang.String> getExtra() {
     return getExtraMap();
   }
-  /**
-   * <code>map&lt;string, string&gt; extra = 11;</code>
-   */
+
+  /** <code>map&lt;string, string&gt; extra = 11;</code> */
   @java.lang.Override
   public java.util.Map<java.lang.String, java.lang.String> getExtraMap() {
     return internalGetExtra().getMap();
   }
-  /**
-   * <code>map&lt;string, string&gt; extra = 11;</code>
-   */
+
+  /** <code>map&lt;string, string&gt; extra = 11;</code> */
   @java.lang.Override
-  public /* nullable */
-java.lang.String getExtraOrDefault(
+  public /* nullable */ java.lang.String getExtraOrDefault(
       java.lang.String key,
       /* nullable */
-java.lang.String defaultValue) {
-    if (key == null) { throw new NullPointerException("map key"); }
-    java.util.Map<java.lang.String, java.lang.String> map =
-        internalGetExtra().getMap();
+      java.lang.String defaultValue) {
+    if (key == null) {
+      throw new NullPointerException("map key");
+    }
+    java.util.Map<java.lang.String, java.lang.String> map = internalGetExtra().getMap();
     return map.containsKey(key) ? map.get(key) : defaultValue;
   }
-  /**
-   * <code>map&lt;string, string&gt; extra = 11;</code>
-   */
+
+  /** <code>map&lt;string, string&gt; extra = 11;</code> */
   @java.lang.Override
-  public java.lang.String getExtraOrThrow(
-      java.lang.String key) {
-    if (key == null) { throw new NullPointerException("map key"); }
-    java.util.Map<java.lang.String, java.lang.String> map =
-        internalGetExtra().getMap();
+  public java.lang.String getExtraOrThrow(java.lang.String key) {
+    if (key == null) {
+      throw new NullPointerException("map key");
+    }
+    java.util.Map<java.lang.String, java.lang.String> map = internalGetExtra().getMap();
     if (!map.containsKey(key)) {
       throw new java.lang.IllegalArgumentException();
     }
@@ -595,6 +617,7 @@ java.lang.String defaultValue) {
   }
 
   private byte memoizedIsInitialized = -1;
+
   @java.lang.Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -606,17 +629,12 @@ java.lang.String defaultValue) {
   }
 
   @java.lang.Override
-  public void writeTo(com.google.protobuf.CodedOutputStream output)
-                      throws java.io.IOException {
+  public void writeTo(com.google.protobuf.CodedOutputStream output) throws java.io.IOException {
     if (!com.google.protobuf.GeneratedMessage.isStringEmpty(message_)) {
       com.google.protobuf.GeneratedMessage.writeString(output, 1, message_);
     }
-    com.google.protobuf.GeneratedMessage
-      .serializeStringMapTo(
-        output,
-        internalGetDdtags(),
-        DdtagsDefaultEntryHolder.defaultEntry,
-        2);
+    com.google.protobuf.GeneratedMessage.serializeStringMapTo(
+        output, internalGetDdtags(), DdtagsDefaultEntryHolder.defaultEntry, 2);
     if (((bitField0_ & 0x00000001) != 0)) {
       output.writeMessage(3, getTimestamp());
     }
@@ -641,12 +659,8 @@ java.lang.String defaultValue) {
     if (((bitField0_ & 0x00000010) != 0)) {
       com.google.protobuf.GeneratedMessage.writeString(output, 10, status_);
     }
-    com.google.protobuf.GeneratedMessage
-      .serializeStringMapTo(
-        output,
-        internalGetExtra(),
-        ExtraDefaultEntryHolder.defaultEntry,
-        11);
+    com.google.protobuf.GeneratedMessage.serializeStringMapTo(
+        output, internalGetExtra(), ExtraDefaultEntryHolder.defaultEntry, 11);
     getUnknownFields().writeTo(output);
   }
 
@@ -659,19 +673,18 @@ java.lang.String defaultValue) {
     if (!com.google.protobuf.GeneratedMessage.isStringEmpty(message_)) {
       size += com.google.protobuf.GeneratedMessage.computeStringSize(1, message_);
     }
-    for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
-         : internalGetDdtags().getMap().entrySet()) {
-      com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
-      ddtags__ = DdtagsDefaultEntryHolder.defaultEntry.newBuilderForType()
-          .setKey(entry.getKey())
-          .setValue(entry.getValue())
-          .build();
-      size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, ddtags__);
+    for (java.util.Map.Entry<java.lang.String, java.lang.String> entry :
+        internalGetDdtags().getMap().entrySet()) {
+      com.google.protobuf.MapEntry<java.lang.String, java.lang.String> ddtags__ =
+          DdtagsDefaultEntryHolder.defaultEntry
+              .newBuilderForType()
+              .setKey(entry.getKey())
+              .setValue(entry.getValue())
+              .build();
+      size += com.google.protobuf.CodedOutputStream.computeMessageSize(2, ddtags__);
     }
     if (((bitField0_ & 0x00000001) != 0)) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(3, getTimestamp());
+      size += com.google.protobuf.CodedOutputStream.computeMessageSize(3, getTimestamp());
     }
     if (!com.google.protobuf.GeneratedMessage.isStringEmpty(env_)) {
       size += com.google.protobuf.GeneratedMessage.computeStringSize(4, env_);
@@ -694,15 +707,15 @@ java.lang.String defaultValue) {
     if (((bitField0_ & 0x00000010) != 0)) {
       size += com.google.protobuf.GeneratedMessage.computeStringSize(10, status_);
     }
-    for (java.util.Map.Entry<java.lang.String, java.lang.String> entry
-         : internalGetExtra().getMap().entrySet()) {
-      com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
-      extra__ = ExtraDefaultEntryHolder.defaultEntry.newBuilderForType()
-          .setKey(entry.getKey())
-          .setValue(entry.getValue())
-          .build();
-      size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(11, extra__);
+    for (java.util.Map.Entry<java.lang.String, java.lang.String> entry :
+        internalGetExtra().getMap().entrySet()) {
+      com.google.protobuf.MapEntry<java.lang.String, java.lang.String> extra__ =
+          ExtraDefaultEntryHolder.defaultEntry
+              .newBuilderForType()
+              .setKey(entry.getKey())
+              .setValue(entry.getValue())
+              .build();
+      size += com.google.protobuf.CodedOutputStream.computeMessageSize(11, extra__);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -712,50 +725,39 @@ java.lang.String defaultValue) {
   @java.lang.Override
   public boolean equals(final java.lang.Object obj) {
     if (obj == this) {
-     return true;
+      return true;
     }
     if (!(obj instanceof com.logwise.spark.protobuf.VectorLogs)) {
       return super.equals(obj);
     }
     com.logwise.spark.protobuf.VectorLogs other = (com.logwise.spark.protobuf.VectorLogs) obj;
 
-    if (!getMessage()
-        .equals(other.getMessage())) return false;
-    if (!internalGetDdtags().equals(
-        other.internalGetDdtags())) return false;
+    if (!getMessage().equals(other.getMessage())) return false;
+    if (!internalGetDdtags().equals(other.internalGetDdtags())) return false;
     if (hasTimestamp() != other.hasTimestamp()) return false;
     if (hasTimestamp()) {
-      if (!getTimestamp()
-          .equals(other.getTimestamp())) return false;
+      if (!getTimestamp().equals(other.getTimestamp())) return false;
     }
-    if (!getEnv()
-        .equals(other.getEnv())) return false;
-    if (!getServiceName()
-        .equals(other.getServiceName())) return false;
-    if (!getComponentName()
-        .equals(other.getComponentName())) return false;
+    if (!getEnv().equals(other.getEnv())) return false;
+    if (!getServiceName().equals(other.getServiceName())) return false;
+    if (!getComponentName().equals(other.getComponentName())) return false;
     if (hasHostname() != other.hasHostname()) return false;
     if (hasHostname()) {
-      if (!getHostname()
-          .equals(other.getHostname())) return false;
+      if (!getHostname().equals(other.getHostname())) return false;
     }
     if (hasDdsource() != other.hasDdsource()) return false;
     if (hasDdsource()) {
-      if (!getDdsource()
-          .equals(other.getDdsource())) return false;
+      if (!getDdsource().equals(other.getDdsource())) return false;
     }
     if (hasSourceType() != other.hasSourceType()) return false;
     if (hasSourceType()) {
-      if (!getSourceType()
-          .equals(other.getSourceType())) return false;
+      if (!getSourceType().equals(other.getSourceType())) return false;
     }
     if (hasStatus() != other.hasStatus()) return false;
     if (hasStatus()) {
-      if (!getStatus()
-          .equals(other.getStatus())) return false;
+      if (!getStatus().equals(other.getStatus())) return false;
     }
-    if (!internalGetExtra().equals(
-        other.internalGetExtra())) return false;
+    if (!internalGetExtra().equals(other.internalGetExtra())) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -808,108 +810,109 @@ java.lang.String defaultValue) {
     return hash;
   }
 
-  public static com.logwise.spark.protobuf.VectorLogs parseFrom(
-      java.nio.ByteBuffer data)
+  public static com.logwise.spark.protobuf.VectorLogs parseFrom(java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
+
   public static com.logwise.spark.protobuf.VectorLogs parseFrom(
-      java.nio.ByteBuffer data,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      java.nio.ByteBuffer data, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.logwise.spark.protobuf.VectorLogs parseFrom(
-      com.google.protobuf.ByteString data)
+
+  public static com.logwise.spark.protobuf.VectorLogs parseFrom(com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
+
   public static com.logwise.spark.protobuf.VectorLogs parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
+
   public static com.logwise.spark.protobuf.VectorLogs parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
+
   public static com.logwise.spark.protobuf.VectorLogs parseFrom(
-      byte[] data,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      byte[] data, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
+
   public static com.logwise.spark.protobuf.VectorLogs parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
-        .parseWithIOException(PARSER, input);
+    return com.google.protobuf.GeneratedMessage.parseWithIOException(PARSER, input);
   }
+
   public static com.logwise.spark.protobuf.VectorLogs parseFrom(
-      java.io.InputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      java.io.InputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage.parseWithIOException(
+        PARSER, input, extensionRegistry);
   }
 
   public static com.logwise.spark.protobuf.VectorLogs parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
-        .parseDelimitedWithIOException(PARSER, input);
+    return com.google.protobuf.GeneratedMessage.parseDelimitedWithIOException(PARSER, input);
   }
 
   public static com.logwise.spark.protobuf.VectorLogs parseDelimitedFrom(
-      java.io.InputStream input,
-      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      java.io.InputStream input, com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage.parseDelimitedWithIOException(
+        PARSER, input, extensionRegistry);
   }
+
   public static com.logwise.spark.protobuf.VectorLogs parseFrom(
-      com.google.protobuf.CodedInputStream input)
-      throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
-        .parseWithIOException(PARSER, input);
+      com.google.protobuf.CodedInputStream input) throws java.io.IOException {
+    return com.google.protobuf.GeneratedMessage.parseWithIOException(PARSER, input);
   }
+
   public static com.logwise.spark.protobuf.VectorLogs parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessage
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessage.parseWithIOException(
+        PARSER, input, extensionRegistry);
   }
 
   @java.lang.Override
-  public Builder newBuilderForType() { return newBuilder(); }
+  public Builder newBuilderForType() {
+    return newBuilder();
+  }
+
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
+
   public static Builder newBuilder(com.logwise.spark.protobuf.VectorLogs prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
+
   @java.lang.Override
   public Builder toBuilder() {
-    return this == DEFAULT_INSTANCE
-        ? new Builder() : new Builder().mergeFrom(this);
+    return this == DEFAULT_INSTANCE ? new Builder() : new Builder().mergeFrom(this);
   }
 
   @java.lang.Override
-  protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+  protected Builder newBuilderForType(com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
-  /**
-   * Protobuf type {@code logcentral.logs.VectorLogs}
-   */
-  public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+
+  /** Protobuf type {@code logcentral.logs.VectorLogs} */
+  public static final class Builder extends com.google.protobuf.GeneratedMessage.Builder<Builder>
+      implements
       // @@protoc_insertion_point(builder_implements:logcentral.logs.VectorLogs)
       com.logwise.spark.protobuf.VectorLogsOrBuilder {
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return com.logwise.spark.protobuf.VectorLogsOuterClass.internal_static_logcentral_logs_VectorLogs_descriptor;
+    public static final com.google.protobuf.Descriptors.Descriptor getDescriptor() {
+      return com.logwise.spark.protobuf.VectorLogsOuterClass
+          .internal_static_logcentral_logs_VectorLogs_descriptor;
     }
 
     @SuppressWarnings({"rawtypes"})
@@ -921,10 +924,10 @@ java.lang.String defaultValue) {
         case 11:
           return internalGetExtra();
         default:
-          throw new RuntimeException(
-              "Invalid map field number: " + number);
+          throw new RuntimeException("Invalid map field number: " + number);
       }
     }
+
     @SuppressWarnings({"rawtypes"})
     protected com.google.protobuf.MapFieldReflectionAccessor internalGetMutableMapFieldReflection(
         int number) {
@@ -934,16 +937,18 @@ java.lang.String defaultValue) {
         case 11:
           return internalGetMutableExtra();
         default:
-          throw new RuntimeException(
-              "Invalid map field number: " + number);
+          throw new RuntimeException("Invalid map field number: " + number);
       }
     }
+
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.logwise.spark.protobuf.VectorLogsOuterClass.internal_static_logcentral_logs_VectorLogs_fieldAccessorTable
+      return com.logwise.spark.protobuf.VectorLogsOuterClass
+          .internal_static_logcentral_logs_VectorLogs_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.logwise.spark.protobuf.VectorLogs.class, com.logwise.spark.protobuf.VectorLogs.Builder.class);
+              com.logwise.spark.protobuf.VectorLogs.class,
+              com.logwise.spark.protobuf.VectorLogs.Builder.class);
     }
 
     // Construct using com.logwise.spark.protobuf.VectorLogs.newBuilder()
@@ -951,17 +956,17 @@ java.lang.String defaultValue) {
       maybeForceBuilderInitialization();
     }
 
-    private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+    private Builder(com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
+
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         internalGetTimestampFieldBuilder();
       }
     }
+
     @java.lang.Override
     public Builder clear() {
       super.clear();
@@ -985,9 +990,9 @@ java.lang.String defaultValue) {
     }
 
     @java.lang.Override
-    public com.google.protobuf.Descriptors.Descriptor
-        getDescriptorForType() {
-      return com.logwise.spark.protobuf.VectorLogsOuterClass.internal_static_logcentral_logs_VectorLogs_descriptor;
+    public com.google.protobuf.Descriptors.Descriptor getDescriptorForType() {
+      return com.logwise.spark.protobuf.VectorLogsOuterClass
+          .internal_static_logcentral_logs_VectorLogs_descriptor;
     }
 
     @java.lang.Override
@@ -1006,8 +1011,11 @@ java.lang.String defaultValue) {
 
     @java.lang.Override
     public com.logwise.spark.protobuf.VectorLogs buildPartial() {
-      com.logwise.spark.protobuf.VectorLogs result = new com.logwise.spark.protobuf.VectorLogs(this);
-      if (bitField0_ != 0) { buildPartial0(result); }
+      com.logwise.spark.protobuf.VectorLogs result =
+          new com.logwise.spark.protobuf.VectorLogs(this);
+      if (bitField0_ != 0) {
+        buildPartial0(result);
+      }
       onBuilt();
       return result;
     }
@@ -1023,9 +1031,7 @@ java.lang.String defaultValue) {
       }
       int to_bitField0_ = 0;
       if (((from_bitField0_ & 0x00000004) != 0)) {
-        result.timestamp_ = timestampBuilder_ == null
-            ? timestamp_
-            : timestampBuilder_.build();
+        result.timestamp_ = timestampBuilder_ == null ? timestamp_ : timestampBuilder_.build();
         to_bitField0_ |= 0x00000001;
       }
       if (((from_bitField0_ & 0x00000008) != 0)) {
@@ -1063,7 +1069,7 @@ java.lang.String defaultValue) {
     @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof com.logwise.spark.protobuf.VectorLogs) {
-        return mergeFrom((com.logwise.spark.protobuf.VectorLogs)other);
+        return mergeFrom((com.logwise.spark.protobuf.VectorLogs) other);
       } else {
         super.mergeFrom(other);
         return this;
@@ -1077,8 +1083,7 @@ java.lang.String defaultValue) {
         bitField0_ |= 0x00000001;
         onChanged();
       }
-      internalGetMutableDdtags().mergeFrom(
-          other.internalGetDdtags());
+      internalGetMutableDdtags().mergeFrom(other.internalGetDdtags());
       bitField0_ |= 0x00000002;
       if (other.hasTimestamp()) {
         mergeTimestamp(other.getTimestamp());
@@ -1118,8 +1123,7 @@ java.lang.String defaultValue) {
         bitField0_ |= 0x00000200;
         onChanged();
       }
-      internalGetMutableExtra().mergeFrom(
-          other.internalGetExtra());
+      internalGetMutableExtra().mergeFrom(other.internalGetExtra());
       bitField0_ |= 0x00000400;
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
@@ -1147,77 +1151,89 @@ java.lang.String defaultValue) {
             case 0:
               done = true;
               break;
-            case 10: {
-              message_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000001;
-              break;
-            } // case 10
-            case 18: {
-              com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
-              ddtags__ = input.readMessage(
-                  DdtagsDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-              internalGetMutableDdtags().getMutableMap().put(
-                  ddtags__.getKey(), ddtags__.getValue());
-              bitField0_ |= 0x00000002;
-              break;
-            } // case 18
-            case 26: {
-              input.readMessage(
-                  internalGetTimestampFieldBuilder().getBuilder(),
-                  extensionRegistry);
-              bitField0_ |= 0x00000004;
-              break;
-            } // case 26
-            case 34: {
-              env_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000008;
-              break;
-            } // case 34
-            case 42: {
-              serviceName_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000010;
-              break;
-            } // case 42
-            case 50: {
-              componentName_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000020;
-              break;
-            } // case 50
-            case 58: {
-              hostname_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000040;
-              break;
-            } // case 58
-            case 66: {
-              ddsource_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000080;
-              break;
-            } // case 66
-            case 74: {
-              sourceType_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000100;
-              break;
-            } // case 74
-            case 82: {
-              status_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000200;
-              break;
-            } // case 82
-            case 90: {
-              com.google.protobuf.MapEntry<java.lang.String, java.lang.String>
-              extra__ = input.readMessage(
-                  ExtraDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
-              internalGetMutableExtra().getMutableMap().put(
-                  extra__.getKey(), extra__.getValue());
-              bitField0_ |= 0x00000400;
-              break;
-            } // case 90
-            default: {
-              if (!super.parseUnknownField(input, extensionRegistry, tag)) {
-                done = true; // was an endgroup tag
-              }
-              break;
-            } // default:
+            case 10:
+              {
+                message_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000001;
+                break;
+              } // case 10
+            case 18:
+              {
+                com.google.protobuf.MapEntry<java.lang.String, java.lang.String> ddtags__ =
+                    input.readMessage(
+                        DdtagsDefaultEntryHolder.defaultEntry.getParserForType(),
+                        extensionRegistry);
+                internalGetMutableDdtags()
+                    .getMutableMap()
+                    .put(ddtags__.getKey(), ddtags__.getValue());
+                bitField0_ |= 0x00000002;
+                break;
+              } // case 18
+            case 26:
+              {
+                input.readMessage(
+                    internalGetTimestampFieldBuilder().getBuilder(), extensionRegistry);
+                bitField0_ |= 0x00000004;
+                break;
+              } // case 26
+            case 34:
+              {
+                env_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000008;
+                break;
+              } // case 34
+            case 42:
+              {
+                serviceName_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000010;
+                break;
+              } // case 42
+            case 50:
+              {
+                componentName_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000020;
+                break;
+              } // case 50
+            case 58:
+              {
+                hostname_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 58
+            case 66:
+              {
+                ddsource_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 66
+            case 74:
+              {
+                sourceType_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000100;
+                break;
+              } // case 74
+            case 82:
+              {
+                status_ = input.readStringRequireUtf8();
+                bitField0_ |= 0x00000200;
+                break;
+              } // case 82
+            case 90:
+              {
+                com.google.protobuf.MapEntry<java.lang.String, java.lang.String> extra__ =
+                    input.readMessage(
+                        ExtraDefaultEntryHolder.defaultEntry.getParserForType(), extensionRegistry);
+                internalGetMutableExtra().getMutableMap().put(extra__.getKey(), extra__.getValue());
+                bitField0_ |= 0x00000400;
+                break;
+              } // case 90
+            default:
+              {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
           } // switch (tag)
         } // while (!done)
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -1227,18 +1243,20 @@ java.lang.String defaultValue) {
       } // finally
       return this;
     }
+
     private int bitField0_;
 
     private java.lang.Object message_ = "";
+
     /**
      * <code>string message = 1;</code>
+     *
      * @return The message.
      */
     public java.lang.String getMessage() {
       java.lang.Object ref = message_;
       if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         message_ = s;
         return s;
@@ -1246,38 +1264,43 @@ java.lang.String defaultValue) {
         return (java.lang.String) ref;
       }
     }
+
     /**
      * <code>string message = 1;</code>
+     *
      * @return The bytes for message.
      */
-    public com.google.protobuf.ByteString
-        getMessageBytes() {
+    public com.google.protobuf.ByteString getMessageBytes() {
       java.lang.Object ref = message_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         message_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
+
     /**
      * <code>string message = 1;</code>
+     *
      * @param value The message to set.
      * @return This builder for chaining.
      */
-    public Builder setMessage(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setMessage(java.lang.String value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       message_ = value;
       bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
+
     /**
      * <code>string message = 1;</code>
+     *
      * @return This builder for chaining.
      */
     public Builder clearMessage() {
@@ -1286,14 +1309,17 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
+
     /**
      * <code>string message = 1;</code>
+     *
      * @param value The bytes for message to set.
      * @return This builder for chaining.
      */
-    public Builder setMessageBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setMessageBytes(com.google.protobuf.ByteString value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       checkByteStringIsUtf8(value);
       message_ = value;
       bitField0_ |= 0x00000001;
@@ -1301,21 +1327,19 @@ java.lang.String defaultValue) {
       return this;
     }
 
-    private com.google.protobuf.MapField<
-        java.lang.String, java.lang.String> ddtags_;
-    private com.google.protobuf.MapField<java.lang.String, java.lang.String>
-        internalGetDdtags() {
+    private com.google.protobuf.MapField<java.lang.String, java.lang.String> ddtags_;
+
+    private com.google.protobuf.MapField<java.lang.String, java.lang.String> internalGetDdtags() {
       if (ddtags_ == null) {
-        return com.google.protobuf.MapField.emptyMapField(
-            DdtagsDefaultEntryHolder.defaultEntry);
+        return com.google.protobuf.MapField.emptyMapField(DdtagsDefaultEntryHolder.defaultEntry);
       }
       return ddtags_;
     }
+
     private com.google.protobuf.MapField<java.lang.String, java.lang.String>
         internalGetMutableDdtags() {
       if (ddtags_ == null) {
-        ddtags_ = com.google.protobuf.MapField.newMapField(
-            DdtagsDefaultEntryHolder.defaultEntry);
+        ddtags_ = com.google.protobuf.MapField.newMapField(DdtagsDefaultEntryHolder.defaultEntry);
       }
       if (!ddtags_.isMutable()) {
         ddtags_ = ddtags_.copy();
@@ -1324,122 +1348,120 @@ java.lang.String defaultValue) {
       onChanged();
       return ddtags_;
     }
+
     public int getDdtagsCount() {
       return internalGetDdtags().getMap().size();
     }
-    /**
-     * <code>map&lt;string, string&gt; ddtags = 2;</code>
-     */
+
+    /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
     @java.lang.Override
-    public boolean containsDdtags(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
+    public boolean containsDdtags(java.lang.String key) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
       return internalGetDdtags().getMap().containsKey(key);
     }
-    /**
-     * Use {@link #getDdtagsMap()} instead.
-     */
+
+    /** Use {@link #getDdtagsMap()} instead. */
     @java.lang.Override
     @java.lang.Deprecated
     public java.util.Map<java.lang.String, java.lang.String> getDdtags() {
       return getDdtagsMap();
     }
-    /**
-     * <code>map&lt;string, string&gt; ddtags = 2;</code>
-     */
+
+    /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
     @java.lang.Override
     public java.util.Map<java.lang.String, java.lang.String> getDdtagsMap() {
       return internalGetDdtags().getMap();
     }
-    /**
-     * <code>map&lt;string, string&gt; ddtags = 2;</code>
-     */
+
+    /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
     @java.lang.Override
-    public /* nullable */
-java.lang.String getDdtagsOrDefault(
+    public /* nullable */ java.lang.String getDdtagsOrDefault(
         java.lang.String key,
         /* nullable */
-java.lang.String defaultValue) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      java.util.Map<java.lang.String, java.lang.String> map =
-          internalGetDdtags().getMap();
+        java.lang.String defaultValue) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
+      java.util.Map<java.lang.String, java.lang.String> map = internalGetDdtags().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
-    /**
-     * <code>map&lt;string, string&gt; ddtags = 2;</code>
-     */
+
+    /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
     @java.lang.Override
-    public java.lang.String getDdtagsOrThrow(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      java.util.Map<java.lang.String, java.lang.String> map =
-          internalGetDdtags().getMap();
+    public java.lang.String getDdtagsOrThrow(java.lang.String key) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
+      java.util.Map<java.lang.String, java.lang.String> map = internalGetDdtags().getMap();
       if (!map.containsKey(key)) {
         throw new java.lang.IllegalArgumentException();
       }
       return map.get(key);
     }
+
     public Builder clearDdtags() {
       bitField0_ = (bitField0_ & ~0x00000002);
-      internalGetMutableDdtags().getMutableMap()
-          .clear();
+      internalGetMutableDdtags().getMutableMap().clear();
       return this;
     }
-    /**
-     * <code>map&lt;string, string&gt; ddtags = 2;</code>
-     */
-    public Builder removeDdtags(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      internalGetMutableDdtags().getMutableMap()
-          .remove(key);
+
+    /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
+    public Builder removeDdtags(java.lang.String key) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
+      internalGetMutableDdtags().getMutableMap().remove(key);
       return this;
     }
-    /**
-     * Use alternate mutation accessors instead.
-     */
+
+    /** Use alternate mutation accessors instead. */
     @java.lang.Deprecated
-    public java.util.Map<java.lang.String, java.lang.String>
-        getMutableDdtags() {
+    public java.util.Map<java.lang.String, java.lang.String> getMutableDdtags() {
       bitField0_ |= 0x00000002;
       return internalGetMutableDdtags().getMutableMap();
     }
-    /**
-     * <code>map&lt;string, string&gt; ddtags = 2;</code>
-     */
-    public Builder putDdtags(
-        java.lang.String key,
-        java.lang.String value) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      if (value == null) { throw new NullPointerException("map value"); }
-      internalGetMutableDdtags().getMutableMap()
-          .put(key, value);
+
+    /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
+    public Builder putDdtags(java.lang.String key, java.lang.String value) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
+      if (value == null) {
+        throw new NullPointerException("map value");
+      }
+      internalGetMutableDdtags().getMutableMap().put(key, value);
       bitField0_ |= 0x00000002;
       return this;
     }
-    /**
-     * <code>map&lt;string, string&gt; ddtags = 2;</code>
-     */
-    public Builder putAllDdtags(
-        java.util.Map<java.lang.String, java.lang.String> values) {
-      internalGetMutableDdtags().getMutableMap()
-          .putAll(values);
+
+    /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
+    public Builder putAllDdtags(java.util.Map<java.lang.String, java.lang.String> values) {
+      internalGetMutableDdtags().getMutableMap().putAll(values);
       bitField0_ |= 0x00000002;
       return this;
     }
 
     private com.google.protobuf.Timestamp timestamp_;
     private com.google.protobuf.SingleFieldBuilder<
-        com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> timestampBuilder_;
+            com.google.protobuf.Timestamp,
+            com.google.protobuf.Timestamp.Builder,
+            com.google.protobuf.TimestampOrBuilder>
+        timestampBuilder_;
+
     /**
      * <code>.google.protobuf.Timestamp timestamp = 3;</code>
+     *
      * @return Whether the timestamp field is set.
      */
     public boolean hasTimestamp() {
       return ((bitField0_ & 0x00000004) != 0);
     }
+
     /**
      * <code>.google.protobuf.Timestamp timestamp = 3;</code>
+     *
      * @return The timestamp.
      */
     public com.google.protobuf.Timestamp getTimestamp() {
@@ -1449,9 +1471,8 @@ java.lang.String defaultValue) {
         return timestampBuilder_.getMessage();
       }
     }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 3;</code>
-     */
+
+    /** <code>.google.protobuf.Timestamp timestamp = 3;</code> */
     public Builder setTimestamp(com.google.protobuf.Timestamp value) {
       if (timestampBuilder_ == null) {
         if (value == null) {
@@ -1465,11 +1486,9 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 3;</code>
-     */
-    public Builder setTimestamp(
-        com.google.protobuf.Timestamp.Builder builderForValue) {
+
+    /** <code>.google.protobuf.Timestamp timestamp = 3;</code> */
+    public Builder setTimestamp(com.google.protobuf.Timestamp.Builder builderForValue) {
       if (timestampBuilder_ == null) {
         timestamp_ = builderForValue.build();
       } else {
@@ -1479,14 +1498,13 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 3;</code>
-     */
+
+    /** <code>.google.protobuf.Timestamp timestamp = 3;</code> */
     public Builder mergeTimestamp(com.google.protobuf.Timestamp value) {
       if (timestampBuilder_ == null) {
-        if (((bitField0_ & 0x00000004) != 0) &&
-          timestamp_ != null &&
-          timestamp_ != com.google.protobuf.Timestamp.getDefaultInstance()) {
+        if (((bitField0_ & 0x00000004) != 0)
+            && timestamp_ != null
+            && timestamp_ != com.google.protobuf.Timestamp.getDefaultInstance()) {
           getTimestampBuilder().mergeFrom(value);
         } else {
           timestamp_ = value;
@@ -1500,9 +1518,8 @@ java.lang.String defaultValue) {
       }
       return this;
     }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 3;</code>
-     */
+
+    /** <code>.google.protobuf.Timestamp timestamp = 3;</code> */
     public Builder clearTimestamp() {
       bitField0_ = (bitField0_ & ~0x00000004);
       timestamp_ = null;
@@ -1513,52 +1530,52 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 3;</code>
-     */
+
+    /** <code>.google.protobuf.Timestamp timestamp = 3;</code> */
     public com.google.protobuf.Timestamp.Builder getTimestampBuilder() {
       bitField0_ |= 0x00000004;
       onChanged();
       return internalGetTimestampFieldBuilder().getBuilder();
     }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 3;</code>
-     */
+
+    /** <code>.google.protobuf.Timestamp timestamp = 3;</code> */
     public com.google.protobuf.TimestampOrBuilder getTimestampOrBuilder() {
       if (timestampBuilder_ != null) {
         return timestampBuilder_.getMessageOrBuilder();
       } else {
-        return timestamp_ == null ?
-            com.google.protobuf.Timestamp.getDefaultInstance() : timestamp_;
+        return timestamp_ == null ? com.google.protobuf.Timestamp.getDefaultInstance() : timestamp_;
       }
     }
-    /**
-     * <code>.google.protobuf.Timestamp timestamp = 3;</code>
-     */
+
+    /** <code>.google.protobuf.Timestamp timestamp = 3;</code> */
     private com.google.protobuf.SingleFieldBuilder<
-        com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder> 
+            com.google.protobuf.Timestamp,
+            com.google.protobuf.Timestamp.Builder,
+            com.google.protobuf.TimestampOrBuilder>
         internalGetTimestampFieldBuilder() {
       if (timestampBuilder_ == null) {
-        timestampBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-            com.google.protobuf.Timestamp, com.google.protobuf.Timestamp.Builder, com.google.protobuf.TimestampOrBuilder>(
-                getTimestamp(),
-                getParentForChildren(),
-                isClean());
+        timestampBuilder_ =
+            new com.google.protobuf.SingleFieldBuilder<
+                com.google.protobuf.Timestamp,
+                com.google.protobuf.Timestamp.Builder,
+                com.google.protobuf.TimestampOrBuilder>(
+                getTimestamp(), getParentForChildren(), isClean());
         timestamp_ = null;
       }
       return timestampBuilder_;
     }
 
     private java.lang.Object env_ = "";
+
     /**
      * <code>string env = 4;</code>
+     *
      * @return The env.
      */
     public java.lang.String getEnv() {
       java.lang.Object ref = env_;
       if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         env_ = s;
         return s;
@@ -1566,38 +1583,43 @@ java.lang.String defaultValue) {
         return (java.lang.String) ref;
       }
     }
+
     /**
      * <code>string env = 4;</code>
+     *
      * @return The bytes for env.
      */
-    public com.google.protobuf.ByteString
-        getEnvBytes() {
+    public com.google.protobuf.ByteString getEnvBytes() {
       java.lang.Object ref = env_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         env_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
+
     /**
      * <code>string env = 4;</code>
+     *
      * @param value The env to set.
      * @return This builder for chaining.
      */
-    public Builder setEnv(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setEnv(java.lang.String value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       env_ = value;
       bitField0_ |= 0x00000008;
       onChanged();
       return this;
     }
+
     /**
      * <code>string env = 4;</code>
+     *
      * @return This builder for chaining.
      */
     public Builder clearEnv() {
@@ -1606,14 +1628,17 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
+
     /**
      * <code>string env = 4;</code>
+     *
      * @param value The bytes for env to set.
      * @return This builder for chaining.
      */
-    public Builder setEnvBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setEnvBytes(com.google.protobuf.ByteString value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       checkByteStringIsUtf8(value);
       env_ = value;
       bitField0_ |= 0x00000008;
@@ -1622,15 +1647,16 @@ java.lang.String defaultValue) {
     }
 
     private java.lang.Object serviceName_ = "";
+
     /**
      * <code>string service_name = 5;</code>
+     *
      * @return The serviceName.
      */
     public java.lang.String getServiceName() {
       java.lang.Object ref = serviceName_;
       if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         serviceName_ = s;
         return s;
@@ -1638,38 +1664,43 @@ java.lang.String defaultValue) {
         return (java.lang.String) ref;
       }
     }
+
     /**
      * <code>string service_name = 5;</code>
+     *
      * @return The bytes for serviceName.
      */
-    public com.google.protobuf.ByteString
-        getServiceNameBytes() {
+    public com.google.protobuf.ByteString getServiceNameBytes() {
       java.lang.Object ref = serviceName_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         serviceName_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
+
     /**
      * <code>string service_name = 5;</code>
+     *
      * @param value The serviceName to set.
      * @return This builder for chaining.
      */
-    public Builder setServiceName(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setServiceName(java.lang.String value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       serviceName_ = value;
       bitField0_ |= 0x00000010;
       onChanged();
       return this;
     }
+
     /**
      * <code>string service_name = 5;</code>
+     *
      * @return This builder for chaining.
      */
     public Builder clearServiceName() {
@@ -1678,14 +1709,17 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
+
     /**
      * <code>string service_name = 5;</code>
+     *
      * @param value The bytes for serviceName to set.
      * @return This builder for chaining.
      */
-    public Builder setServiceNameBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setServiceNameBytes(com.google.protobuf.ByteString value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       checkByteStringIsUtf8(value);
       serviceName_ = value;
       bitField0_ |= 0x00000010;
@@ -1694,15 +1728,16 @@ java.lang.String defaultValue) {
     }
 
     private java.lang.Object componentName_ = "";
+
     /**
      * <code>string component_name = 6;</code>
+     *
      * @return The componentName.
      */
     public java.lang.String getComponentName() {
       java.lang.Object ref = componentName_;
       if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         componentName_ = s;
         return s;
@@ -1710,38 +1745,43 @@ java.lang.String defaultValue) {
         return (java.lang.String) ref;
       }
     }
+
     /**
      * <code>string component_name = 6;</code>
+     *
      * @return The bytes for componentName.
      */
-    public com.google.protobuf.ByteString
-        getComponentNameBytes() {
+    public com.google.protobuf.ByteString getComponentNameBytes() {
       java.lang.Object ref = componentName_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         componentName_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
+
     /**
      * <code>string component_name = 6;</code>
+     *
      * @param value The componentName to set.
      * @return This builder for chaining.
      */
-    public Builder setComponentName(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setComponentName(java.lang.String value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       componentName_ = value;
       bitField0_ |= 0x00000020;
       onChanged();
       return this;
     }
+
     /**
      * <code>string component_name = 6;</code>
+     *
      * @return This builder for chaining.
      */
     public Builder clearComponentName() {
@@ -1750,14 +1790,17 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
+
     /**
      * <code>string component_name = 6;</code>
+     *
      * @param value The bytes for componentName to set.
      * @return This builder for chaining.
      */
-    public Builder setComponentNameBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setComponentNameBytes(com.google.protobuf.ByteString value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       checkByteStringIsUtf8(value);
       componentName_ = value;
       bitField0_ |= 0x00000020;
@@ -1766,22 +1809,25 @@ java.lang.String defaultValue) {
     }
 
     private java.lang.Object hostname_ = "";
+
     /**
      * <code>optional string hostname = 7;</code>
+     *
      * @return Whether the hostname field is set.
      */
     public boolean hasHostname() {
       return ((bitField0_ & 0x00000040) != 0);
     }
+
     /**
      * <code>optional string hostname = 7;</code>
+     *
      * @return The hostname.
      */
     public java.lang.String getHostname() {
       java.lang.Object ref = hostname_;
       if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         hostname_ = s;
         return s;
@@ -1789,38 +1835,43 @@ java.lang.String defaultValue) {
         return (java.lang.String) ref;
       }
     }
+
     /**
      * <code>optional string hostname = 7;</code>
+     *
      * @return The bytes for hostname.
      */
-    public com.google.protobuf.ByteString
-        getHostnameBytes() {
+    public com.google.protobuf.ByteString getHostnameBytes() {
       java.lang.Object ref = hostname_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         hostname_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
+
     /**
      * <code>optional string hostname = 7;</code>
+     *
      * @param value The hostname to set.
      * @return This builder for chaining.
      */
-    public Builder setHostname(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setHostname(java.lang.String value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       hostname_ = value;
       bitField0_ |= 0x00000040;
       onChanged();
       return this;
     }
+
     /**
      * <code>optional string hostname = 7;</code>
+     *
      * @return This builder for chaining.
      */
     public Builder clearHostname() {
@@ -1829,14 +1880,17 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
+
     /**
      * <code>optional string hostname = 7;</code>
+     *
      * @param value The bytes for hostname to set.
      * @return This builder for chaining.
      */
-    public Builder setHostnameBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setHostnameBytes(com.google.protobuf.ByteString value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       checkByteStringIsUtf8(value);
       hostname_ = value;
       bitField0_ |= 0x00000040;
@@ -1845,22 +1899,25 @@ java.lang.String defaultValue) {
     }
 
     private java.lang.Object ddsource_ = "";
+
     /**
      * <code>optional string ddsource = 8;</code>
+     *
      * @return Whether the ddsource field is set.
      */
     public boolean hasDdsource() {
       return ((bitField0_ & 0x00000080) != 0);
     }
+
     /**
      * <code>optional string ddsource = 8;</code>
+     *
      * @return The ddsource.
      */
     public java.lang.String getDdsource() {
       java.lang.Object ref = ddsource_;
       if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         ddsource_ = s;
         return s;
@@ -1868,38 +1925,43 @@ java.lang.String defaultValue) {
         return (java.lang.String) ref;
       }
     }
+
     /**
      * <code>optional string ddsource = 8;</code>
+     *
      * @return The bytes for ddsource.
      */
-    public com.google.protobuf.ByteString
-        getDdsourceBytes() {
+    public com.google.protobuf.ByteString getDdsourceBytes() {
       java.lang.Object ref = ddsource_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         ddsource_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
+
     /**
      * <code>optional string ddsource = 8;</code>
+     *
      * @param value The ddsource to set.
      * @return This builder for chaining.
      */
-    public Builder setDdsource(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setDdsource(java.lang.String value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       ddsource_ = value;
       bitField0_ |= 0x00000080;
       onChanged();
       return this;
     }
+
     /**
      * <code>optional string ddsource = 8;</code>
+     *
      * @return This builder for chaining.
      */
     public Builder clearDdsource() {
@@ -1908,14 +1970,17 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
+
     /**
      * <code>optional string ddsource = 8;</code>
+     *
      * @param value The bytes for ddsource to set.
      * @return This builder for chaining.
      */
-    public Builder setDdsourceBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setDdsourceBytes(com.google.protobuf.ByteString value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       checkByteStringIsUtf8(value);
       ddsource_ = value;
       bitField0_ |= 0x00000080;
@@ -1924,22 +1989,25 @@ java.lang.String defaultValue) {
     }
 
     private java.lang.Object sourceType_ = "";
+
     /**
      * <code>optional string source_type = 9;</code>
+     *
      * @return Whether the sourceType field is set.
      */
     public boolean hasSourceType() {
       return ((bitField0_ & 0x00000100) != 0);
     }
+
     /**
      * <code>optional string source_type = 9;</code>
+     *
      * @return The sourceType.
      */
     public java.lang.String getSourceType() {
       java.lang.Object ref = sourceType_;
       if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         sourceType_ = s;
         return s;
@@ -1947,38 +2015,43 @@ java.lang.String defaultValue) {
         return (java.lang.String) ref;
       }
     }
+
     /**
      * <code>optional string source_type = 9;</code>
+     *
      * @return The bytes for sourceType.
      */
-    public com.google.protobuf.ByteString
-        getSourceTypeBytes() {
+    public com.google.protobuf.ByteString getSourceTypeBytes() {
       java.lang.Object ref = sourceType_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         sourceType_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
+
     /**
      * <code>optional string source_type = 9;</code>
+     *
      * @param value The sourceType to set.
      * @return This builder for chaining.
      */
-    public Builder setSourceType(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setSourceType(java.lang.String value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       sourceType_ = value;
       bitField0_ |= 0x00000100;
       onChanged();
       return this;
     }
+
     /**
      * <code>optional string source_type = 9;</code>
+     *
      * @return This builder for chaining.
      */
     public Builder clearSourceType() {
@@ -1987,14 +2060,17 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
+
     /**
      * <code>optional string source_type = 9;</code>
+     *
      * @param value The bytes for sourceType to set.
      * @return This builder for chaining.
      */
-    public Builder setSourceTypeBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setSourceTypeBytes(com.google.protobuf.ByteString value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       checkByteStringIsUtf8(value);
       sourceType_ = value;
       bitField0_ |= 0x00000100;
@@ -2003,22 +2079,25 @@ java.lang.String defaultValue) {
     }
 
     private java.lang.Object status_ = "";
+
     /**
      * <code>optional string status = 10;</code>
+     *
      * @return Whether the status field is set.
      */
     public boolean hasStatus() {
       return ((bitField0_ & 0x00000200) != 0);
     }
+
     /**
      * <code>optional string status = 10;</code>
+     *
      * @return The status.
      */
     public java.lang.String getStatus() {
       java.lang.Object ref = status_;
       if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
+        com.google.protobuf.ByteString bs = (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         status_ = s;
         return s;
@@ -2026,38 +2105,43 @@ java.lang.String defaultValue) {
         return (java.lang.String) ref;
       }
     }
+
     /**
      * <code>optional string status = 10;</code>
+     *
      * @return The bytes for status.
      */
-    public com.google.protobuf.ByteString
-        getStatusBytes() {
+    public com.google.protobuf.ByteString getStatusBytes() {
       java.lang.Object ref = status_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8((java.lang.String) ref);
         status_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
+
     /**
      * <code>optional string status = 10;</code>
+     *
      * @param value The status to set.
      * @return This builder for chaining.
      */
-    public Builder setStatus(
-        java.lang.String value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setStatus(java.lang.String value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       status_ = value;
       bitField0_ |= 0x00000200;
       onChanged();
       return this;
     }
+
     /**
      * <code>optional string status = 10;</code>
+     *
      * @return This builder for chaining.
      */
     public Builder clearStatus() {
@@ -2066,14 +2150,17 @@ java.lang.String defaultValue) {
       onChanged();
       return this;
     }
+
     /**
      * <code>optional string status = 10;</code>
+     *
      * @param value The bytes for status to set.
      * @return This builder for chaining.
      */
-    public Builder setStatusBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) { throw new NullPointerException(); }
+    public Builder setStatusBytes(com.google.protobuf.ByteString value) {
+      if (value == null) {
+        throw new NullPointerException();
+      }
       checkByteStringIsUtf8(value);
       status_ = value;
       bitField0_ |= 0x00000200;
@@ -2081,21 +2168,19 @@ java.lang.String defaultValue) {
       return this;
     }
 
-    private com.google.protobuf.MapField<
-        java.lang.String, java.lang.String> extra_;
-    private com.google.protobuf.MapField<java.lang.String, java.lang.String>
-        internalGetExtra() {
+    private com.google.protobuf.MapField<java.lang.String, java.lang.String> extra_;
+
+    private com.google.protobuf.MapField<java.lang.String, java.lang.String> internalGetExtra() {
       if (extra_ == null) {
-        return com.google.protobuf.MapField.emptyMapField(
-            ExtraDefaultEntryHolder.defaultEntry);
+        return com.google.protobuf.MapField.emptyMapField(ExtraDefaultEntryHolder.defaultEntry);
       }
       return extra_;
     }
+
     private com.google.protobuf.MapField<java.lang.String, java.lang.String>
         internalGetMutableExtra() {
       if (extra_ == null) {
-        extra_ = com.google.protobuf.MapField.newMapField(
-            ExtraDefaultEntryHolder.defaultEntry);
+        extra_ = com.google.protobuf.MapField.newMapField(ExtraDefaultEntryHolder.defaultEntry);
       }
       if (!extra_.isMutable()) {
         extra_ = extra_.copy();
@@ -2104,106 +2189,97 @@ java.lang.String defaultValue) {
       onChanged();
       return extra_;
     }
+
     public int getExtraCount() {
       return internalGetExtra().getMap().size();
     }
-    /**
-     * <code>map&lt;string, string&gt; extra = 11;</code>
-     */
+
+    /** <code>map&lt;string, string&gt; extra = 11;</code> */
     @java.lang.Override
-    public boolean containsExtra(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
+    public boolean containsExtra(java.lang.String key) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
       return internalGetExtra().getMap().containsKey(key);
     }
-    /**
-     * Use {@link #getExtraMap()} instead.
-     */
+
+    /** Use {@link #getExtraMap()} instead. */
     @java.lang.Override
     @java.lang.Deprecated
     public java.util.Map<java.lang.String, java.lang.String> getExtra() {
       return getExtraMap();
     }
-    /**
-     * <code>map&lt;string, string&gt; extra = 11;</code>
-     */
+
+    /** <code>map&lt;string, string&gt; extra = 11;</code> */
     @java.lang.Override
     public java.util.Map<java.lang.String, java.lang.String> getExtraMap() {
       return internalGetExtra().getMap();
     }
-    /**
-     * <code>map&lt;string, string&gt; extra = 11;</code>
-     */
+
+    /** <code>map&lt;string, string&gt; extra = 11;</code> */
     @java.lang.Override
-    public /* nullable */
-java.lang.String getExtraOrDefault(
+    public /* nullable */ java.lang.String getExtraOrDefault(
         java.lang.String key,
         /* nullable */
-java.lang.String defaultValue) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      java.util.Map<java.lang.String, java.lang.String> map =
-          internalGetExtra().getMap();
+        java.lang.String defaultValue) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
+      java.util.Map<java.lang.String, java.lang.String> map = internalGetExtra().getMap();
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
-    /**
-     * <code>map&lt;string, string&gt; extra = 11;</code>
-     */
+
+    /** <code>map&lt;string, string&gt; extra = 11;</code> */
     @java.lang.Override
-    public java.lang.String getExtraOrThrow(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      java.util.Map<java.lang.String, java.lang.String> map =
-          internalGetExtra().getMap();
+    public java.lang.String getExtraOrThrow(java.lang.String key) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
+      java.util.Map<java.lang.String, java.lang.String> map = internalGetExtra().getMap();
       if (!map.containsKey(key)) {
         throw new java.lang.IllegalArgumentException();
       }
       return map.get(key);
     }
+
     public Builder clearExtra() {
       bitField0_ = (bitField0_ & ~0x00000400);
-      internalGetMutableExtra().getMutableMap()
-          .clear();
+      internalGetMutableExtra().getMutableMap().clear();
       return this;
     }
-    /**
-     * <code>map&lt;string, string&gt; extra = 11;</code>
-     */
-    public Builder removeExtra(
-        java.lang.String key) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      internalGetMutableExtra().getMutableMap()
-          .remove(key);
+
+    /** <code>map&lt;string, string&gt; extra = 11;</code> */
+    public Builder removeExtra(java.lang.String key) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
+      internalGetMutableExtra().getMutableMap().remove(key);
       return this;
     }
-    /**
-     * Use alternate mutation accessors instead.
-     */
+
+    /** Use alternate mutation accessors instead. */
     @java.lang.Deprecated
-    public java.util.Map<java.lang.String, java.lang.String>
-        getMutableExtra() {
+    public java.util.Map<java.lang.String, java.lang.String> getMutableExtra() {
       bitField0_ |= 0x00000400;
       return internalGetMutableExtra().getMutableMap();
     }
-    /**
-     * <code>map&lt;string, string&gt; extra = 11;</code>
-     */
-    public Builder putExtra(
-        java.lang.String key,
-        java.lang.String value) {
-      if (key == null) { throw new NullPointerException("map key"); }
-      if (value == null) { throw new NullPointerException("map value"); }
-      internalGetMutableExtra().getMutableMap()
-          .put(key, value);
+
+    /** <code>map&lt;string, string&gt; extra = 11;</code> */
+    public Builder putExtra(java.lang.String key, java.lang.String value) {
+      if (key == null) {
+        throw new NullPointerException("map key");
+      }
+      if (value == null) {
+        throw new NullPointerException("map value");
+      }
+      internalGetMutableExtra().getMutableMap().put(key, value);
       bitField0_ |= 0x00000400;
       return this;
     }
-    /**
-     * <code>map&lt;string, string&gt; extra = 11;</code>
-     */
-    public Builder putAllExtra(
-        java.util.Map<java.lang.String, java.lang.String> values) {
-      internalGetMutableExtra().getMutableMap()
-          .putAll(values);
+
+    /** <code>map&lt;string, string&gt; extra = 11;</code> */
+    public Builder putAllExtra(java.util.Map<java.lang.String, java.lang.String> values) {
+      internalGetMutableExtra().getMutableMap().putAll(values);
       bitField0_ |= 0x00000400;
       return this;
     }
@@ -2213,6 +2289,7 @@ java.lang.String defaultValue) {
 
   // @@protoc_insertion_point(class_scope:logcentral.logs.VectorLogs)
   private static final com.logwise.spark.protobuf.VectorLogs DEFAULT_INSTANCE;
+
   static {
     DEFAULT_INSTANCE = new com.logwise.spark.protobuf.VectorLogs();
   }
@@ -2221,27 +2298,27 @@ java.lang.String defaultValue) {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<VectorLogs>
-      PARSER = new com.google.protobuf.AbstractParser<VectorLogs>() {
-    @java.lang.Override
-    public VectorLogs parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      Builder builder = newBuilder();
-      try {
-        builder.mergeFrom(input, extensionRegistry);
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(builder.buildPartial());
-      } catch (com.google.protobuf.UninitializedMessageException e) {
-        throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(e)
-            .setUnfinishedMessage(builder.buildPartial());
-      }
-      return builder.buildPartial();
-    }
-  };
+  private static final com.google.protobuf.Parser<VectorLogs> PARSER =
+      new com.google.protobuf.AbstractParser<VectorLogs>() {
+        @java.lang.Override
+        public VectorLogs parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          Builder builder = newBuilder();
+          try {
+            builder.mergeFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw e.setUnfinishedMessage(builder.buildPartial());
+          } catch (com.google.protobuf.UninitializedMessageException e) {
+            throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+          } catch (java.io.IOException e) {
+            throw new com.google.protobuf.InvalidProtocolBufferException(e)
+                .setUnfinishedMessage(builder.buildPartial());
+          }
+          return builder.buildPartial();
+        }
+      };
 
   public static com.google.protobuf.Parser<VectorLogs> parser() {
     return PARSER;
@@ -2256,6 +2333,4 @@ java.lang.String defaultValue) {
   public com.logwise.spark.protobuf.VectorLogs getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
-
 }
-

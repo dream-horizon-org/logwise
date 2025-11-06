@@ -6,206 +6,211 @@
 package com.logwise.spark.protobuf;
 
 @com.google.protobuf.Generated
-public interface VectorLogsOrBuilder extends
+public interface VectorLogsOrBuilder
+    extends
     // @@protoc_insertion_point(interface_extends:logcentral.logs.VectorLogs)
     com.google.protobuf.MessageOrBuilder {
 
   /**
    * <code>string message = 1;</code>
+   *
    * @return The message.
    */
   java.lang.String getMessage();
-  /**
-   * <code>string message = 1;</code>
-   * @return The bytes for message.
-   */
-  com.google.protobuf.ByteString
-      getMessageBytes();
 
   /**
-   * <code>map&lt;string, string&gt; ddtags = 2;</code>
+   * <code>string message = 1;</code>
+   *
+   * @return The bytes for message.
    */
+  com.google.protobuf.ByteString getMessageBytes();
+
+  /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
   int getDdtagsCount();
-  /**
-   * <code>map&lt;string, string&gt; ddtags = 2;</code>
-   */
-  boolean containsDdtags(
-      java.lang.String key);
-  /**
-   * Use {@link #getDdtagsMap()} instead.
-   */
+
+  /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
+  boolean containsDdtags(java.lang.String key);
+
+  /** Use {@link #getDdtagsMap()} instead. */
   @java.lang.Deprecated
-  java.util.Map<java.lang.String, java.lang.String>
-  getDdtags();
-  /**
-   * <code>map&lt;string, string&gt; ddtags = 2;</code>
-   */
-  java.util.Map<java.lang.String, java.lang.String>
-  getDdtagsMap();
-  /**
-   * <code>map&lt;string, string&gt; ddtags = 2;</code>
-   */
+  java.util.Map<java.lang.String, java.lang.String> getDdtags();
+
+  /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
+  java.util.Map<java.lang.String, java.lang.String> getDdtagsMap();
+
+  /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
   /* nullable */
-java.lang.String getDdtagsOrDefault(
+  java.lang.String getDdtagsOrDefault(
       java.lang.String key,
       /* nullable */
-java.lang.String defaultValue);
-  /**
-   * <code>map&lt;string, string&gt; ddtags = 2;</code>
-   */
-  java.lang.String getDdtagsOrThrow(
-      java.lang.String key);
+      java.lang.String defaultValue);
+
+  /** <code>map&lt;string, string&gt; ddtags = 2;</code> */
+  java.lang.String getDdtagsOrThrow(java.lang.String key);
 
   /**
    * <code>.google.protobuf.Timestamp timestamp = 3;</code>
+   *
    * @return Whether the timestamp field is set.
    */
   boolean hasTimestamp();
+
   /**
    * <code>.google.protobuf.Timestamp timestamp = 3;</code>
+   *
    * @return The timestamp.
    */
   com.google.protobuf.Timestamp getTimestamp();
-  /**
-   * <code>.google.protobuf.Timestamp timestamp = 3;</code>
-   */
+
+  /** <code>.google.protobuf.Timestamp timestamp = 3;</code> */
   com.google.protobuf.TimestampOrBuilder getTimestampOrBuilder();
 
   /**
    * <code>string env = 4;</code>
+   *
    * @return The env.
    */
   java.lang.String getEnv();
+
   /**
    * <code>string env = 4;</code>
+   *
    * @return The bytes for env.
    */
-  com.google.protobuf.ByteString
-      getEnvBytes();
+  com.google.protobuf.ByteString getEnvBytes();
 
   /**
    * <code>string service_name = 5;</code>
+   *
    * @return The serviceName.
    */
   java.lang.String getServiceName();
+
   /**
    * <code>string service_name = 5;</code>
+   *
    * @return The bytes for serviceName.
    */
-  com.google.protobuf.ByteString
-      getServiceNameBytes();
+  com.google.protobuf.ByteString getServiceNameBytes();
 
   /**
    * <code>string component_name = 6;</code>
+   *
    * @return The componentName.
    */
   java.lang.String getComponentName();
+
   /**
    * <code>string component_name = 6;</code>
+   *
    * @return The bytes for componentName.
    */
-  com.google.protobuf.ByteString
-      getComponentNameBytes();
+  com.google.protobuf.ByteString getComponentNameBytes();
 
   /**
    * <code>optional string hostname = 7;</code>
+   *
    * @return Whether the hostname field is set.
    */
   boolean hasHostname();
+
   /**
    * <code>optional string hostname = 7;</code>
+   *
    * @return The hostname.
    */
   java.lang.String getHostname();
+
   /**
    * <code>optional string hostname = 7;</code>
+   *
    * @return The bytes for hostname.
    */
-  com.google.protobuf.ByteString
-      getHostnameBytes();
+  com.google.protobuf.ByteString getHostnameBytes();
 
   /**
    * <code>optional string ddsource = 8;</code>
+   *
    * @return Whether the ddsource field is set.
    */
   boolean hasDdsource();
+
   /**
    * <code>optional string ddsource = 8;</code>
+   *
    * @return The ddsource.
    */
   java.lang.String getDdsource();
+
   /**
    * <code>optional string ddsource = 8;</code>
+   *
    * @return The bytes for ddsource.
    */
-  com.google.protobuf.ByteString
-      getDdsourceBytes();
+  com.google.protobuf.ByteString getDdsourceBytes();
 
   /**
    * <code>optional string source_type = 9;</code>
+   *
    * @return Whether the sourceType field is set.
    */
   boolean hasSourceType();
+
   /**
    * <code>optional string source_type = 9;</code>
+   *
    * @return The sourceType.
    */
   java.lang.String getSourceType();
+
   /**
    * <code>optional string source_type = 9;</code>
+   *
    * @return The bytes for sourceType.
    */
-  com.google.protobuf.ByteString
-      getSourceTypeBytes();
+  com.google.protobuf.ByteString getSourceTypeBytes();
 
   /**
    * <code>optional string status = 10;</code>
+   *
    * @return Whether the status field is set.
    */
   boolean hasStatus();
+
   /**
    * <code>optional string status = 10;</code>
+   *
    * @return The status.
    */
   java.lang.String getStatus();
-  /**
-   * <code>optional string status = 10;</code>
-   * @return The bytes for status.
-   */
-  com.google.protobuf.ByteString
-      getStatusBytes();
 
   /**
-   * <code>map&lt;string, string&gt; extra = 11;</code>
+   * <code>optional string status = 10;</code>
+   *
+   * @return The bytes for status.
    */
+  com.google.protobuf.ByteString getStatusBytes();
+
+  /** <code>map&lt;string, string&gt; extra = 11;</code> */
   int getExtraCount();
-  /**
-   * <code>map&lt;string, string&gt; extra = 11;</code>
-   */
-  boolean containsExtra(
-      java.lang.String key);
-  /**
-   * Use {@link #getExtraMap()} instead.
-   */
+
+  /** <code>map&lt;string, string&gt; extra = 11;</code> */
+  boolean containsExtra(java.lang.String key);
+
+  /** Use {@link #getExtraMap()} instead. */
   @java.lang.Deprecated
-  java.util.Map<java.lang.String, java.lang.String>
-  getExtra();
-  /**
-   * <code>map&lt;string, string&gt; extra = 11;</code>
-   */
-  java.util.Map<java.lang.String, java.lang.String>
-  getExtraMap();
-  /**
-   * <code>map&lt;string, string&gt; extra = 11;</code>
-   */
+  java.util.Map<java.lang.String, java.lang.String> getExtra();
+
+  /** <code>map&lt;string, string&gt; extra = 11;</code> */
+  java.util.Map<java.lang.String, java.lang.String> getExtraMap();
+
+  /** <code>map&lt;string, string&gt; extra = 11;</code> */
   /* nullable */
-java.lang.String getExtraOrDefault(
+  java.lang.String getExtraOrDefault(
       java.lang.String key,
       /* nullable */
-java.lang.String defaultValue);
-  /**
-   * <code>map&lt;string, string&gt; extra = 11;</code>
-   */
-  java.lang.String getExtraOrThrow(
-      java.lang.String key);
+      java.lang.String defaultValue);
+
+  /** <code>map&lt;string, string&gt; extra = 11;</code> */
+  java.lang.String getExtraOrThrow(java.lang.String key);
 }
