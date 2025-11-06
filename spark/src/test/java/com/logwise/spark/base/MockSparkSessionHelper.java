@@ -1,48 +1,41 @@
 package com.logwise.spark.base;
 
-import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
 import org.mockito.Mockito;
 
-/**
- * Helper class for creating mock SparkSession objects for testing.
- */
+/** Helper class for creating mock SparkSession objects for testing. */
 public class MockSparkSessionHelper {
 
-    /**
-     * Creates a mock SparkSession with basic configuration.
-     *
-     * @return Mock SparkSession
-     */
-    public static SparkSession createMockSparkSession() {
-        SparkSession mockSession = Mockito.mock(SparkSession.class);
-        SparkConf mockConf = new SparkConf();
-        mockConf.setMaster("local[2]");
-        mockConf.setAppName("test-app");
+  /**
+   * Creates a mock SparkSession with basic configuration. Does not create real SparkConf to avoid
+   * Spark initialization issues.
+   *
+   * @return Mock SparkSession
+   */
+  public static SparkSession createMockSparkSession() {
+    SparkSession mockSession = Mockito.mock(SparkSession.class);
 
-        // Mock common SparkSession methods
-        Mockito.when(mockSession.sparkContext()).thenReturn(null);
-        Mockito.when(mockSession.newSession()).thenReturn(mockSession);
+    // Mock common SparkSession methods
+    Mockito.when(mockSession.sparkContext()).thenReturn(null);
+    Mockito.when(mockSession.newSession()).thenReturn(mockSession);
 
-        return mockSession;
-    }
+    return mockSession;
+  }
 
-    /**
-     * Creates a mock SparkSession with custom configuration.
-     *
-     * @param appName Application name
-     * @param master  Spark master URL
-     * @return Mock SparkSession
-     */
-    public static SparkSession createMockSparkSession(String appName, String master) {
-        SparkSession mockSession = Mockito.mock(SparkSession.class);
-        SparkConf mockConf = new SparkConf();
-        mockConf.setMaster(master);
-        mockConf.setAppName(appName);
+  /**
+   * Creates a mock SparkSession with custom configuration. Does not create real SparkConf to avoid
+   * Spark initialization issues.
+   *
+   * @param appName Application name (not used in mock, but kept for API compatibility)
+   * @param master Spark master URL (not used in mock, but kept for API compatibility)
+   * @return Mock SparkSession
+   */
+  public static SparkSession createMockSparkSession(String appName, String master) {
+    SparkSession mockSession = Mockito.mock(SparkSession.class);
 
-        Mockito.when(mockSession.sparkContext()).thenReturn(null);
-        Mockito.when(mockSession.newSession()).thenReturn(mockSession);
+    Mockito.when(mockSession.sparkContext()).thenReturn(null);
+    Mockito.when(mockSession.newSession()).thenReturn(mockSession);
 
-        return mockSession;
-    }
+    return mockSession;
+  }
 }

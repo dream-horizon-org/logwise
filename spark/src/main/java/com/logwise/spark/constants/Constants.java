@@ -22,7 +22,6 @@ public class Constants {
   public final String WRITE_STREAM_BQ_FORMAT = "com.google.cloud.spark.bigquery";
   public final String WRITE_STREAM_GZIP_COMPRESSION = "gzip";
 
-
   // Config Keys
   public final String CONFIG_KEY_SPARK_CONFIG = "sparkConfig";
   public final String CONFIG_KEY_SPARK_HADOOP_CONFIG = "sparkHadoopConfig";

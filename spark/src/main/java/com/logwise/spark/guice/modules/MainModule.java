@@ -12,5 +12,4 @@ public class MainModule extends AbstractModule {
   protected void configure() {
     bind(Config.class).toInstance(config);
   }
-
 }
