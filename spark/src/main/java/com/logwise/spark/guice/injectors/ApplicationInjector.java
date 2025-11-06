@@ -25,4 +25,11 @@ public class ApplicationInjector {
     }
     return applicationInjector.injector.getInstance(clazz);
   }
+
+  /**
+   * Resets the ApplicationInjector instance. This method should only be used for testing purposes.
+   */
+  public static void reset() {
+    applicationInjector = null;
+  }
 }

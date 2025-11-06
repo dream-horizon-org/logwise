@@ -25,10 +25,6 @@ public class PushLogsToS3SparkJob extends AbstractSparkStreamSparkJob<Void> {
   private final Config config;
   private final SparkSession sparkSession;
 
-  {
-    this.pushLogsToS3Thread = new Thread(getPushLogsToS3Runnable());
-  }
-
   @NonFinal private Thread pushLogsToS3Thread;
   @NonFinal private Long pushLogsToS3ThreadStartTime = null;
 
@@ -51,7 +47,7 @@ public class PushLogsToS3SparkJob extends AbstractSparkStreamSparkJob<Void> {
 
   @Override
   public void stop() {
-    if (pushLogsToS3Thread.isAlive()) {
+    if (pushLogsToS3Thread != null && pushLogsToS3Thread.isAlive()) {
       pushLogsToS3Thread.interrupt();
     } else {
       log.info("Job {} is not running, nothing to stop.", getJobName());
@@ -78,7 +74,7 @@ public class PushLogsToS3SparkJob extends AbstractSparkStreamSparkJob<Void> {
             getJobName(),
             TimeUnit.MILLISECONDS.toMinutes(timeOutInMillis));
         stop();
-      } else if (!pushLogsToS3Thread.isAlive()) {
+      } else if (pushLogsToS3Thread == null || !pushLogsToS3Thread.isAlive()) {
         startGetPushLogsToS3Runnable();
       }
       Thread.sleep(100);
@@ -86,6 +82,8 @@ public class PushLogsToS3SparkJob extends AbstractSparkStreamSparkJob<Void> {
   }
 
   private void startGetPushLogsToS3Runnable() {
+    // Create a new Thread instance each time to avoid IllegalThreadStateException
+    pushLogsToS3Thread = new Thread(getPushLogsToS3Runnable());
     pushLogsToS3Thread.start();
     pushLogsToS3ThreadStartTime = System.currentTimeMillis();
     RUNNING_JOBS.add(this);
@@ -112,7 +110,7 @@ public class PushLogsToS3SparkJob extends AbstractSparkStreamSparkJob<Void> {
                           "Creating new Spark Session: {} for Steam: {}",
                           newSparkSession,
                           streamName.getValue());
-                      return StreamFactory.getStream(streamName).startStreams(sparkSession);
+                      return StreamFactory.getStream(streamName).startStreams(newSparkSession);
                     })
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
