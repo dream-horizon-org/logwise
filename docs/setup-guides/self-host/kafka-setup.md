@@ -64,26 +64,6 @@ bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092
 zkCli.sh -server localhost:2181 ls /brokers/ids
 ```
 
-## 4) Install Kafka Manager (CMAK)
-
-```bash
-# Get CMAK (Kafka Manager)
-# Releases: https://github.com/yahoo/CMAK/releases
-
-# Example using packaged start (adjust for your install method)
-export ZK_HOSTS="localhost:2181"
-
-# In conf/application.conf ensure:
-# cmak.zkhosts="localhost:2181"
-
-# Start CMAK (default port 9000)
-bin/cmak -Dconfig.file=conf/application.conf -Dhttp.port=9000 &
-```
-
-Then open `http://<server>:9000`, add a cluster:
-- Cluster Zookeeper hosts: `localhost:2181`
-- Enable JMX polling if needed
-
 ## Notes for LogWise
 
 - `auto.create.topics.enable=true` is required so Vector can publish to new topics.
