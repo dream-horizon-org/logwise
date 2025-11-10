@@ -157,24 +157,49 @@ if [[ -n "${AWS_REGION}" ]]; then
   ENV_VARS_JSON="${ENV_VARS_JSON}, \"AWS_REGION\": \"$(escape_json "${AWS_REGION}")\""
 fi
 
-# Determine credentials provider based on whether session token is present
-# SimpleAWSCredentialsProvider doesn't support session tokens, so use EnvironmentVariableCredentialsProvider when session token is present
-if [[ -n "${AWS_SESSION_TOKEN}" ]]; then
-  S3A_CREDENTIALS_PROVIDER="com.amazonaws.auth.EnvironmentVariableCredentialsProvider"
-  # When using EnvironmentVariableCredentialsProvider, don't set access.key and secret.key in properties
-  S3A_PROPERTIES_JSON='"spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
-    "spark.hadoop.fs.s3a.path.style.access": "true",
-    "spark.hadoop.fs.s3a.aws.credentials.provider": "'"${S3A_CREDENTIALS_PROVIDER}"'",
-    "spark.hadoop.fs.s3a.endpoint": "s3.'"${AWS_REGION:-us-east-1}"'.amazonaws.com"'
+# Determine S3A endpoint based on region
+# For us-east-1, use s3.amazonaws.com (no region prefix)
+# For other regions, use s3-<region>.amazonaws.com
+AWS_REGION=${AWS_REGION:-us-east-1}
+if [[ "${AWS_REGION}" == "us-east-1" ]]; then
+  S3A_ENDPOINT="s3.amazonaws.com"
 else
-  S3A_CREDENTIALS_PROVIDER="org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider"
-  # When using SimpleAWSCredentialsProvider, set access.key and secret.key in properties
+  S3A_ENDPOINT="s3-${AWS_REGION}.amazonaws.com"
+fi
+
+# Determine credentials provider based on whether session token is present
+# Use explicit credentials via S3A properties so executors don't rely on env propagation
+if [[ -n "${AWS_SESSION_TOKEN}" ]]; then
+  S3A_CREDENTIALS_PROVIDER="org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider"
   S3A_PROPERTIES_JSON='"spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
-    "spark.hadoop.fs.s3a.path.style.access": "true",
+    "spark.hadoop.fs.s3a.path.style.access": "false",
     "spark.hadoop.fs.s3a.aws.credentials.provider": "'"${S3A_CREDENTIALS_PROVIDER}"'",
     "spark.hadoop.fs.s3a.access.key": "'"$(escape_json "${AWS_ACCESS_KEY_ID:-}")"'",
     "spark.hadoop.fs.s3a.secret.key": "'"$(escape_json "${AWS_SECRET_ACCESS_KEY:-}")"'",
-    "spark.hadoop.fs.s3a.endpoint": "s3.'"${AWS_REGION:-us-east-1}"'.amazonaws.com"'
+    "spark.hadoop.fs.s3a.session.token": "'"$(escape_json "${AWS_SESSION_TOKEN:-}")"'",
+    "spark.hadoop.fs.s3a.endpoint": "'"${S3A_ENDPOINT}"'",
+    "spark.driverEnv.AWS_ACCESS_KEY_ID": "'"$(escape_json "${AWS_ACCESS_KEY_ID:-}")"'",
+    "spark.driverEnv.AWS_SECRET_ACCESS_KEY": "'"$(escape_json "${AWS_SECRET_ACCESS_KEY:-}")"'",
+    "spark.driverEnv.AWS_SESSION_TOKEN": "'"$(escape_json "${AWS_SESSION_TOKEN:-}")"'",
+    "spark.driverEnv.AWS_REGION": "'"$(escape_json "${AWS_REGION:-us-east-1}")"'",
+    "spark.executorEnv.AWS_ACCESS_KEY_ID": "'"$(escape_json "${AWS_ACCESS_KEY_ID:-}")"'",
+    "spark.executorEnv.AWS_SECRET_ACCESS_KEY": "'"$(escape_json "${AWS_SECRET_ACCESS_KEY:-}")"'",
+    "spark.executorEnv.AWS_SESSION_TOKEN": "'"$(escape_json "${AWS_SESSION_TOKEN:-}")"'",
+    "spark.executorEnv.AWS_REGION": "'"$(escape_json "${AWS_REGION:-us-east-1}")"'"'
+else
+  S3A_CREDENTIALS_PROVIDER="org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider"
+  S3A_PROPERTIES_JSON='"spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
+    "spark.hadoop.fs.s3a.path.style.access": "false",
+    "spark.hadoop.fs.s3a.aws.credentials.provider": "'"${S3A_CREDENTIALS_PROVIDER}"'",
+    "spark.hadoop.fs.s3a.access.key": "'"$(escape_json "${AWS_ACCESS_KEY_ID:-}")"'",
+    "spark.hadoop.fs.s3a.secret.key": "'"$(escape_json "${AWS_SECRET_ACCESS_KEY:-}")"'",
+    "spark.hadoop.fs.s3a.endpoint": "'"${S3A_ENDPOINT}"'",
+    "spark.driverEnv.AWS_ACCESS_KEY_ID": "'"$(escape_json "${AWS_ACCESS_KEY_ID:-}")"'",
+    "spark.driverEnv.AWS_SECRET_ACCESS_KEY": "'"$(escape_json "${AWS_SECRET_ACCESS_KEY:-}")"'",
+    "spark.driverEnv.AWS_REGION": "'"$(escape_json "${AWS_REGION:-us-east-1}")"'",
+    "spark.executorEnv.AWS_ACCESS_KEY_ID": "'"$(escape_json "${AWS_ACCESS_KEY_ID:-}")"'",
+    "spark.executorEnv.AWS_SECRET_ACCESS_KEY": "'"$(escape_json "${AWS_SECRET_ACCESS_KEY:-}")"'",
+    "spark.executorEnv.AWS_REGION": "'"$(escape_json "${AWS_REGION:-us-east-1}")"'"'
 fi
 
 # Build JSON body - use printf instead of heredoc to avoid issues with set -eu

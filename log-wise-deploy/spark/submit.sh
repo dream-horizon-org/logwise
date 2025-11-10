@@ -91,15 +91,38 @@ spark.stop()
 PYAPP
 fi
 
-# Ensure required jars exist (Kafka + S3A)
-SPARK_VERSION_MATCH=${SPARK_VERSION_MATCH:-3.5.1}
-HADOOP_AWS_VERSION=${HADOOP_AWS_VERSION:-3.3.4}
-AWS_SDK_VERSION=${AWS_SDK_VERSION:-1.12.772}
+# Ensure required jars exist (Kafka + S3A) aligned to Spark 3.1.2
+SPARK_VERSION_MATCH=${SPARK_VERSION_MATCH:-3.1.2}
+HADOOP_AWS_VERSION=${HADOOP_AWS_VERSION:-3.2.0}
+AWS_SDK_VERSION=${AWS_SDK_VERSION:-1.11.375}
 JARS_DIR="${SPARK_HOME}/jars"
 mkdir -p "$JARS_DIR"
 if [ ! -f "$JARS_DIR/spark-sql-kafka-0-10_2.12-${SPARK_VERSION_MATCH}.jar" ]; then
   wget -q -O "$JARS_DIR/spark-sql-kafka-0-10_2.12-${SPARK_VERSION_MATCH}.jar" \
     "https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.12/${SPARK_VERSION_MATCH}/spark-sql-kafka-0-10_2.12-${SPARK_VERSION_MATCH}.jar"
+fi
+# Spark 3.1.x requires token provider jar for Kafka
+if [ ! -f "$JARS_DIR/spark-token-provider-kafka-0-10_2.12-${SPARK_VERSION_MATCH}.jar" ]; then
+  wget -q -O "$JARS_DIR/spark-token-provider-kafka-0-10_2.12-${SPARK_VERSION_MATCH}.jar" \
+    "https://repo1.maven.org/maven2/org/apache/spark/spark-token-provider-kafka-0-10_2.12/${SPARK_VERSION_MATCH}/spark-token-provider-kafka-0-10_2.12-${SPARK_VERSION_MATCH}.jar"
+fi
+# Kafka connector caches consumers via commons-pool2
+if ! ls "$JARS_DIR"/commons-pool2-*.jar >/dev/null 2>&1; then
+  wget -q -O "$JARS_DIR/commons-pool2-2.6.2.jar" \
+    "https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/2.6.2/commons-pool2-2.6.2.jar"
+fi
+# Compression codec runtime libs for Kafka (lz4, zstd, snappy)
+if ! ls "$JARS_DIR"/lz4-java-*.jar >/dev/null 2>&1; then
+  wget -q -O "$JARS_DIR/lz4-java-1.7.1.jar" \
+    "https://repo1.maven.org/maven2/org/lz4/lz4-java/1.7.1/lz4-java-1.7.1.jar"
+fi
+if ! ls "$JARS_DIR"/zstd-jni-*.jar >/dev/null 2>&1; then
+  wget -q -O "$JARS_DIR/zstd-jni-1.4.8-1.jar" \
+    "https://repo1.maven.org/maven2/com/github/luben/zstd-jni/1.4.8-1/zstd-jni-1.4.8-1.jar"
+fi
+if ! ls "$JARS_DIR"/snappy-java-*.jar >/dev/null 2>&1; then
+  wget -q -O "$JARS_DIR/snappy-java-1.1.8.4.jar" \
+    "https://repo1.maven.org/maven2/org/xerial/snappy/snappy-java/1.1.8.4/snappy-java-1.1.8.4.jar"
 fi
 if [ ! -f "$JARS_DIR/hadoop-aws-${HADOOP_AWS_VERSION}.jar" ]; then
   wget -q -O "$JARS_DIR/hadoop-aws-${HADOOP_AWS_VERSION}.jar" \
@@ -111,12 +134,47 @@ if [ ! -f "$JARS_DIR/aws-java-sdk-bundle-${AWS_SDK_VERSION}.jar" ]; then
 fi
 
 # Spark settings: S3A + master URL
-S3A_OPTS=(
-  --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
-  --conf spark.hadoop.fs.s3a.path.style.access=true
-  --conf spark.hadoop.fs.s3a.aws.credentials.provider=com.amazonaws.auth.EnvironmentVariableCredentialsProvider
-  --conf spark.hadoop.fs.s3a.endpoint=s3.${AWS_REGION}.amazonaws.com
-)
+# For us-east-1, use s3.amazonaws.com (no region prefix)
+# For other regions, use s3-<region>.amazonaws.com
+if [[ "${AWS_REGION}" == "us-east-1" ]]; then
+  S3A_ENDPOINT="s3.amazonaws.com"
+else
+  S3A_ENDPOINT="s3-${AWS_REGION}.amazonaws.com"
+fi
+
+S3A_OPTS=(--conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+          --conf spark.hadoop.fs.s3a.path.style.access=false
+          --conf spark.hadoop.fs.s3a.endpoint=${S3A_ENDPOINT})
+
+# Pass credentials explicitly so executors don't rely on inheriting env
+if [[ -n "${AWS_SESSION_TOKEN:-}" ]]; then
+  S3A_OPTS+=(
+    --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider
+    --conf spark.hadoop.fs.s3a.access.key="${AWS_ACCESS_KEY_ID}"
+    --conf spark.hadoop.fs.s3a.secret.key="${AWS_SECRET_ACCESS_KEY}"
+    --conf spark.hadoop.fs.s3a.session.token="${AWS_SESSION_TOKEN}"
+    --conf spark.driverEnv.AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+    --conf spark.driverEnv.AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+    --conf spark.driverEnv.AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}"
+    --conf spark.driverEnv.AWS_REGION="${AWS_REGION}"
+    --conf spark.executorEnv.AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+    --conf spark.executorEnv.AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+    --conf spark.executorEnv.AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}"
+    --conf spark.executorEnv.AWS_REGION="${AWS_REGION}"
+  )
+else
+  S3A_OPTS+=(
+    --conf spark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider
+    --conf spark.hadoop.fs.s3a.access.key="${AWS_ACCESS_KEY_ID}"
+    --conf spark.hadoop.fs.s3a.secret.key="${AWS_SECRET_ACCESS_KEY}"
+    --conf spark.driverEnv.AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+    --conf spark.driverEnv.AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+    --conf spark.driverEnv.AWS_REGION="${AWS_REGION}"
+    --conf spark.executorEnv.AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+    --conf spark.executorEnv.AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+    --conf spark.executorEnv.AWS_REGION="${AWS_REGION}"
+  )
+fi
 MASTER_URL=${SPARK_MASTER_URL:-spark://spark-master:7077}
 
 if [ -n "$APP_JAR" ]; then

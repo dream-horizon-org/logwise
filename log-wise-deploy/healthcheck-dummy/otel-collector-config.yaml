@@ -28,6 +28,9 @@ processors:
       - key: service.name
         value: healthcheck-dummy
         action: upsert
+      - key: component.name
+        value: healthcheck-dummy
+        action: upsert
       - key: environment
         value: local
         action: upsert

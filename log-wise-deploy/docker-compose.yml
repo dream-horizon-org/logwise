@@ -181,55 +181,55 @@ services:
       start_period: 20s
     restart: unless-stopped
 
-  kafka-manager:
-    image: hlebalbau/kafka-manager:stable
-    platform: linux/amd64
-    container_name: lc_kafka_manager
-    environment:
-      ZK_HOSTS: zookeeper:2181
-      APPLICATION_SECRET: change_me_secret
-      KM_ARGS: -Dpidfile.path=/dev/null
-    networks:
-      - lc_net
-    depends_on:
-      zookeeper:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    ports:
-      - "${KAFKA_MANAGER_PORT:-9000}:9000"
-    healthcheck:
-      test: ["CMD", "bash", "-lc", "wget -qO- http://localhost:9000 | grep -i kafka >/dev/null"]
-      interval: 15s
-      timeout: 10s
-      retries: 20
-      start_period: 20s
-    restart: unless-stopped
+  # kafka-manager:
+  #   image: hlebalbau/kafka-manager:stable
+  #   platform: linux/amd64
+  #   container_name: lc_kafka_manager
+  #   environment:
+  #     ZK_HOSTS: zookeeper:2181
+  #     APPLICATION_SECRET: change_me_secret
+  #     KM_ARGS: -Dpidfile.path=/dev/null
+  #   networks:
+  #     - lc_net
+  #   depends_on:
+  #     zookeeper:
+  #       condition: service_healthy
+  #     kafka:
+  #       condition: service_healthy
+  #   ports:
+  #     - "${KAFKA_MANAGER_PORT:-9000}:9000"
+  #   healthcheck:
+  #     test: ["CMD", "bash", "-lc", "wget -qO- http://localhost:9000 | grep -i kafka >/dev/null"]
+  #     interval: 15s
+  #     timeout: 10s
+  #     retries: 20
+  #     start_period: 20s
+  #   restart: unless-stopped
 
-  kafka-manager-init:
-    image: alpine:3.20
-    container_name: lc_kafka_manager_init
-    environment:
-      ZK_HOSTS: zookeeper:2181
-      CLUSTER_NAME: logwise
-      KAFKA_MANAGER_HOST: kafka-manager
-      KAFKA_MANAGER_PORT: 9000
-      KAFKA_VERSION: 2.4.0
-      KAFKA_HOST: kafka
-      KAFKA_JMX_PORT: 9999
-    networks:
-      - lc_net
-    depends_on:
-      kafka-manager:
-        condition: service_started
-      kafka:
-        condition: service_healthy
-      zookeeper:
-        condition: service_healthy
-    volumes:
-      - ./kafka-manager/init-cluster.sh:/init-cluster.sh:ro
-    entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl netcat-openbsd && /init-cluster.sh"]
-    restart: "on-failure"
+  # kafka-manager-init:
+  #   image: alpine:3.20
+  #   container_name: lc_kafka_manager_init
+  #   environment:
+  #     ZK_HOSTS: zookeeper:2181
+  #     CLUSTER_NAME: logwise
+  #     KAFKA_MANAGER_HOST: kafka-manager
+  #     KAFKA_MANAGER_PORT: 9000
+  #     KAFKA_VERSION: 2.4.0
+  #     KAFKA_HOST: kafka
+  #     KAFKA_JMX_PORT: 9999
+  #   networks:
+  #     - lc_net
+  #   depends_on:
+  #     kafka-manager:
+  #       condition: service_started
+  #     kafka:
+  #       condition: service_healthy
+  #     zookeeper:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./kafka-manager/init-cluster.sh:/init-cluster.sh:ro
+  #   entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl netcat-openbsd && /init-cluster.sh"]
+  #   restart: "on-failure"
 
   spark-master:
     build:
@@ -249,7 +249,7 @@ services:
       - "${SPARK_MASTER_UI_PORT:-18080}:8080"
       - 6066:6066
     volumes:
-      - ./d11-log-management-spark/central-log-management-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
+      - ../spark/target/logwise-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
       - ./log4j.properties:/opt/spark/conf/log4j.properties:ro
       - spark_master_logs:/opt/spark/logs
     networks:
@@ -281,7 +281,7 @@ services:
     networks:
       - lc_net
     volumes:
-      - ./d11-log-management-spark/central-log-management-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
+      - ../spark/target/logwise-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
       # - ./spark-kafka-vector:/opt/spark/work-dir
       - ./log4j.properties:/opt/spark/conf/log4j.properties:ro
       - spark_worker_logs:/opt/spark/logs
@@ -301,6 +301,39 @@ services:
     mem_limit: 3g
     cpus: "2.00"
 
+  # spark-worker-2:
+  #   build:
+  #     context: ./spark
+  #     dockerfile: Dockerfile
+  #   container_name: lc_spark_worker_2
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_WORKER_MEMORY=2g
+  #     - SPARK_WORKER_CORES=2
+  #   command: ["bash", "-lc", 
+  #     "mkdir -p /opt/spark/logs && SPARK_WORKER_OPTS='-Dspark.worker.memory=2048m' /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8081 --memory 2048m --cores 2"]
+  #   networks:
+  #     - lc_net
+  #   volumes:
+  #     - ./d11-log-management-spark/central-log-management-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
+  #     # - ./spark-kafka-vector:/opt/spark/work-dir
+  #     - ./log4j.properties:/opt/spark/conf/log4j.properties:ro
+  #     - spark_worker_logs:/opt/spark/logs
+  #     # - ./spark-work-dir:/opt/spark/work
+  #   depends_on:
+  #     spark-master:
+  #       condition: service_started
+  #   ports: 
+  #     - "8081:8081"
+  #   healthcheck:
+  #     test: ["CMD", "bash", "-lc", "wget -qO- http://localhost:8081 >/dev/null"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 20
+  #     start_period: 10s
+  #   restart: unless-stopped
+  #   mem_limit: 3g
+  #   cpus: "2.00"
   # spark-build:
   #   image: maven:3-eclipse-temurin-17
   #   container_name: lc_spark_build
@@ -420,7 +453,23 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
-      - GF_INSTALL_PLUGINS=${GF_INSTALL_PLUGINS}
+      - GF_INSTALL_PLUGINS=grafana-athena-datasource,yesoreyeram-infinity-datasource
+      # Fix external URL to avoid redirects to Docker internal IP
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_HTTP_ADDR=0.0.0.0
+      - GF_SERVER_HTTP_PORT=3000
+      - GF_SERVER_ROOT_URL=http://localhost:3000/
+      # Use MySQL as Grafana database instead of default SQLite
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=db:3306
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=grafana
+      # AWS credentials for Athena datasource
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -428,6 +477,11 @@ services:
       - "${GRAFANA_PORT:-3000}:3000" # only user-facing port
     networks:
       - lc_net
+    depends_on:
+      db:
+        condition: service_healthy
+      grafana-db-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "bash", "-lc", "wget -qO- http://localhost:3000/api/health | grep 'ok' >/dev/null"]
       interval: 10s
@@ -435,6 +489,26 @@ services:
       retries: 20
       start_period: 20s
     restart: unless-stopped
+
+  grafana-db-init:
+    image: mysql:8.0
+    container_name: lc_grafana_db_init
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_pass}
+    networks:
+      - lc_net
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: [ "sh", "-c" ]
+    # Idempotent DB/user creation for Grafana
+    command: >
+      "mysql -h db -uroot -p\"${MYSQL_ROOT_PASSWORD:-root_pass}\" -e
+      \"CREATE DATABASE IF NOT EXISTS grafana CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+      CREATE USER IF NOT EXISTS 'grafana'@'%' IDENTIFIED BY 'grafana';
+      GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'%';
+      FLUSH PRIVILEGES;\""
+    restart: "no"
 
   scheduler:
     image: alpine:3.20
@@ -452,5 +526,3 @@ services:
        crontab /crontab &&
        crond -f -l 8'
   
-
-
