@@ -146,7 +146,7 @@
             "uid": "asadsadf"
           },
           "format": 1,
-          "rawSQL": "-- Dashboard: ${__dashboard.title}\n-- User Email: ${__user.email}\nSELECT ${columns:raw}\nFROM \"logs\".\"application-logs\"\nWHERE \n  time BETWEEN date_format(TIMESTAMP $__rawTimeFrom(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i') AND date_format(TIMESTAMP $__rawTimeTo(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i')\n  AND env = '${env}'\n  AND service_name IN (${service_name:singlequote})\n  AND component_name IN (${component_name:singlequote})\n  AND (length('$text_search') = 0 OR REGEXP_LIKE(message, REGEXP_REPLACE('$text_search', ',', '|')))\n  AND (length('$exclude_text') = 0 OR NOT REGEXP_LIKE(message, REGEXP_REPLACE('$exclude_text', ',', '|')))\n  AND (length('$regex_search') = 0 OR REGEXP_LIKE(message, '$regex_search'))\n  AND (length('$instanceIds') = 0 OR hostname IN (SELECT * FROM UNNEST(split('$instanceIds', ',')) AS t(value)))\n  AND (length('$file_name') = 0 OR json_extract_scalar(ddtags, '$[\"filename\"]') = '${file_name:raw}')\nORDER BY \"timestamp\" ${sortby:raw}\nLIMIT $limit",
+          "rawSQL": "-- Dashboard: ${__dashboard.title}\n-- User Email: ${__user.email}\nSELECT ${columns:raw}\nFROM \"logwise\".\"application-logs\"\nWHERE \n  time BETWEEN date_format(TIMESTAMP $__rawTimeFrom(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i') AND date_format(TIMESTAMP $__rawTimeTo(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i')\n  AND env = '${env}'\n  AND service_name IN (${service_name:singlequote})\n  AND component_name IN (${component_name:singlequote})\n  AND (length('$text_search') = 0 OR REGEXP_LIKE(message, REGEXP_REPLACE('$text_search', ',', '|')))\n  AND (length('$exclude_text') = 0 OR NOT REGEXP_LIKE(message, REGEXP_REPLACE('$exclude_text', ',', '|')))\n  AND (length('$regex_search') = 0 OR REGEXP_LIKE(message, '$regex_search'))\n  AND (length('$instanceIds') = 0 OR hostname IN (SELECT * FROM UNNEST(split('$instanceIds', ',')) AS t(value)))\n  AND (length('$file_name') = 0 OR json_extract_scalar(ddtags, '$[\"filename\"]') = '${file_name:raw}')\nORDER BY \"timestamp\" ${sortby:raw}\nLIMIT $limit",
           "refId": "A"
         }
       ],
@@ -578,7 +578,7 @@
     "nowDelay": "5s"
   },
   "timezone": "",
-  "title": "d11-application-logs",
+  "title": "Application Logs",
   "uid": "ferlywfmzk1kwb",
   "version": 2,
   "weekStart": ""

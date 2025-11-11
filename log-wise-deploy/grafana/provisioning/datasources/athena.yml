@@ -8,12 +8,10 @@ datasources:
     isDefault: false
     editable: true
     jsonData:
-      authType: keys
-      defaultRegion: us-east-1
+      authType: default
+      defaultRegion: ${AWS_REGION:-us-east-1}
       catalog: AwsDataCatalog
-      database: default
-      workgroup: primary
-    secureJsonData:
-      accessKey: ""
-      secretKey: ""
+      database: ${ATHENA_DATABASE}
+      workgroup: ${ATHENA_WORKGROUP}
+      outputLocation: ${S3_ATHENA_OUTPUT}
 

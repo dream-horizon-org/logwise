@@ -481,6 +481,7 @@ services:
       MYSQL_DATABASE: grafana
       MYSQL_USER: grafana
       MYSQL_PASSWORD: grafana_password
+      DB_HOST: mysql
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
@@ -491,6 +492,25 @@ services:
       timeout: 5s
       retries: 5
 
+  grafana-db-init:
+    image: mysql:8.0
+    container_name: lc_grafana_db_init
+    networks:
+      - lc_net
+    environment:
+      MYSQL_ROOT_PASSWORD: grafana_root_password
+    depends_on:
+      mysql:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command: >
+      "mysql -h mysql -uroot -pgrafana_root_password -e
+      \"CREATE DATABASE IF NOT EXISTS grafana CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+      CREATE USER IF NOT EXISTS 'grafana'@'%' IDENTIFIED BY 'grafana_password';
+      GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'%';
+      FLUSH PRIVILEGES;\""
+    restart: "no"
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -499,6 +519,8 @@ services:
       - "3000:3000"
     networks:
       - lc_net
+    env_file:
+      - .env
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -509,12 +531,23 @@ services:
       - GF_DATABASE_USER=grafana
       - GF_DATABASE_PASSWORD=grafana_password
       - GF_DATABASE_SSL_MODE=disable
+       #     # (If referenced by provisioning)
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
+      - ATHENA_WORKGROUP=${ATHENA_WORKGROUP}
+      - ATHENA_CATALOG=${ATHENA_CATALOG}
+      - ATHENA_DATABASE=${ATHENA_DATABASE}
+      - S3_ATHENA_OUTPUT=${S3_ATHENA_OUTPUT}
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./provisioning:/etc/grafana/provisioning
+      - ./grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       mysql:
         condition: service_healthy
+      grafana-db-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
       interval: 30s
