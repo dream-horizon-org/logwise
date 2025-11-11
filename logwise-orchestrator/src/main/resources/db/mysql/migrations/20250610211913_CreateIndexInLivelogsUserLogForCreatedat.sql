@@ -1,0 +1,1 @@
+ALTER TABLE livelogs_user_log ADD INDEX idx_createdAt (createdAt);

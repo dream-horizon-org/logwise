@@ -1,0 +1,27 @@
+name: Onboard Ephemeral Runners
+
+run-name: ${{ github.repository }} repository ephemeral runners
+
+on: workflow_dispatch
+
+# Todo: Remove this once the onboarding runner is on debian/ubuntu or anything that is not centos7
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
+jobs:
+  onboarding-job:
+    runs-on: onboarding-runner
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Use Onboard Ephemeral Runners Action
+        id: onboarding
+        uses: dream11/k8s-action-runner@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          values-file : '.ci/actions/values.yaml'
+          docker-username: ${{ secrets.JFROG_USERNAME }}
+          docker-password: ${{ secrets.JFROG_PASSWORD }}
+          helm-username: ${{ secrets.JFROG_USERNAME }}
+          helm-password: ${{ secrets.JFROG_PASSWORD }}

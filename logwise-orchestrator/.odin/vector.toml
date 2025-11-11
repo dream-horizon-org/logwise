@@ -1,0 +1,48 @@
+#Log Central Orchestrator Local Vector Config
+data_dir = "/var/lib/vector"
+
+[sources.my_source_id]
+type = "datadog_agent"
+address = "0.0.0.0:8000"
+store_api_key = true
+
+[transforms.my_transform_id]
+type = "remap"
+inputs = [ "my_source_id" ]
+
+source = """
+.ddtags=parse_key_value(.ddtags, key_value_delimiter: ":", field_delimiter: ",") ?? {}
+# To remove odin logs
+if exists(.ddtags.disable_log_central) && string!(.ddtags.disable_log_central) == "true" {
+    abort
+}
+.component_name=string(.ddtags.component_name) ?? string!(.service)
+.env=string(.ddtags.environment_name) ?? string(.ddtags.env) ?? string(.ddtags.kube_namespace) ?? "prod"
+.service_name=string(.ddtags.service_name) ?? string!(.service)
+if string(.service_name) == "dind" || string(.service_name) == "odin-component-interface" || string(.service_name) == "ec2-component-interface" || string(.service_name) == "d11-mocktale" || string(.service_name) == "bedlam3" || string(.service_name) == "bedlam1" || string(.service_name) == "bedlam2" || string(.service_name) == "perf-executor" || string(.service_name) == "bedlam"  || string(.service_name) == "mocktale-admin" {
+    abort
+}
+
+if !is_object(.message){
+    .message=parse_json(string!(.message)) ?? string!(.message)
+}
+if exists(.message."@timestamp"){
+    .message.timestamp = del(.message."@timestamp")
+}
+if exists(.message."@version"){
+    .message.version = del(.message."@version")
+}
+.message=.message
+.topic="logs."+string(.env)+"_"+string(.service_name)+"_"+string(.component_name)
+"""
+timezone = "local"
+
+[sinks.my_sink_id]
+type = "file"
+inputs = [ "my_transform_id" ]
+path = "/tmp/vector-%Y-%m-%d.log"
+encoding.codec = "json"
+
+[api]
+enabled = true
+address = "0.0.0.0:8686"

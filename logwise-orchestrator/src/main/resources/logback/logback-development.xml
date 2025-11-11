@@ -1,0 +1,23 @@
+<configuration scan="true" scanPeriod="1 seconds">
+  <property scope="context" name="HOSTNAME" value="${HOSTNAME}"/>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>
+        %date %highlight(%+5level) %-26thread %X{dd.trace_id:-0} %X{dd.span_id:-0} %logger{36} [%file:%line] %green(%msg) %n
+      </pattern>
+    </encoder>
+  </appender>
+
+  <logger name="com.dream11" level="trace"/>
+  <logger name="io.netty" level="info"/>
+  <logger name="org.jboss.resteasy" level="info"/>
+  <logger name="software.amazon.awssdk" level="warn"/>
+  <logger name="io.grpc.netty" level="warn"/>
+  <logger name="org.apache.kafka" level="warn"/>
+
+  <root level="debug">
+    <appender-ref ref="STDOUT"/>
+  </root>
+
+</configuration>

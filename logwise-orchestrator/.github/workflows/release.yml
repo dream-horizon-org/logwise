@@ -1,0 +1,68 @@
+# This workflow publishes the module to Maven and is triggered when a Draft release is published.
+
+name: Publish Release
+
+on:
+  release:
+    types: [released]
+
+env:
+  ARTIFACT_NAME: log-central-orchestrator
+  JFROG_REPOSITORY: d11-repo/com/dream11
+  JFROG_URL: 'https://dreamsports.jfrog.io/artifactory'
+
+jobs:
+  publish-concrete-version:
+    name: Release concrete version
+    runs-on: [self-hosted, linux, X64, k8s, log-central-orchestrator]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.COMMIT_ACCESS_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+          overwrite-settings: false
+
+      - name: Setup Maven 3.8.2
+        uses: stCarolas/setup-maven@v4.5
+        with:
+          maven-version: 3.8.2
+
+      - name: Setup git config
+        run: |
+          git config user.name "release-bot"
+          git config user.email "<>"
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          releaseVersion="${GITHUB_REF/refs\/tags\//}"
+          releaseVersion="${releaseVersion//v/}"
+          echo "VERSION=$releaseVersion" >> $GITHUB_OUTPUT
+
+      - name: Update version pom.xml
+        run: mvn versions:set -DnewVersion=${{ steps.get_version.outputs.VERSION }}
+
+      - name: Generate Artefact
+        run: mvn -B clean package -Dmaven.test.skip
+
+      - name: Setup jfrog
+        uses: jfrog/setup-jfrog-cli@v3
+
+      - name: Publish to jfrog
+        env:
+          USERNAME: ${{ secrets.JFROG_USERNAME }}
+          PASSWORD: ${{ secrets.JFROG_PASSWORD }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: .ci/scripts/publish-to-artifactory.sh
+
+      - name: Bump version
+        run: .ci/scripts/bump-version.sh

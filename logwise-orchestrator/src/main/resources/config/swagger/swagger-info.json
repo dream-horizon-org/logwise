@@ -1,0 +1,10 @@
+{
+  "prettyPrint": true,
+  "openAPI": {
+    "info": {
+      "version": 1.0,
+      "title": "log-central-orchestration",
+      "description": "log-central-orchestration Service"
+    }
+  }
+}

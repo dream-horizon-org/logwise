@@ -1,0 +1,23 @@
+<configuration scan="true" scanPeriod="10 seconds">
+  <property name="log.directory.path" value="/app/logs"/>
+  <property name="log.directory.file" value="${artifactId}.log"/>
+  <property scope="context" name="HOSTNAME" value="${HOSTNAME}"/>
+  <property scope="context" name="service.name" value="${SERVICE_NAME}"/>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="com.dream11.logger.encoder.D11JsonEncoder"/>
+  </appender>
+
+  <appender name="ASYNC_STDOUT" class="ch.qos.logback.classic.AsyncAppender">
+    <appender-ref ref="STDOUT"/>
+    <includeCallerData>${includeCallerData:-false}</includeCallerData>
+    <neverBlock>true</neverBlock>
+  </appender>
+
+  <logger name="com.dream11" level="trace"/>
+
+  <root level="debug">
+    <appender-ref ref="ASYNC_STDOUT"/>
+  </root>
+
+</configuration>

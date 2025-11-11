@@ -1,0 +1,709 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.dream11</groupId>
+  <artifactId>log-central-orchestrator</artifactId>
+  <version>1.4.2-SNAPSHOT</version>
+  <packaging>jar</packaging>
+  <name>log-central-orchestrator</name>
+
+  <!-- ==========================================================
+       Properties (deduplicated and aligned)
+       ========================================================== -->
+  <properties>
+    <!-- Java -->
+    <maven.properties.plugin.version>1.0.0</maven.properties.plugin.version>
+    <maven.compiler.release>11</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- App -->
+    <app.name>log-central-orchestrator</app.name>
+    <main.class>com.dream11.logcentralorchestrator.MainApplication</main.class>
+    <fat-jar.path>${project.build.directory}/${project.artifactId}-${project.version}-all.jar</fat-jar.path>
+
+    <!-- 3rd‑party versions -->
+    <vertx.version>3.9.16</vertx.version>
+    <caffeine.version>2.8.8</caffeine.version>
+    <commons-validator.version>1.6</commons-validator.version>
+    <guava.version>32.0.0-jre</guava.version>
+    <commons-lang3.version>3.9</commons-lang3.version>
+    <jackson.version>2.10.2</jackson.version>
+    <reflections.version>0.10.2</reflections.version>
+    <swagger-jaxrs2.version>2.1.7</swagger-jaxrs2.version>
+    <resteasy.version>4.5.8.Final</resteasy.version>
+    <hibernate-validator.version>6.1.6.Final</hibernate-validator.version>
+    <jakarta.el.version>3.0.3</jakarta.el.version>
+    <opentracing.version>0.32.0</opentracing.version>
+    <assertj.version>3.24.2</assertj.version>
+    <hamcrest.version>2.2</hamcrest.version>
+    <junit.version>4.13.2</junit.version>
+    <junit-jupiter.version>5.7.0</junit-jupiter.version>
+    <mockito.version>4.8.0</mockito.version>
+    <mockito-testng.version>0.4.26</mockito-testng.version>
+    <mysql-connector-java.version>8.0.28</mysql-connector-java.version>
+    <testcontainers.version>1.19.1</testcontainers.version>
+    <guice.version>7.0.0</guice.version>
+
+    <!-- Google / AWS -->
+    <google.cloud.bigquery.version>2.50.1</google.cloud.bigquery.version>
+    <google.http.client.version>1.47.0</google.http.client.version>
+    <google.auth.version>1.37.0</google.auth.version>
+    <google.cloud.storage.version>2.43.1</google.cloud.storage.version>
+    <aws.sdk.v2.version>2.23.3</aws.sdk.v2.version>
+
+    <!-- Plugins -->
+    <maven.shade.plugin.version>3.2.3</maven.shade.plugin.version>
+    <maven.jacoco.plugin.version>0.8.6</maven.jacoco.plugin.version>
+    <maven.surefire.plugin.version>3.0.0-M5</maven.surefire.plugin.version>
+    <maven.failsafe.plugin.version>3.0.0-M5</maven.failsafe.plugin.version>
+    <maven.swagger.plugin.version>2.1.7</maven.swagger.plugin.version>
+    <maven.resources.plugin.version>2.7</maven.resources.plugin.version>
+
+    <!-- Swagger output paths -->
+    <swagger.outputFileName>swagger</swagger.outputFileName>
+    <swagger.configurationFilePath>${project.basedir}/src/main/resources/config/swagger/swagger-info.json</swagger.configurationFilePath>
+    <swagger.outputPath>${project.basedir}/target/classes/webroot/swagger</swagger.outputPath>
+    <swagger.resourcePackage>com.dream11.logcentralorchestrator.rest</swagger.resourcePackage>
+  </properties>
+
+  <!-- ==========================================================
+       Dependency Management (import BOMs where possible)
+       ========================================================== -->
+  <dependencyManagement>
+    <dependencies>
+      <!-- Vert.x BOM so individual vertx-* deps don't need versions -->
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-stack-depchain</artifactId>
+        <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <!-- ==========================================================
+       Dependencies (deduplicated, consistent scopes)
+       ========================================================== -->
+  <dependencies>
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <version>${guice.version}</version>
+    </dependency>
+
+    <!-- Vert.x core -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-service-proxy</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-mysql-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-dropwizard-metrics</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-config-hocon</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.wnameless.json</groupId>
+      <artifactId>json-flattener</artifactId>
+      <version>0.8.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.alibaba</groupId>
+      <artifactId>fastjson</artifactId>
+      <version>1.2.61</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-config-consul</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-config-vault</artifactId>
+    </dependency>
+
+
+    <!-- Rx stack (correct groupId/version) -->
+    <dependency>
+      <groupId>io.reactivex.rxjava2</groupId>
+      <artifactId>rxjava</artifactId>
+      <version>2.2.21</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-rx-java2</artifactId>
+    </dependency>
+
+    <!-- Validation & REST (javax only; removed jakarta.ws.rs to avoid clashes) -->
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-vertx</artifactId>
+      <version>${resteasy.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-validator-provider</artifactId>
+      <version>${resteasy.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jackson2-provider</artifactId>
+      <version>${resteasy.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <version>${hibernate-validator.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>jakarta.el</artifactId>
+      <version>${jakarta.el.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+      <version>2.1.1</version>
+    </dependency>
+
+    <!-- Swagger (OpenAPI) -->
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-jaxrs2</artifactId>
+      <version>${swagger-jaxrs2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>${swagger-jaxrs2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-models</artifactId>
+      <version>${swagger-jaxrs2.version}</version>
+    </dependency>
+
+    <!-- Core libs -->
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+      <version>${caffeine.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons-lang3.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.reflections</groupId>
+      <artifactId>reflections</artifactId>
+      <version>${reflections.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe</groupId>
+      <artifactId>config</artifactId>
+      <version>1.4.3</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-validator</groupId>
+      <artifactId>commons-validator</artifactId>
+      <version>${commons-validator.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
+    <!-- Tracing -->
+    <dependency>
+      <groupId>io.opentracing</groupId>
+      <artifactId>opentracing-api</artifactId>
+      <version>${opentracing.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.opentracing</groupId>
+      <artifactId>opentracing-util</artifactId>
+      <version>${opentracing.version}</version>
+    </dependency>
+
+    <!-- AWS SDK v2 -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>netty-nio-client</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>sts</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>autoscaling</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>ec2</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>athena</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>glue</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>route53</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>ssm</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+
+    <!-- Google Cloud -->
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-bigquery</artifactId>
+      <version>${google.cloud.bigquery.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-storage</artifactId>
+      <version>${google.cloud.storage.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-oauth2-http</artifactId>
+      <version>${google.auth.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-credentials</artifactId>
+      <version>${google.auth.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client-gson</artifactId>
+      <version>${google.http.client.version}</version>
+    </dependency>
+
+    <!-- Lombok (optional) -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.30</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.36</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.4.14</version>
+    </dependency>
+
+    <!-- ======================== Tests ======================== -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit-jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit-jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <version>${hamcrest.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-inline</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-testng</artifactId>
+      <version>${mockito-testng.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.testng</groupId>
+          <artifactId>testng</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.mockito</groupId>
+          <artifactId>mockito-core</artifactId>
+        </exclusion>
+      </exclusions>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>mysql</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>localstack</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>${mysql-connector-java.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.reflections</groupId>
+      <artifactId>reflections</artifactId>
+      <version>${reflections.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>me.escoffier.vertx</groupId>
+      <artifactId>vertx-completable-future</artifactId>
+      <version>0.1.2</version>
+    </dependency>
+
+  </dependencies>
+
+  <!-- ==========================================================
+       Build (plugins cleaned up)
+       ========================================================== -->
+  <build>
+    <plugins>
+      <!-- Compiler uses release 17 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>1.18.30</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <!-- This plugin provides the capability to package the artifact in an uber-jar, including its dependencies and to shade - i.e. rename - the packages of some of the dependencies -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${maven.shade.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>create-fat-jar</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Main-Class>${main.class}</Main-Class>
+                    <X-Compile-Source-JDK>11</X-Compile-Source-JDK>
+                    <X-Compile-Target-JDK>11</X-Compile-Target-JDK>
+                  </manifestEntries>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <artifactSet>
+              </artifactSet>
+              <outputFile>${fat-jar.path}</outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Jib: Build container images without Dockerfile/daemon -->
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <from>
+            <image>eclipse-temurin:11-jre</image>
+          </from>
+          <container>
+            <mainClass>${main.class}</mainClass>
+            <jvmFlags>
+              <jvmFlag>-XX:+HeapDumpOnOutOfMemoryError</jvmFlag>
+              <jvmFlag>-Dcom.sun.management.jmxremote=true</jvmFlag>
+              <jvmFlag>-Dcom.sun.management.jmxremote.port=1099</jvmFlag>
+              <jvmFlag>-Dcom.sun.management.jmxremote.authenticate=false</jvmFlag>
+              <jvmFlag>-Dcom.sun.management.jmxremote.ssl=false</jvmFlag>
+              <jvmFlag>-Dvertx.disableDnsResolver=true</jvmFlag>
+              <jvmFlag>-DIGNITE_JETTY_PORT=9000</jvmFlag>
+            </jvmFlags>
+            <ports>
+              <port>8080</port>
+            </ports>
+          </container>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>${maven.properties.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>set-system-properties</id>
+            <goals>
+              <goal>set-system-properties</goal>
+            </goals>
+            <configuration>
+              <properties>
+                <property>
+                  <name>vertx.version</name>
+                  <value>${vertx.version}</value>
+                </property>
+              </properties>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>write-project-properties</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>write-project-properties</goal>
+            </goals>
+            <configuration>
+              <outputFile>${project.build.directory}/pom.properties</outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Swagger generation -->
+      <plugin>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-maven-plugin</artifactId>
+        <version>${maven.swagger.plugin.version}</version>
+        <configuration>
+          <outputFileName>${swagger.outputFileName}</outputFileName>
+          <configurationFilePath>${swagger.configurationFilePath}</configurationFilePath>
+          <outputPath>${swagger.outputPath}</outputPath>
+          <outputFormat>JSONANDYAML</outputFormat>
+          <resourcePackages>
+            <package>${swagger.resourcePackage}</package>
+          </resourcePackages>
+          <prettyPrint>true</prettyPrint>
+        </configuration>
+        <executions>
+          <execution>
+            <id>generate-swagger-docs</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>resolve</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Surefire (unit tests) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven.surefire.plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-testng</artifactId>
+            <version>${maven.surefire.plugin.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <trimStackTrace>false</trimStackTrace>
+        </configuration>
+      </plugin>
+
+      <!-- Failsafe (integration tests) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${maven.failsafe.plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-testng</artifactId>
+            <version>${maven.failsafe.plugin.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>integration-tests</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>**/*IT.java</include>
+              </includes>
+              <useModulePath>false</useModulePath>
+              <test>com.dream11.logcentralorchestrator.runners.TestRunner</test>
+              <trimStackTrace>false</trimStackTrace>
+              <failIfNoTests>false</failIfNoTests>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- JaCoCo -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${maven.jacoco.plugin.version}</version>
+        <executions>
+          <execution>
+            <id>pre-unit-test</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>post-unit-test</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>pre-integration-test</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>post-integration-test</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>jacoco-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.10</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Dependency plugin (optional goals can be configured as needed) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

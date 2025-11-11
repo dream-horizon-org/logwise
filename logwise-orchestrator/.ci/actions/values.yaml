@@ -1,0 +1,27 @@
+runnerImage:
+  image: dreamsports.jfrog.io/d11-docker-artifacts/actions-runner-maven:ubuntu-20.04-1
+
+labels:
+  - self-hosted
+  - linux
+  - X64
+  - k8s
+  - log-central-orchestrator
+
+resources:
+  limits:
+    cpu: 4000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 0
+  maxReplicas: 20
+
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::954754807219:role/ci-cluster-service-account-role"
