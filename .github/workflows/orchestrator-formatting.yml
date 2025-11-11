@@ -2,6 +2,10 @@ name: Orchestrator Formatting Check
 
 on:
   pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
     paths:
       - 'logwise-orchestrator/**'
 
