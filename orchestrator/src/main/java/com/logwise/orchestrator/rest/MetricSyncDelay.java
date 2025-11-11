@@ -28,12 +28,12 @@ import org.apache.http.HttpStatus;
 
 @Slf4j
 @RequiredArgsConstructor(onConstructor = @__({@Inject}))
+@Path("/metric/sync-delay")
 @Tag(name = "Metrics", description = "Metrics operations")
 public class MetricSyncDelay {
   private final MetricsService metricsService;
 
   @GET
-  @Path("/metric/sync-delay")
   @Produces(MediaType.APPLICATION_JSON)
   @Operation(
       summary = "Get object-store log sync delay",

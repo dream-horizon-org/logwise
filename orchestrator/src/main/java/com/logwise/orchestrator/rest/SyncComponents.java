@@ -30,6 +30,7 @@ import org.apache.http.HttpStatus;
 
 @Slf4j
 @RequiredArgsConstructor(onConstructor = @__({@Inject}))
+@Path("/component/sync")
 @Tag(
     name = "Component Management",
     description = "Component management operations including sync and data analytics")
@@ -37,7 +38,6 @@ public class SyncComponents {
   private final ServiceManagerService serviceManagerService;
 
   @POST
-  @Path("/component/sync")
   @Consumes(MediaType.WILDCARD)
   @Produces(MediaType.APPLICATION_JSON)
   @Timeout(60000)
