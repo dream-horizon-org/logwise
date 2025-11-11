@@ -27,4 +27,4 @@
 ## To Encrypt Pem File
 
 * Set ENCRYPTION_IV and ENCRYPTION_KEY in environment variables
-* Run `mvn compile exec:java -Dexec.mainClass="com.dream11.logcentralorchestrator.util.Encryption" -Dexec.args="<pem-file-path>"` from project root directory
+* Run `mvn compile exec:java -Dexec.mainClass="util.com.logwise.orchestrator.Encryption" -Dexec.args="<pem-file-path>"` from project root directory
