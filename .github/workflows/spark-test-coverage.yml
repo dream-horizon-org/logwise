@@ -9,7 +9,6 @@ on:
       - synchronize
     paths:
       - 'spark/**'
-  push:
 
 jobs:
   test-coverage:
