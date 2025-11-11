@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @Builder
 public class DefaultSuccessResponse {
-  boolean success = true;
+  @Builder.Default boolean success = true;
   @Builder.Default String message = "Success";
 }

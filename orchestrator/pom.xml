@@ -46,6 +46,8 @@
     <mysql-connector-java.version>8.0.28</mysql-connector-java.version>
     <testcontainers.version>1.19.1</testcontainers.version>
     <guice.version>7.0.0</guice.version>
+    <testng.version>7.8.0</testng.version>
+    <extentreports.version>5.1.1</extentreports.version>
 
     <!-- Google / AWS -->
     <google.cloud.bigquery.version>2.50.1</google.cloud.bigquery.version>
@@ -408,6 +410,18 @@
           <artifactId>mockito-core</artifactId>
         </exclusion>
       </exclusions>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>${testng.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.aventstack</groupId>
+      <artifactId>extentreports</artifactId>
+      <version>${extentreports.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
