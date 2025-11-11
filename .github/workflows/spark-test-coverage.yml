@@ -9,6 +9,8 @@ on:
     paths:
       - 'spark/**'
   push:
+    branches:
+      - '**'
     paths:
       - 'spark/**'
 
