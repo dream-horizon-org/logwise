@@ -1,0 +1,132 @@
+name: PR Gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  actions: read        # needed to read workflow runs
+  pull-requests: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      docs: ${{ steps.changes.outputs.docs }}
+      orchestrator: ${{ steps.changes.outputs.orchestrator }}
+      spark: ${{ steps.changes.outputs.spark }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            docs:
+              - 'docs/**'
+            orchestrator:
+              - 'orchestrator/**'
+            spark:
+              - 'spark/**'
+
+  gate:
+    name: PR Gate
+    needs: detect
+    if: always()            # always run so it can make the final decision
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide required workflows based on changes
+        id: plan
+        env:
+          DOCS_CHANGED: ${{ needs.detect.outputs.docs }}
+          ORCH_CHANGED: ${{ needs.detect.outputs.orchestrator }}
+          SPARK_CHANGED: ${{ needs.detect.outputs.spark }}
+        run: |
+          required=()
+          if [ "$DOCS_CHANGED" = "true" ]; then
+            required+=("Docs Build Check")
+          fi
+          if [ "$ORCH_CHANGED" = "true" ]; then
+            required+=("Orchestrator Formatting Check")
+          fi
+          if [ "$SPARK_CHANGED" = "true" ]; then
+            required+=("Spark Formatting Check")
+          fi
+          printf 'required=%s\n' "$(jq -nc --argjson a "$(printf '%s\0' "${required[@]}" | jq -Rcs 'split("\u0000")[:-1]')" '$a')" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for required workflows and evaluate
+        id: eval
+        uses: actions/github-script@v7
+        env:
+          REQUIRED_JSON: ${{ steps.plan.outputs.required }}
+        with:
+          script: |
+            const required = JSON.parse(process.env.REQUIRED_JSON || "[]");
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const sha   = context.payload.pull_request.head.sha;
+
+            // Helper: sleep
+            const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+            // Poll each required workflow until completed (max ~30 minutes)
+            const results = {};
+            for (const wfName of required) {
+              let attempt = 0, run = null;
+
+              while (attempt < 120) { // 120 * 15s = 30 min
+                const runs = await github.rest.actions.listWorkflowRunsForRepo({
+                  owner, repo,
+                  event: "pull_request",
+                  head_sha: sha,
+                  per_page: 100,
+                });
+
+                // Find the newest run for this workflow name
+                run = runs.data.workflow_runs
+                  .filter(r => r.name === wfName)
+                  .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+                if (run && run.status === "completed") break;
+                if (run && run.status !== "completed") {
+                  await sleep(15000);
+                } else {
+                  // no run found yet — give it a moment to start
+                  await sleep(15000);
+                }
+                attempt++;
+              }
+
+              if (!run) {
+                results[wfName] = { status: "missing", conclusion: "missing" };
+              } else {
+                results[wfName] = { status: run.status, conclusion: run.conclusion, html_url: run.html_url };
+              }
+            }
+
+            core.setOutput("results", JSON.stringify(results));
+
+            // Build a markdown summary
+            let summary = "## PR Gate — conditional required checks\n";
+            if (required.length === 0) {
+              summary += "- No relevant folders changed (`docs/`, `orchestrator/`, `spark/`). Gate passes.\n";
+              await core.summary.addRaw(summary).write();
+              return;
+            }
+            for (const [name, info] of Object.entries(results)) {
+              const link = info.html_url ? `([run](${info.html_url}))` : "";
+              summary += `- **${name}** → status: \`${info.status}\`, conclusion: \`${info.conclusion}\` ${link}\n`;
+            }
+            await core.summary.addRaw(summary).write();
+
+            // Fail if any required workflow didn't succeed
+            const failures = Object.entries(results).filter(([,i]) => i.conclusion !== "success");
+            if (failures.length > 0) {
+              core.setFailed(
+                "One or more required workflows did not succeed: " +
+                failures.map(([n,i]) => `${n}=${i.conclusion}`).join(", ")
+              );
+            }
+      - name: Echo decision
+        if: success()
+        run: echo "✅ PR Gate passed"
