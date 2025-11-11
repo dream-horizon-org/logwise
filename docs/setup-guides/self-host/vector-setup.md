@@ -38,7 +38,7 @@ git clone https://github.com/ds-horizon/logwise.git
 cd logwise/vector/
 ```
 
-### 2) Set Kafka broker address in [`vector.toml`](https://github.com/ds-horizon/logwise/blob/main/vector/vector.toml)
+### 2) Set Kafka broker address in [`vector.toml`](.././vector/vector.toml)
 Edit [`vector.toml`](https://github.com/ds-horizon/logwise/blob/main/vector/vector.toml) and update the Kafka bootstrap servers. Use comma-separated values for multiple brokers.
 ```toml
 # Before
