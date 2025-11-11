@@ -15,7 +15,9 @@ via EC2 instance tags.
 | OS        | Amazon Linux 2 / Ubuntu                  |
 | Storage   | S3 Supported (Hadoop AWS + AWS SDK Jars) |
 
-## 1) Install Java 11
+# Common Setup (Run on Both Master & Worker)
+
+## Install Java 11
 
 ```bash
 sudo yum install java-11-amazon-corretto -y
@@ -23,7 +25,7 @@ sudo yum install java-11-amazon-corretto -y
 # sudo apt-get install -y openjdk-11-jdk
 ```
 
-## 2) Download & Install Spark
+##  Download & Install Spark
 
 ```bash 
 cd /root
@@ -40,7 +42,20 @@ export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
 source ~/.bashrc
 ```
 
-## 3) Enable REST API on Spark Master
+## Add S3 Support Jars 
+
+```bash
+mkdir /root/spark-jars
+wget -P /root/spark-jars https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.2.0/hadoop-aws-3.2.0.jar
+wget -P /root/spark-jars https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar
+
+cp /root/spark-jars/*.jar $SPARK_HOME/jars/
+
+```
+
+# Master Setup (Run only on Master node)
+
+## Enable REST API on Spark Master
 
 ### Edit:
 
@@ -72,7 +87,7 @@ http://<MASTER_PUBLIC_IP>:8080
 spark://<MASTER_PUBLIC_IP>:7077
 ```
 
-## 4) Configure Worker Node
+# Worker Setup (Run only on Worker nodes)
 
 ### Edit Worker environment file:
 
@@ -86,16 +101,6 @@ nano $SPARK_HOME/conf/spark-env.sh
 SPARK_WORKER_OPTS="$SPARK_WORKER_OPTS -Dspark.shuffle.service.enabled=true"
 ```
 
-### Add S3 Support (Hadoop AWS Connector)
-
-```bash
-mkdir /root/spark-jars
-wget -P /root/spark-jars https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.2.0/hadoop-aws-3.2.0.jar
-wget -P /root/spark-jars https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar
-
-cp /root/spark-jars/*.jar $SPARK_HOME/jars/
-
-```
 
 ### Start Worker and attach to Master:
 
@@ -103,7 +108,7 @@ cp /root/spark-jars/*.jar $SPARK_HOME/jars/
 $SPARK_HOME/sbin/start-worker.sh spark://<MASTER_PRIVATE_IP>:7077
 ```
 
-## 5) Verify Cluster Status
+## Verify Cluster Status
 
 ### Open:
 
@@ -113,17 +118,8 @@ http://<MASTER_PUBLIC_IP>:8080
 
 You should see all Workers under Workers section.
 
-## 6) (Optional) Auto-Scaling Group (ASG) Setup
 
-Idea
-
-- Create an ASG for Workers
-
-- Use EC2 Tags to identify the Master node
-
-- On Worker startup, lookup Master IP and auto-join cluster
-
-## 7) Running a Spark Job on the Cluster (REST API Submit)
+##  Running a Spark Job on the Cluster (REST API Submit)
 
 Once the Spark cluster (Master + Workers) is up and running, you can submit jobs using the Spark REST Submission API (
 port 6066).
@@ -180,23 +176,5 @@ curl --location '<SPARK_MASTER_HOST>:6066/v1/submissions/create' \
 
 ```
 
-### Job Orchestration / Driver Readiness Polling (Optional Feature)
-
-In production setups, we typically run an orchestration service that:
-
-Submits the Spark job (as above)
-
-Polls the Spark Master API periodically:
-
-```bash
-http://<SPARK_MASTER_HOST>:8080/json/
-```
-
-Waits until the Driver State = RUNNING
-
-If driver fails / restarts → auto re-submit or alert
-
-This avoids manually checking the Spark UI and ensures the job is guaranteed to be running before downstream components
-proceed.
 
 
