@@ -78,7 +78,7 @@ public class Component {
         .andThen(
             Single.just(
                 DefaultSuccessResponse.builder()
-                        .success(true)
+                    .success(true)
                     .message(
                         String.format(
                             "Successfully synced componentType: %s for tenant: %s",

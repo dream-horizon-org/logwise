@@ -40,6 +40,7 @@ public class RestResponse {
     return single ->
         single.map(Response::successfulResponse).to(CompletableFutureUtils::fromSingle);
   }
+
   /** Temporary method to handle common exceptions so they have a printable cause. */
   public static Throwable parseThrowable(Throwable throwable) {
     return throwable instanceof RestException
