@@ -66,6 +66,10 @@ public class StreamFactoryTest {
     assertTrue(
         stream instanceof ApplicationLogsStreamToS3,
         "Stream should be instance of ApplicationLogsStreamToS3");
+    assertEquals(
+        stream.getClass(),
+        ApplicationLogsStreamToS3.class,
+        "Should create ApplicationLogsStreamToS3 instance");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
@@ -75,45 +79,22 @@ public class StreamFactoryTest {
   }
 
   @Test
-  public void testGetStream_WithValidStreamName_ReturnsNonNullStream() {
-    // Act
-    Stream stream = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
-
-    // Assert
-    assertNotNull(stream, "Stream should not be null");
-  }
-
-  @Test
-  public void testGetStream_CalledMultipleTimes_ReturnsSameOrNewInstances() {
+  public void testGetStream_CalledMultipleTimes_CreatesStreams() {
     // Act - Get streams multiple times
     Stream stream1 = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
     Stream stream2 = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
 
-    // Assert - Both should be non-null
+    // Assert - Both should be non-null and correct type
     assertNotNull(stream1, "First stream should not be null");
     assertNotNull(stream2, "Second stream should not be null");
-
-    // Note: Whether they are the same instance or not depends on Guice configuration
-    // (singleton vs prototype scope). We just verify they are created successfully.
     assertTrue(
         stream1 instanceof ApplicationLogsStreamToS3,
         "First stream should be correct type");
     assertTrue(
         stream2 instanceof ApplicationLogsStreamToS3,
         "Second stream should be correct type");
-  }
-
-  @Test
-  public void testGetStream_WithEnumValue_CreatesCorrectStreamType() {
-    // Act
-    Stream stream = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
-
-    // Assert
-    assertNotNull(stream, "Stream should not be null");
-    assertEquals(
-        stream.getClass(),
-        ApplicationLogsStreamToS3.class,
-        "Should create ApplicationLogsStreamToS3 instance");
+    // Note: Whether they are the same instance or not depends on Guice configuration
+    // (singleton vs prototype scope). We just verify they are created successfully.
   }
 
   @Test
@@ -135,18 +116,4 @@ public class StreamFactoryTest {
       // Test passes
     }
   }
-
-  @Test
-  public void testGetStream_ReturnsStreamImplementation() {
-    // Act
-    Stream stream = StreamFactory.getStream(StreamName.APPLICATION_LOGS_STREAM_TO_S3);
-
-    // Assert
-    assertNotNull(stream, "Stream should not be null");
-    assertTrue(
-        stream instanceof Stream,
-        "Returned object should implement Stream interface");
-  }
 }
-
-
