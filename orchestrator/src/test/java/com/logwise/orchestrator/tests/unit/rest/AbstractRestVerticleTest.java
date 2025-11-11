@@ -1,6 +1,5 @@
 package com.dream11.logcentralorchestrator.tests.unit.rest;
 
-
 import com.dream11.logcentralorchestrator.rest.AbstractRestVerticle;
 import com.dream11.logcentralorchestrator.setup.BaseTest;
 import io.vertx.reactivex.core.Vertx;

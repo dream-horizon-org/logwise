@@ -1,6 +1,5 @@
 package com.dream11.logcentralorchestrator.tests.unit.common;
 
-
 import com.dream11.logcentralorchestrator.common.app.AbstractApplication;
 import com.dream11.logcentralorchestrator.common.app.Deployable;
 import com.dream11.logcentralorchestrator.setup.BaseTest;
