@@ -1,19 +1,19 @@
-# Provision Athena datasource. Requires GF_INSTALL_PLUGINS=grafana-athena-datasource
-
 apiVersion: 1
 
 datasources:
   - name: Athena
     type: grafana-athena-datasource
+    uid: asadsadf
     access: proxy
-    isDefault: true
+    isDefault: false
     editable: true
     jsonData:
-      region: ${AWS_REGION}
-      workgroup: ${ATHENA_WORKGROUP}
-      catalog: ${ATHENA_CATALOG}
-      database: ${ATHENA_DATABASE}
-      outputLocation: ${S3_ATHENA_OUTPUT}
-    secureJsonData: {}
-
+      authType: keys
+      defaultRegion: us-east-1
+      catalog: AwsDataCatalog
+      database: default
+      workgroup: primary
+    secureJsonData:
+      accessKey: ""
+      secretKey: ""
 

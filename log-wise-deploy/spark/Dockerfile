@@ -25,6 +25,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ca-certificates \
     curl \
     file \
+    aria2 \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
@@ -39,17 +40,16 @@ ARG SPARK_VERSION=3.1.2
 ARG HADOOP_VERSION=3.2
 WORKDIR /tmp
 RUN SPARK_FILE="spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" && \
-    echo "Downloading Spark ${SPARK_VERSION}..." && \
-    curl -L -f --connect-timeout 30 --max-time 600 --retry 2 --retry-delay 3 --progress-bar \
-    -o "${SPARK_FILE}" \
-    "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/${SPARK_FILE}" || \
-    (echo "Primary mirror failed, trying Berkeley mirror..." && \
-     curl -L -f --connect-timeout 30 --max-time 600 --retry 2 --retry-delay 3 --progress-bar \
-     -o "${SPARK_FILE}" \
-     "https://mirrors.ocf.berkeley.edu/apache/spark/spark-${SPARK_VERSION}/${SPARK_FILE}") && \
+    echo "Downloading Spark ${SPARK_VERSION} with aria2 (multi-connection + mirrors)..." && \
+    aria2c -c -x 16 -s 16 -k 1M --timeout=60 --max-tries=5 --retry-wait=3 \
+      -o "${SPARK_FILE}" \
+      "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/${SPARK_FILE}" \
+      "https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/${SPARK_FILE}" \
+      "https://downloads.apache.org/spark/spark-${SPARK_VERSION}/${SPARK_FILE}" \
+      "https://mirrors.ocf.berkeley.edu/apache/spark/spark-${SPARK_VERSION}/${SPARK_FILE}" && \
     echo "Verifying download..." && \
     file "${SPARK_FILE}" && \
-    (file "${SPARK_FILE}" | grep -q "gzip\|POSIX tar" || \
+    (file "${SPARK_FILE}" | grep -q "gzip\\|POSIX tar" || \
      (echo "ERROR: Invalid archive" && head -c 200 "${SPARK_FILE}" && exit 1))
 
 # Download JARs in a separate stage for better caching
