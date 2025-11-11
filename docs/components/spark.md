@@ -50,4 +50,4 @@ This structure allows fast filtering based on environment, service, or time rang
 
 ## Requirements and Setup
 
-See the Spark setup documentation for installation and configuration.
+See the [Spark Setup Guide](/setup-guides/self-host/spark-setup) for installation and configuration.
