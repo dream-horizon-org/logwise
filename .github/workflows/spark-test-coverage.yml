@@ -1,6 +1,7 @@
 name: Spark Test Coverage Check
 
 on:
+  workflow_dispatch:
   pull_request:
     types:
       - opened
@@ -9,10 +10,6 @@ on:
     paths:
       - 'spark/**'
   push:
-    branches:
-      - '**'
-    paths:
-      - 'spark/**'
 
 jobs:
   test-coverage:
@@ -23,13 +20,32 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check for changes in spark folder
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            if git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -q "^spark/"; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "^spark/"; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
       - name: Set up Java 11
+        if: steps.changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '11'
 
       - name: Cache Maven dependencies
+        if: steps.changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/cache@v4
         with:
           path: ~/.m2
@@ -37,12 +53,13 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Run tests with coverage check
+        if: steps.changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: spark
         run: mvn clean test jacoco:report jacoco:check
 
       - name: Upload coverage report
+        if: always() && (steps.changes.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch')
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: coverage-report
           path: spark/target/site/jacoco/index.html
