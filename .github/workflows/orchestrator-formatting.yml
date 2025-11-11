@@ -28,10 +28,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('logwise-orchestrator/pom.xml') }}
+          key: ${{ runner.os }}-m2-${{ hashFiles('orchestrator/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
       - name: Verify formatting with Google Java Formatter
-        working-directory: logwise-orchestrator
+        working-directory: orchestrator
         run: mvn -B fmt:check
 
