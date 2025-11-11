@@ -69,7 +69,8 @@
             **/com/logwise/feign/logger/**,
             **/com/logwise/guice/**,
             **/com/logwise/schema/**,
-            **/com/logwise/MainApplication.java
+            **/com/logwise/spark/MainApplication*,
+            **/com/logwise/spark/protobuf/**
         </sonar.coverage.exclusions>
     </properties>
 
@@ -245,7 +246,7 @@
         <!-- Test -->
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
+            <artifactId>mockito-inline</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
@@ -367,9 +368,6 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <excludes>
-                        <exclude>**/*Test.java</exclude>
-                    </excludes>
                     <trimStackTrace>false</trimStackTrace>
                 </configuration>
             </plugin>
@@ -429,7 +427,9 @@
                         <!-- To exclude schema classes from coverage report-->
                         <exclude>com/logwise/schema/**</exclude>
                         <!-- To exclude MainApplication class from coverage report-->
-                        <exclude>com/logwise/MainApplication</exclude>
+                        <exclude>com/logwise/spark/MainApplication*</exclude>
+                        <!-- To exclude protobuf generated classes from coverage report-->
+                        <exclude>com/logwise/spark/protobuf/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
