@@ -35,18 +35,7 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
 
 ---
 
-### **3. Kafka Manager**
-
-- Responsible for **monitoring Kafka cluster health** and **performance**.  
-- Offers **APIs** used by the **Orchestrator Service** for:
-  - Balancing load across Kafka brokers.
-  - Monitoring topic metrics and cluster status.
-- Ensures continuous high availability of Kafka topics and data streams.
-
-
----
-
-### **4. Apache Spark**
+### **3. [Apache Spark](/components/spark)**
 
 - Consumes raw logs from Kafka and transforms them into **Parquet** format for:
   - Efficient compression.
@@ -59,7 +48,7 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
 
 ---
 
-### **5. Grafana**
+### **4. [Grafana](/components/grafana)**
 
 - Acts as the **viewing and exploration** layer for logs.
 - Displays processed logs in **table format** for easy searching and filtering.
@@ -68,7 +57,7 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
 
 ---
 
-### **6. Orchestrator Service**
+### **5. [Orchestrator Service](/components/orchestrator)**
 
 - The **central control component** that automates and maintains the overall system state.
 - Performs several background operations:
