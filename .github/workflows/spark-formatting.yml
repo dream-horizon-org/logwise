@@ -1,7 +1,11 @@
 name: Spark Formatting Check
 
 on:
-  pull_request:
+  pull_request: 
+    types:
+      - opened
+      - reopened
+      - synchronize
     paths:
       - 'spark/**'
 
