@@ -56,20 +56,6 @@ Increase retention beyond 1 hour for:
 - Batch processing with longer intervals
 - Recovery scenarios requiring historical data
 
-## Kafka Manager
-
-Kafka Manager provides management and monitoring for Kafka clusters. Logwise uses Kafka Manager for cluster monitoring and management operations.
-
-**Features:**
-- Central UI and API for Kafka operations
-- Exposes per-topic metrics (messages/sec, partitions, replication factor)
-- Requires JMX enabled on Kafka brokers
-
-**API Used:**
-- Endpoint: `/api/clusters/{clusterName}/topics`
-- Method: GET
-- Returns metrics for all topics including `messagesPerSec`, `partitions`, and `replicationFactor`
-
 ## Integration with Other Components
 
 - **Vector** - Publishes logs to Kafka topics
@@ -79,7 +65,3 @@ Kafka Manager provides management and monitoring for Kafka clusters. Logwise use
 ## Requirements and Setup
 
 See the [Kafka Setup Guide](/setup-guides/self-host/kafka-setup) for installation and configuration.
-
-::: warning Important
-Use Zookeeper-based Kafka (required for Kafka Manager metrics integration).
-:::
