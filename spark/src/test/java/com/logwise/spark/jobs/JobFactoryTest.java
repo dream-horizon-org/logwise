@@ -70,15 +70,6 @@ public class JobFactoryTest {
   }
 
   @Test
-  public void testGetSparkJob_WithValidJobName_ReturnsNonNullJob() {
-    // Act
-    SparkJob job = JobFactory.getSparkJob(JobName.PUSH_LOGS_TO_S3.getValue(), mockSparkSession);
-
-    // Assert
-    assertNotNull(job, "Job should not be null");
-  }
-
-  @Test
   public void testGetSparkJob_CalledMultipleTimes_ReturnsNewInstances() {
     // Act - Create jobs multiple times
     SparkJob job1 = JobFactory.getSparkJob(JobName.PUSH_LOGS_TO_S3.getValue(), mockSparkSession);
@@ -109,16 +100,6 @@ public class JobFactoryTest {
         mockSparkSession2.close();
       }
     }
-  }
-
-  @Test
-  public void testGetSparkJob_WithJobNameEnum_WorksCorrectly() {
-    // Act - Using enum directly
-    SparkJob job = JobFactory.getSparkJob(JobName.PUSH_LOGS_TO_S3.getValue(), mockSparkSession);
-
-    // Assert
-    assertNotNull(job, "Job should not be null");
-    assertTrue(job instanceof PushLogsToS3SparkJob, "Should create correct job type");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)

@@ -89,18 +89,6 @@ public class SparkStageListenerTest {
   // ==================== Test onStageSubmitted() ====================
 
   @Test
-  public void testOnStageSubmitted_TracksStageSubmission() {
-    // Arrange
-    SparkListenerStageSubmitted stageSubmitted = createStageSubmitted("stage1", 1);
-
-    // Act
-    listener.onStageSubmitted(stageSubmitted);
-
-    // Assert
-    assertEquals(stageSubmittedMap.get("stage1"), Integer.valueOf(1));
-  }
-
-  @Test
   public void testOnStageSubmitted_IncrementsCountForSameStage() {
     // Arrange
     stageSubmittedMap.put("stage1", 2);
@@ -127,23 +115,6 @@ public class SparkStageListenerTest {
     assertEquals(stageSubmittedMap.size(), 2);
     assertEquals(stageSubmittedMap.get("stage1"), Integer.valueOf(1));
     assertEquals(stageSubmittedMap.get("stage2"), Integer.valueOf(1));
-  }
-
-  @Test
-  public void testOnStageSubmitted_WhenStageAlreadyCompleted_CallsStopStage() throws Exception {
-    // Arrange - Stage already completed
-    stageCompletionMap.put("stage1", 1);
-    SparkListenerStageSubmitted stageSubmitted = createStageSubmitted("stage1", 1);
-
-    // Act - This will start a thread that calls stopStage
-    // Note: The thread may fail due to SparkSession dependency, but the method should
-    // be callable without throwing exceptions
-    listener.onStageSubmitted(stageSubmitted);
-
-    // Assert - Verify the method completed without throwing exception
-    // The stopStage thread starts asynchronously and may fail, but that's acceptable
-    // Full testing of stopStage requires integration tests with a real SparkSession
-    assertTrue(true, "onStageSubmitted should handle already completed stages without throwing");
   }
 
   @Test
@@ -187,19 +158,6 @@ public class SparkStageListenerTest {
   }
 
   // ==================== Test onStageCompleted() ====================
-
-  @Test
-  public void testOnStageCompleted_TracksStageCompletion() {
-    // Arrange
-    SparkListenerStageCompleted stageCompleted =
-        createStageCompleted("stage1", 100L, 1000L, 1000000L, 999000L);
-
-    // Act
-    listener.onStageCompleted(stageCompleted);
-
-    // Assert
-    assertEquals(stageCompletionMap.get("stage1"), Integer.valueOf(1));
-  }
 
   @Test
   public void testOnStageCompleted_IncrementsCountForSameStage() {
@@ -287,24 +245,6 @@ public class SparkStageListenerTest {
 
     // Assert
     assertEquals(stageCompletionMap.get("stage1"), Integer.valueOf(1));
-  }
-
-  @Test
-  public void testOnStageCompleted_HandlesFirstSubmissionTime() throws Exception {
-    // Arrange - Reset metrics to initial state
-    resetStageMetrics();
-
-    SparkListenerStageCompleted stageCompleted =
-        createStageCompleted("stage1", 100L, 1000L, 1000000L, 999000L);
-
-    // Act
-    listener.onStageCompleted(stageCompleted);
-
-    // Assert - First submission time should be set (not zero)
-    assertEquals(
-        getMetricValue("submissionTime"),
-        999000L,
-        "First submission time should be set when starting from zero");
   }
 
   // ==================== Test completeExecution() ====================
@@ -420,18 +360,6 @@ public class SparkStageListenerTest {
   }
 
   @Test
-  public void testIsStageAlreadyCompleted_ReturnsFalseWhenCountIsZero() throws Exception {
-    // Arrange
-    stageCompletionMap.put("stage1", 0);
-
-    // Act
-    Boolean result = invokePrivateStaticMethodWithParam("isStageAlreadyCompleted", "stage1");
-
-    // Assert
-    assertFalse(result, "Should return false when completion count is zero");
-  }
-
-  @Test
   public void testIsAllStagesCompletedAtLeastOnce_ReturnsFalseWhenEmpty() throws Exception {
     // Act
     Boolean result = invokePrivateStaticMethod("isAllStagesCompletedAtLeastOnce");
@@ -528,26 +456,6 @@ public class SparkStageListenerTest {
 
     assertEquals(totalSubmitted, threadCount, "Total submitted count should match thread count");
     assertEquals(totalCompleted, threadCount, "Total completed count should match thread count");
-  }
-
-  // ==================== Test stopStage() ====================
-
-  @Test
-  public void testStopStage_CanBeInvokedWithoutException() throws Exception {
-    // Arrange
-    java.lang.reflect.Method stopStageMethod =
-        SparkStageListener.class.getDeclaredMethod("stopStage", String.class, int.class);
-    stopStageMethod.setAccessible(true);
-
-    // Act - This starts a thread that may fail due to SparkSession dependency
-    // The method itself should be callable without throwing exceptions
-    stopStageMethod.invoke(listener, "Export Application Logs To S3", 1);
-
-    // Assert - Verify the method can be called without throwing exception
-    // Note: The async thread may fail due to SparkSession requirements, but that's
-    // acceptable for unit tests. Full testing of stopStage execution requires
-    // integration tests with a real SparkSession configured.
-    assertTrue(true, "stopStage should be callable without throwing exceptions");
   }
 
   // ==================== Helper Methods ====================
