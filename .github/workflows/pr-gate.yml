@@ -38,9 +38,9 @@ jobs:
       - name: Decide required workflows based on changes
         id: plan
         env:
-          DOCS_CHANGED: ${{ needs.detect.outputs.docs }}
-          ORCH_CHANGED: ${{ needs.detect.outputs.orchestrator }}
-          SPARK_CHANGED: ${{ needs.detect.outputs.spark }}
+          DOCS_CHANGED: ${{ needs.detect.outputs.docs || 'false' }}
+          ORCH_CHANGED: ${{ needs.detect.outputs.orchestrator || 'false' }}
+          SPARK_CHANGED: ${{ needs.detect.outputs.spark || 'false' }}
         run: |
           required=()
           if [ "$DOCS_CHANGED" = "true" ]; then
@@ -53,6 +53,7 @@ jobs:
             required+=("Spark Formatting Check")
           fi
           printf 'required=%s\n' "$(jq -nc --argjson a "$(printf '%s\0' "${required[@]}" | jq -Rcs 'split("\u0000")[:-1]')" '$a')" >> "$GITHUB_OUTPUT"
+          echo "Required checks: ${required[*]}"
 
       - name: Wait for required workflows and evaluate
         id: eval
@@ -61,7 +62,14 @@ jobs:
           REQUIRED_JSON: ${{ steps.plan.outputs.required }}
         with:
           script: |
-            const required = JSON.parse(process.env.REQUIRED_JSON || "[]");
+            let required = [];
+            try {
+              required = JSON.parse(process.env.REQUIRED_JSON || "[]");
+            } catch (e) {
+              core.warning(`Failed to parse REQUIRED_JSON: ${e.message}`);
+              required = [];
+            }
+            core.info(`Required workflows: ${required.join(", ") || "none"}`);
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
             const sha   = context.payload.pull_request.head.sha;
@@ -69,10 +77,18 @@ jobs:
             // Helper: sleep
             const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-            // Poll each required workflow until completed (max ~30 minutes)
+            // Map workflow names to their workflow file names
+            const workflowNameMap = {
+              "Docs Build Check": "docs-build-check.yml",
+              "Spark Formatting Check": "spark-formatting.yml",
+              "Orchestrator Formatting Check": "orchestrator-formatting.yml"
+            };
+
+            // Poll each required workflow until all jobs completed (max ~30 minutes)
             const results = {};
             for (const wfName of required) {
               let attempt = 0, run = null;
+              const workflowFile = workflowNameMap[wfName];
 
               while (attempt < 120) { // 120 * 15s = 30 min
                 const runs = await github.rest.actions.listWorkflowRunsForRepo({
@@ -82,50 +98,105 @@ jobs:
                   per_page: 100,
                 });
 
-                // Find the newest run for this workflow name
+                // Find the newest run for this workflow file
                 run = runs.data.workflow_runs
-                  .filter(r => r.name === wfName)
+                  .filter(r => r.path === `.github/workflows/${workflowFile}`)
                   .sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
-                if (run && run.status === "completed") break;
+                if (run && run.status === "completed") {
+                  // Check individual jobs to ensure they all passed
+                  const jobs = await github.rest.actions.listJobsForWorkflowRun({
+                    owner, repo, run_id: run.id
+                  });
+                  
+                  const allJobsCompleted = jobs.data.jobs.every(j => j.status === "completed");
+                  const allJobsSucceeded = jobs.data.jobs.every(j => j.conclusion === "success");
+                  
+                  if (allJobsCompleted) {
+                    // Store job-level details
+                    results[wfName] = {
+                      status: run.status,
+                      conclusion: allJobsSucceeded ? "success" : "failure",
+                      html_url: run.html_url,
+                      jobs: jobs.data.jobs.map(j => ({
+                        name: j.name,
+                        conclusion: j.conclusion,
+                        status: j.status
+                      }))
+                    };
+                    break;
+                  }
+                }
+                
                 if (run && run.status !== "completed") {
                   await sleep(15000);
-                } else {
+                } else if (!run) {
                   // no run found yet — give it a moment to start
+                  await sleep(15000);
+                } else {
+                  // run completed but jobs not all done yet
                   await sleep(15000);
                 }
                 attempt++;
               }
 
               if (!run) {
-                results[wfName] = { status: "missing", conclusion: "missing" };
-              } else {
-                results[wfName] = { status: run.status, conclusion: run.conclusion, html_url: run.html_url };
+                results[wfName] = { status: "missing", conclusion: "missing", error: "Workflow run not found" };
+              } else if (!results[wfName]) {
+                results[wfName] = { status: run.status, conclusion: "timeout", error: "Timeout waiting for jobs to complete" };
               }
             }
 
             core.setOutput("results", JSON.stringify(results));
 
             // Build a markdown summary
-            let summary = "## PR Gate — conditional required checks\n";
+            let summary = "## PR Gate — conditional required checks\n\n";
             if (required.length === 0) {
-              summary += "- No relevant folders changed (`docs/`, `orchestrator/`, `spark/`). Gate passes.\n";
+              summary += "✅ No relevant folders changed (`docs/`, `orchestrator/`, `spark/`). Gate passes.\n";
               await core.summary.addRaw(summary).write();
               return;
             }
+            
+            summary += `**Required checks:** ${required.join(", ")}\n\n`;
+            
             for (const [name, info] of Object.entries(results)) {
-              const link = info.html_url ? `([run](${info.html_url}))` : "";
-              summary += `- **${name}** → status: \`${info.status}\`, conclusion: \`${info.conclusion}\` ${link}\n`;
+              const link = info.html_url ? `[View run](${info.html_url})` : "";
+              const statusIcon = info.conclusion === "success" ? "✅" : "❌";
+              summary += `### ${statusIcon} ${name}\n`;
+              summary += `- Status: \`${info.status}\`\n`;
+              summary += `- Conclusion: \`${info.conclusion}\`\n`;
+              if (info.jobs) {
+                summary += `- Jobs:\n`;
+                for (const job of info.jobs) {
+                  const jobIcon = job.conclusion === "success" ? "✅" : "❌";
+                  summary += `  - ${jobIcon} ${job.name}: \`${job.conclusion || job.status}\`\n`;
+                }
+              }
+              if (info.error) {
+                summary += `- ⚠️ Error: ${info.error}\n`;
+              }
+              if (link) {
+                summary += `- ${link}\n`;
+              }
+              summary += "\n";
             }
             await core.summary.addRaw(summary).write();
 
             // Fail if any required workflow didn't succeed
             const failures = Object.entries(results).filter(([,i]) => i.conclusion !== "success");
             if (failures.length > 0) {
+              const failureDetails = failures.map(([n, i]) => {
+                const jobDetails = i.jobs ? i.jobs.filter(j => j.conclusion !== "success").map(j => `${j.name}=${j.conclusion}`).join(", ") : "";
+                return `${n}=${i.conclusion}${jobDetails ? ` (${jobDetails})` : ""}`;
+              }).join("; ");
+              
               core.setFailed(
-                "One or more required workflows did not succeed: " +
-                failures.map(([n,i]) => `${n}=${i.conclusion}`).join(", ")
+                `❌ PR Gate failed: One or more required workflows did not succeed.\n\n` +
+                `Failed checks: ${failureDetails}\n\n` +
+                `Please fix the failing checks before merging this PR.`
               );
+            } else {
+              core.info("✅ All required checks passed!");
             }
       - name: Echo decision
         if: success()
