@@ -4,11 +4,11 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.dream11</groupId>
-  <artifactId>log-central-orchestrator</artifactId>
+  <groupId>com.logwise</groupId>
+  <artifactId>orchestrator</artifactId>
   <version>1.4.2-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>log-central-orchestrator</name>
+  <name>logwise-orchestrator</name>
 
   <!-- ==========================================================
        Properties (deduplicated and aligned)
@@ -20,8 +20,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- App -->
-    <app.name>log-central-orchestrator</app.name>
-    <main.class>com.dream11.logcentralorchestrator.MainApplication</main.class>
+    <app.name>logwise-orchestrator</app.name>
+    <main.class>com.logwise.orchestrator.MainApplication</main.class>
     <fat-jar.path>${project.build.directory}/${project.artifactId}-${project.version}-all.jar</fat-jar.path>
 
     <!-- 3rd‑party versions -->
@@ -66,7 +66,7 @@
     <swagger.outputFileName>swagger</swagger.outputFileName>
     <swagger.configurationFilePath>${project.basedir}/src/main/resources/config/swagger/swagger-info.json</swagger.configurationFilePath>
     <swagger.outputPath>${project.basedir}/target/classes/webroot/swagger</swagger.outputPath>
-    <swagger.resourcePackage>com.dream11.logcentralorchestrator.rest</swagger.resourcePackage>
+    <swagger.resourcePackage>com.logwise.orchestrator.rest</swagger.resourcePackage>
   </properties>
 
   <!-- ==========================================================
@@ -635,7 +635,7 @@
                 <include>**/*IT.java</include>
               </includes>
               <useModulePath>false</useModulePath>
-              <test>com.dream11.logcentralorchestrator.runners.TestRunner</test>
+              <test>com.logwise.orchestrator.runners.TestRunner</test>
               <trimStackTrace>false</trimStackTrace>
               <failIfNoTests>false</failIfNoTests>
             </configuration>
