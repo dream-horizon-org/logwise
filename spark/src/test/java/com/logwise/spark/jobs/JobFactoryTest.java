@@ -48,8 +48,7 @@ public class JobFactoryTest {
     // Assert
     assertNotNull(job, "Job should not be null");
     assertTrue(
-        job instanceof PushLogsToS3SparkJob,
-        "Job should be instance of PushLogsToS3SparkJob");
+        job instanceof PushLogsToS3SparkJob, "Job should be instance of PushLogsToS3SparkJob");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
@@ -88,10 +87,7 @@ public class JobFactoryTest {
     // Assert - Should return different instances (factory creates new instances)
     assertNotNull(job1, "First job should not be null");
     assertNotNull(job2, "Second job should not be null");
-    assertNotSame(
-        job1,
-        job2,
-        "Factory should create new instances for each call");
+    assertNotSame(job1, job2, "Factory should create new instances for each call");
   }
 
   @Test
@@ -101,10 +97,8 @@ public class JobFactoryTest {
 
     try {
       // Act
-      SparkJob job1 =
-          JobFactory.getSparkJob(JobName.PUSH_LOGS_TO_S3.getValue(), mockSparkSession);
-      SparkJob job2 =
-          JobFactory.getSparkJob(JobName.PUSH_LOGS_TO_S3.getValue(), mockSparkSession2);
+      SparkJob job1 = JobFactory.getSparkJob(JobName.PUSH_LOGS_TO_S3.getValue(), mockSparkSession);
+      SparkJob job2 = JobFactory.getSparkJob(JobName.PUSH_LOGS_TO_S3.getValue(), mockSparkSession2);
 
       // Assert
       assertNotNull(job1, "First job should not be null");
@@ -124,9 +118,7 @@ public class JobFactoryTest {
 
     // Assert
     assertNotNull(job, "Job should not be null");
-    assertTrue(
-        job instanceof PushLogsToS3SparkJob,
-        "Should create correct job type");
+    assertTrue(job instanceof PushLogsToS3SparkJob, "Should create correct job type");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
@@ -153,5 +145,3 @@ public class JobFactoryTest {
     assertNotNull(job, "Job should be created with exact job name");
   }
 }
-
-

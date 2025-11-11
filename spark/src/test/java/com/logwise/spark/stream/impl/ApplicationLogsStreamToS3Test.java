@@ -18,14 +18,12 @@ import org.testng.annotations.Test;
 /**
  * Unit tests for ApplicationLogsStreamToS3.
  *
- * <p>Tests the S3 streaming implementation including:
- * - Constructor behavior and dependency injection
- * - Configuration usage
- * - Constants validation
+ * <p>Tests the S3 streaming implementation including: - Constructor behavior and dependency
+ * injection - Configuration usage - Constants validation
  *
- * <p>Note: The getVectorApplicationLogsStreamQuery() method contains Spark Streaming code
- * that requires a real SparkSession and cannot be easily unit tested with mocks. This method
- * is covered by integration tests.
+ * <p>Note: The getVectorApplicationLogsStreamQuery() method contains Spark Streaming code that
+ * requires a real SparkSession and cannot be easily unit tested with mocks. This method is covered
+ * by integration tests.
  */
 public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
 
@@ -72,7 +70,7 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
   public void testConstructor_WithNullConfig_CreatesInstance() {
     // Note: Guice will ensure config is not null in production code
     // This test verifies constructor signature works
-    
+
     // Act
     ApplicationLogsStreamToS3 newStream = new ApplicationLogsStreamToS3(null, mockKafkaService);
 
@@ -84,7 +82,7 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
   public void testConstructor_WithNullKafkaService_CreatesInstance() {
     // Note: Guice will ensure kafkaService is not null in production code
     // This test verifies constructor signature works
-    
+
     // Act
     ApplicationLogsStreamToS3 newStream = new ApplicationLogsStreamToS3(config, null);
 
@@ -108,7 +106,8 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
     Config newConfig = ConfigFactory.parseMap(differentConfig);
 
     // Act
-    ApplicationLogsStreamToS3 newStream = new ApplicationLogsStreamToS3(newConfig, mockKafkaService);
+    ApplicationLogsStreamToS3 newStream =
+        new ApplicationLogsStreamToS3(newConfig, mockKafkaService);
 
     // Assert
     assertNotNull(newStream);
@@ -117,7 +116,8 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
   @Test
   public void testConstructor_ExtendsAbstractApplicationLogsStream() {
     // Assert - Verify inheritance
-    assertTrue(stream instanceof AbstractApplicationLogsStream, 
+    assertTrue(
+        stream instanceof AbstractApplicationLogsStream,
         "ApplicationLogsStreamToS3 should extend AbstractApplicationLogsStream");
   }
 
@@ -137,7 +137,6 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
     assertNotSame(stream1, stream3);
   }
 
-
   @Test
   public void testPushApplicationLogsToS3_WithMockedDataset_ExecutesMethod() throws Exception {
     // Arrange - Create config that allows ConfigUtils.getSparkConfig() to succeed
@@ -153,16 +152,17 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
     configMap.put("spark.offsetPerTrigger.default", 10000L);
     // Add empty spark.config to ensure ConfigUtils.getSparkConfig() returns empty map
     configMap.put("spark.config", new HashMap<String, Object>());
-    
+
     Config testConfig = ConfigFactory.parseMap(configMap);
-    ApplicationLogsStreamToS3 testStream = new ApplicationLogsStreamToS3(testConfig, mockKafkaService);
-    
+    ApplicationLogsStreamToS3 testStream =
+        new ApplicationLogsStreamToS3(testConfig, mockKafkaService);
+
     // Mock Dataset and its chained methods
-    org.apache.spark.sql.Dataset<org.apache.spark.sql.Row> mockDataset = 
+    org.apache.spark.sql.Dataset<org.apache.spark.sql.Row> mockDataset =
         org.mockito.Mockito.mock(org.apache.spark.sql.Dataset.class);
-    org.apache.spark.sql.streaming.DataStreamWriter<org.apache.spark.sql.Row> mockWriter = 
+    org.apache.spark.sql.streaming.DataStreamWriter<org.apache.spark.sql.Row> mockWriter =
         org.mockito.Mockito.mock(org.apache.spark.sql.streaming.DataStreamWriter.class);
-    org.apache.spark.sql.streaming.StreamingQuery mockQuery = 
+    org.apache.spark.sql.streaming.StreamingQuery mockQuery =
         org.mockito.Mockito.mock(org.apache.spark.sql.streaming.StreamingQuery.class);
 
     // Mock the chain: dataset.writeStream().queryName()...start()
@@ -171,49 +171,58 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
         .thenReturn(mockWriter);
     org.mockito.Mockito.when(mockWriter.trigger(org.mockito.ArgumentMatchers.any()))
         .thenReturn(mockWriter);
-    org.apache.spark.sql.streaming.OutputMode appendMode = org.apache.spark.sql.streaming.OutputMode.Append();
-    org.mockito.Mockito.when(mockWriter.outputMode(appendMode))
-        .thenReturn(mockWriter);
+    org.apache.spark.sql.streaming.OutputMode appendMode =
+        org.apache.spark.sql.streaming.OutputMode.Append();
+    org.mockito.Mockito.when(mockWriter.outputMode(appendMode)).thenReturn(mockWriter);
     org.mockito.Mockito.when(mockWriter.format(org.mockito.ArgumentMatchers.anyString()))
         .thenReturn(mockWriter);
-    org.mockito.Mockito.when(mockWriter.partitionBy(org.mockito.ArgumentMatchers.any(String[].class)))
+    org.mockito.Mockito.when(
+            mockWriter.partitionBy(org.mockito.ArgumentMatchers.any(String[].class)))
         .thenReturn(mockWriter);
-    org.mockito.Mockito.when(mockWriter.option(org.mockito.ArgumentMatchers.anyString(), 
-        org.mockito.ArgumentMatchers.anyString())).thenReturn(mockWriter);
+    org.mockito.Mockito.when(
+            mockWriter.option(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
+        .thenReturn(mockWriter);
     org.mockito.Mockito.when(mockWriter.options(org.mockito.ArgumentMatchers.anyMap()))
         .thenReturn(mockWriter);
     org.mockito.Mockito.when(mockWriter.start(org.mockito.ArgumentMatchers.anyString()))
         .thenReturn(mockQuery);
 
     // Use reflection to call private method
-    java.lang.reflect.Method method = ApplicationLogsStreamToS3.class
-        .getDeclaredMethod("pushApplicationLogsToS3", org.apache.spark.sql.Dataset.class);
+    java.lang.reflect.Method method =
+        ApplicationLogsStreamToS3.class.getDeclaredMethod(
+            "pushApplicationLogsToS3", org.apache.spark.sql.Dataset.class);
     method.setAccessible(true);
 
     // Act - This will execute the method, which calls ConfigUtils.getSparkConfig()
     // With proper config, it should get further and execute more lines
     try {
-      org.apache.spark.sql.streaming.StreamingQuery result = 
+      org.apache.spark.sql.streaming.StreamingQuery result =
           (org.apache.spark.sql.streaming.StreamingQuery) method.invoke(testStream, mockDataset);
 
       // Assert - If successful, verify interactions
       assertNotNull(result, "Should return a StreamingQuery");
       org.mockito.Mockito.verify(mockDataset).writeStream();
-      org.mockito.Mockito.verify(mockWriter).option("compression", Constants.WRITE_STREAM_GZIP_COMPRESSION);
-      org.mockito.Mockito.verify(mockWriter).option("checkpointLocation", testConfig.getString("s3.path.checkpoint.application"));
-      org.mockito.Mockito.verify(mockWriter).start(testConfig.getString("s3.path.logs.application"));
+      org.mockito.Mockito.verify(mockWriter)
+          .option("compression", Constants.WRITE_STREAM_GZIP_COMPRESSION);
+      org.mockito.Mockito.verify(mockWriter)
+          .option("checkpointLocation", testConfig.getString("s3.path.checkpoint.application"));
+      org.mockito.Mockito.verify(mockWriter)
+          .start(testConfig.getString("s3.path.logs.application"));
     } catch (java.lang.reflect.InvocationTargetException e) {
       // Expected - The method executes but may fail at Spark dependencies
       // However, we've executed more code paths including option() calls
       Throwable cause = e.getCause();
-      assertTrue(cause != null || e.getMessage() != null, 
+      assertTrue(
+          cause != null || e.getMessage() != null,
           "Method executed but failed due to dependencies - this still improves coverage");
-      
+
       // Verify that writeStream and option calls were attempted
       try {
         org.mockito.Mockito.verify(mockDataset, org.mockito.Mockito.atLeastOnce()).writeStream();
         // Even if it fails, we've executed lines 35-45 which improves coverage
-        assertTrue(true, "Method executed and called writeStream and option methods (improves coverage)");
+        assertTrue(
+            true, "Method executed and called writeStream and option methods (improves coverage)");
       } catch (Exception verifyEx) {
         // Method may have failed before writeStream, but we've still executed code
         assertTrue(true, "Method execution attempted (improves coverage even if it fails)");
@@ -222,70 +231,79 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
   }
 
   @Test
-  public void testGetVectorApplicationLogsStreamQuery_WithMockedDataset_ProcessesData() throws Exception {
+  public void testGetVectorApplicationLogsStreamQuery_WithMockedDataset_ProcessesData()
+      throws Exception {
     // Arrange - Mock Dataset and its chained methods
-    org.apache.spark.sql.Dataset<org.apache.spark.sql.Row> mockKafkaDataset = 
+    org.apache.spark.sql.Dataset<org.apache.spark.sql.Row> mockKafkaDataset =
         org.mockito.Mockito.mock(org.apache.spark.sql.Dataset.class);
-    org.apache.spark.sql.Dataset<org.apache.spark.sql.Row> mockMappedDataset = 
+    org.apache.spark.sql.Dataset<org.apache.spark.sql.Row> mockMappedDataset =
         org.mockito.Mockito.mock(org.apache.spark.sql.Dataset.class);
-    org.apache.spark.sql.streaming.DataStreamWriter<org.apache.spark.sql.Row> mockWriter = 
+    org.apache.spark.sql.streaming.DataStreamWriter<org.apache.spark.sql.Row> mockWriter =
         org.mockito.Mockito.mock(org.apache.spark.sql.streaming.DataStreamWriter.class);
-    org.apache.spark.sql.streaming.StreamingQuery mockQuery = 
+    org.apache.spark.sql.streaming.StreamingQuery mockQuery =
         org.mockito.Mockito.mock(org.apache.spark.sql.streaming.StreamingQuery.class);
 
     // Mock the map() call - this is tricky, so we'll use a spy or partial mock
     // For now, we'll verify the method can be called
-    org.mockito.Mockito.when(mockKafkaDataset.map(
-        org.mockito.ArgumentMatchers.any(org.apache.spark.api.java.function.MapFunction.class),
-        org.mockito.ArgumentMatchers.any(org.apache.spark.sql.catalyst.encoders.ExpressionEncoder.class)))
+    org.mockito.Mockito.when(
+            mockKafkaDataset.map(
+                org.mockito.ArgumentMatchers.any(
+                    org.apache.spark.api.java.function.MapFunction.class),
+                org.mockito.ArgumentMatchers.any(
+                    org.apache.spark.sql.catalyst.encoders.ExpressionEncoder.class)))
         .thenReturn(mockMappedDataset);
-    
+
     // Mock withColumn calls
-    org.mockito.Mockito.when(mockMappedDataset.withColumn(
-        org.mockito.ArgumentMatchers.anyString(),
-        org.mockito.ArgumentMatchers.any(org.apache.spark.sql.Column.class)))
+    org.mockito.Mockito.when(
+            mockMappedDataset.withColumn(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any(org.apache.spark.sql.Column.class)))
         .thenReturn(mockMappedDataset);
-    
+
     // Mock writeStream chain
     org.mockito.Mockito.when(mockMappedDataset.writeStream()).thenReturn(mockWriter);
     org.mockito.Mockito.when(mockWriter.queryName(org.mockito.ArgumentMatchers.anyString()))
         .thenReturn(mockWriter);
     org.mockito.Mockito.when(mockWriter.trigger(org.mockito.ArgumentMatchers.any()))
         .thenReturn(mockWriter);
-    org.apache.spark.sql.streaming.OutputMode appendMode = org.apache.spark.sql.streaming.OutputMode.Append();
-    org.mockito.Mockito.when(mockWriter.outputMode(appendMode))
-        .thenReturn(mockWriter);
+    org.apache.spark.sql.streaming.OutputMode appendMode =
+        org.apache.spark.sql.streaming.OutputMode.Append();
+    org.mockito.Mockito.when(mockWriter.outputMode(appendMode)).thenReturn(mockWriter);
     org.mockito.Mockito.when(mockWriter.format(org.mockito.ArgumentMatchers.anyString()))
         .thenReturn(mockWriter);
-    org.mockito.Mockito.when(mockWriter.partitionBy(org.mockito.ArgumentMatchers.any(String[].class)))
+    org.mockito.Mockito.when(
+            mockWriter.partitionBy(org.mockito.ArgumentMatchers.any(String[].class)))
         .thenReturn(mockWriter);
-    org.mockito.Mockito.when(mockWriter.option(org.mockito.ArgumentMatchers.anyString(), 
-        org.mockito.ArgumentMatchers.anyString())).thenReturn(mockWriter);
+    org.mockito.Mockito.when(
+            mockWriter.option(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
+        .thenReturn(mockWriter);
     org.mockito.Mockito.when(mockWriter.options(org.mockito.ArgumentMatchers.anyMap()))
         .thenReturn(mockWriter);
     org.mockito.Mockito.when(mockWriter.start(org.mockito.ArgumentMatchers.anyString()))
         .thenReturn(mockQuery);
 
     // Use reflection to call protected method
-    java.lang.reflect.Method method = ApplicationLogsStreamToS3.class
-        .getDeclaredMethod("getVectorApplicationLogsStreamQuery", org.apache.spark.sql.Dataset.class);
+    java.lang.reflect.Method method =
+        ApplicationLogsStreamToS3.class.getDeclaredMethod(
+            "getVectorApplicationLogsStreamQuery", org.apache.spark.sql.Dataset.class);
     method.setAccessible(true);
 
     // Act - This will fail at runtime due to Spark dependencies, but we verify the method structure
     try {
-      org.apache.spark.sql.streaming.StreamingQuery result = 
+      org.apache.spark.sql.streaming.StreamingQuery result =
           (org.apache.spark.sql.streaming.StreamingQuery) method.invoke(stream, mockKafkaDataset);
       // If we get here, verify the result
       assertNotNull(result, "Should return a StreamingQuery");
     } catch (Exception e) {
       // Expected - Spark runtime dependencies prevent full execution
       // But we've verified the method can be invoked and the structure is correct
-      assertTrue(e.getCause() instanceof RuntimeException || 
-                 e.getCause() instanceof NullPointerException ||
-                 e.getMessage().contains("Spark") ||
-                 e.getCause() == null,
+      assertTrue(
+          e.getCause() instanceof RuntimeException
+              || e.getCause() instanceof NullPointerException
+              || e.getMessage().contains("Spark")
+              || e.getCause() == null,
           "Method invocation attempted (may fail due to Spark dependencies)");
     }
   }
 }
-

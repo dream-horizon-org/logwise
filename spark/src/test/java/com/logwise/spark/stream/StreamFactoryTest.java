@@ -25,27 +25,28 @@ public class StreamFactoryTest {
   public void setUp() {
     // Reset the ApplicationInjector before each test
     ApplicationInjector.reset();
-    
+
     // Create a test module with mocked dependencies
-    AbstractModule testModule = new AbstractModule() {
-      @Override
-      protected void configure() {
-        // Create a mock config
-        Config mockConfig = ConfigFactory.parseString(
-            "spark.processing.time.seconds = 60\n" +
-            "s3.path.checkpoint.application = \"/test/checkpoint\"\n" +
-            "s3.path.logs.application = \"/test/logs\""
-        );
-        
-        // Create a mock KafkaService
-        KafkaService mockKafkaService = mock(KafkaService.class);
-        
-        // Bind the mocked dependencies
-        bind(Config.class).toInstance(mockConfig);
-        bind(KafkaService.class).toInstance(mockKafkaService);
-      }
-    };
-    
+    AbstractModule testModule =
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            // Create a mock config
+            Config mockConfig =
+                ConfigFactory.parseString(
+                    "spark.processing.time.seconds = 60\n"
+                        + "s3.path.checkpoint.application = \"/test/checkpoint\"\n"
+                        + "s3.path.logs.application = \"/test/logs\"");
+
+            // Create a mock KafkaService
+            KafkaService mockKafkaService = mock(KafkaService.class);
+
+            // Bind the mocked dependencies
+            bind(Config.class).toInstance(mockConfig);
+            bind(KafkaService.class).toInstance(mockKafkaService);
+          }
+        };
+
     // Initialize the ApplicationInjector with the test module
     ApplicationInjector.initInjection(testModule);
   }
@@ -87,12 +88,9 @@ public class StreamFactoryTest {
     // Assert - Both should be non-null and correct type
     assertNotNull(stream1, "First stream should not be null");
     assertNotNull(stream2, "Second stream should not be null");
+    assertTrue(stream1 instanceof ApplicationLogsStreamToS3, "First stream should be correct type");
     assertTrue(
-        stream1 instanceof ApplicationLogsStreamToS3,
-        "First stream should be correct type");
-    assertTrue(
-        stream2 instanceof ApplicationLogsStreamToS3,
-        "Second stream should be correct type");
+        stream2 instanceof ApplicationLogsStreamToS3, "Second stream should be correct type");
     // Note: Whether they are the same instance or not depends on Guice configuration
     // (singleton vs prototype scope). We just verify they are created successfully.
   }

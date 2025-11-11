@@ -118,12 +118,13 @@ public class ApplicationInjectorTest {
   public void testInitInjection_WithMultipleModules_InitializesSuccessfully() {
     // Arrange
     Module module1 = createTestModule();
-    Module module2 = new AbstractModule() {
-      @Override
-      protected void configure() {
-        // Empty module
-      }
-    };
+    Module module2 =
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            // Empty module
+          }
+        };
 
     // Act
     ApplicationInjector.initInjection(module1, module2);
@@ -135,14 +136,15 @@ public class ApplicationInjectorTest {
   @Test
   public void testGetInstance_WithDifferentTypes_ReturnsCorrectInstances() {
     // Arrange
-    AbstractModule testModule = new AbstractModule() {
-      @Override
-      protected void configure() {
-        Config config = ConfigFactory.parseString("test.key = test.value");
-        bind(Config.class).toInstance(config);
-        bind(String.class).toInstance("test-string");
-      }
-    };
+    AbstractModule testModule =
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            Config config = ConfigFactory.parseString("test.key = test.value");
+            bind(Config.class).toInstance(config);
+            bind(String.class).toInstance("test-string");
+          }
+        };
     ApplicationInjector.initInjection(testModule);
 
     // Act
@@ -174,4 +176,3 @@ public class ApplicationInjectorTest {
     };
   }
 }
-

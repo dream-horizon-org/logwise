@@ -11,7 +11,7 @@ public class StreamFactory {
     if (streamName == null) {
       throw new IllegalArgumentException("Stream name cannot be null");
     }
-    
+
     switch (streamName) {
       case APPLICATION_LOGS_STREAM_TO_S3:
         return ApplicationInjector.getInstance(ApplicationLogsStreamToS3.class);

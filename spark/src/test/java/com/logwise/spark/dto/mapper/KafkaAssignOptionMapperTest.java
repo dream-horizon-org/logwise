@@ -21,8 +21,7 @@ public class KafkaAssignOptionMapperTest {
     offsetOption.addPartition("test-topic", "0", 1000L);
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Assert
     assertNotNull(result, "Result should not be null");
@@ -34,9 +33,7 @@ public class KafkaAssignOptionMapperTest {
         1,
         "test-topic should have exactly one partition");
     assertEquals(
-        result.getAssign().get("test-topic").get(0),
-        Integer.valueOf(0),
-        "Partition should be 0");
+        result.getAssign().get("test-topic").get(0), Integer.valueOf(0), "Partition should be 0");
   }
 
   @Test
@@ -48,16 +45,13 @@ public class KafkaAssignOptionMapperTest {
     offsetOption.addPartition("test-topic", "2", 1200L);
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Assert
     assertNotNull(result, "Result should not be null");
     assertEquals(result.getAssign().size(), 1, "Should contain exactly one topic");
     assertEquals(
-        result.getAssign().get("test-topic").size(),
-        3,
-        "test-topic should have three partitions");
+        result.getAssign().get("test-topic").size(), 3, "test-topic should have three partitions");
 
     List<Integer> partitions = result.getAssign().get("test-topic");
     assertTrue(partitions.contains(0), "Should contain partition 0");
@@ -75,8 +69,7 @@ public class KafkaAssignOptionMapperTest {
     offsetOption.addPartition("metrics-topic", "0", 3000L);
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Assert
     assertNotNull(result, "Result should not be null");
@@ -87,17 +80,11 @@ public class KafkaAssignOptionMapperTest {
     assertTrue(result.getAssign().containsKey("metrics-topic"), "Should contain metrics-topic");
 
     assertEquals(
-        result.getAssign().get("logs-topic-1").size(),
-        2,
-        "logs-topic-1 should have 2 partitions");
+        result.getAssign().get("logs-topic-1").size(), 2, "logs-topic-1 should have 2 partitions");
     assertEquals(
-        result.getAssign().get("logs-topic-2").size(),
-        1,
-        "logs-topic-2 should have 1 partition");
+        result.getAssign().get("logs-topic-2").size(), 1, "logs-topic-2 should have 1 partition");
     assertEquals(
-        result.getAssign().get("metrics-topic").size(),
-        1,
-        "metrics-topic should have 1 partition");
+        result.getAssign().get("metrics-topic").size(), 1, "metrics-topic should have 1 partition");
   }
 
   @Test
@@ -106,8 +93,7 @@ public class KafkaAssignOptionMapperTest {
     StartingOffsetsByTimestampOption offsetOption = new StartingOffsetsByTimestampOption();
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Assert
     assertNotNull(result, "Result should not be null");
@@ -126,16 +112,13 @@ public class KafkaAssignOptionMapperTest {
     offsetOption.addTopic("test-topic", partitions);
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Assert
     assertNotNull(result, "Result should not be null");
     assertEquals(result.getAssign().size(), 1, "Should contain exactly one topic");
     assertEquals(
-        result.getAssign().get("test-topic").size(),
-        3,
-        "test-topic should have three partitions");
+        result.getAssign().get("test-topic").size(), 3, "test-topic should have three partitions");
 
     List<Integer> resultPartitions = result.getAssign().get("test-topic");
     assertTrue(resultPartitions.contains(0), "Should contain partition 0");
@@ -152,8 +135,7 @@ public class KafkaAssignOptionMapperTest {
     offsetOption.addPartition("test-topic", "10", 1200L);
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Assert
     List<Integer> partitions = result.getAssign().get("test-topic");
@@ -179,16 +161,13 @@ public class KafkaAssignOptionMapperTest {
     offsetOption.addPartition("logs-development", "0", 1200L);
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Assert
     assertEquals(result.getAssign().size(), 3, "Should contain three topics");
     assertTrue(
-        result.getAssign().containsKey("logs-production"),
-        "Should contain logs-production topic");
-    assertTrue(
-        result.getAssign().containsKey("logs-staging"), "Should contain logs-staging topic");
+        result.getAssign().containsKey("logs-production"), "Should contain logs-production topic");
+    assertTrue(result.getAssign().containsKey("logs-staging"), "Should contain logs-staging topic");
     assertTrue(
         result.getAssign().containsKey("logs-development"),
         "Should contain logs-development topic");
@@ -205,8 +184,7 @@ public class KafkaAssignOptionMapperTest {
     offsetOption.addPartition("test-topic", "0", 1300L);
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Assert
     List<Integer> partitions = result.getAssign().get("test-topic");
@@ -226,8 +204,7 @@ public class KafkaAssignOptionMapperTest {
     offsetOption.addPartition("test-topic", "0", 1000L);
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Modify the original offset option
     offsetOption.addPartition("test-topic", "1", 2000L);
@@ -257,10 +234,8 @@ public class KafkaAssignOptionMapperTest {
     offsetOption2.addPartition("topic-2", "0", 2000L);
 
     // Act - Use the same mapper function multiple times
-    KafkaAssignOption result1 =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption1);
-    KafkaAssignOption result2 =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption2);
+    KafkaAssignOption result1 = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption1);
+    KafkaAssignOption result2 = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption2);
 
     // Assert - Each result should be independent and correct
     assertNotNull(result1, "First result should not be null");
@@ -282,8 +257,7 @@ public class KafkaAssignOptionMapperTest {
     offsetOption.addPartition("test-topic", "9999", 1200L);
 
     // Act
-    KafkaAssignOption result =
-        KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
+    KafkaAssignOption result = KafkaAssignOptionMapper.toKafkaAssignOption.apply(offsetOption);
 
     // Assert
     List<Integer> partitions = result.getAssign().get("test-topic");
@@ -293,5 +267,3 @@ public class KafkaAssignOptionMapperTest {
     assertTrue(partitions.contains(9999), "Should contain partition 9999");
   }
 }
-
-

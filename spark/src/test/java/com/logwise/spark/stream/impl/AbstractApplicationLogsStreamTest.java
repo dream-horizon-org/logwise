@@ -26,15 +26,11 @@ import org.testng.annotations.Test;
 /**
  * Unit tests for AbstractApplicationLogsStream.
  *
- * <p>Tests the base stream processing logic including:
- * - Configuration reading and validation
- * - Dependency injection
- * - Abstract class behavior
- * - Configuration scenarios
+ * <p>Tests the base stream processing logic including: - Configuration reading and validation -
+ * Dependency injection - Abstract class behavior - Configuration scenarios
  *
- * <p>Note: The startStreams() method uses SparkUtils static methods and requires
- * integration testing with a real SparkSession. These tests focus on verifiable
- * unit-testable behavior.
+ * <p>Note: The startStreams() method uses SparkUtils static methods and requires integration
+ * testing with a real SparkSession. These tests focus on verifiable unit-testable behavior.
  */
 public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
 
@@ -54,7 +50,8 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     }
 
     @Override
-    protected StreamingQuery getVectorApplicationLogsStreamQuery(Dataset<Row> kafkaValueTopicStream) {
+    protected StreamingQuery getVectorApplicationLogsStreamQuery(
+        Dataset<Row> kafkaValueTopicStream) {
       return mockQuery;
     }
   }
@@ -126,7 +123,6 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     assertNotNull(testStream);
   }
 
-
   @Test
   public void testKafkaService_GetStartingOffsetsByTimestamp_CanBeCalled() {
     // Arrange
@@ -144,8 +140,9 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
         .thenReturn(startingOffsets);
 
     // Act
-    StartingOffsetsByTimestampOption result = mockKafkaService.getStartingOffsetsByTimestamp(
-        "test-kafka-cluster.local", "app-logs-.*", 1609459200000L);
+    StartingOffsetsByTimestampOption result =
+        mockKafkaService.getStartingOffsetsByTimestamp(
+            "test-kafka-cluster.local", "app-logs-.*", 1609459200000L);
 
     // Assert
     assertNotNull(result);
@@ -197,7 +194,6 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     assertTrue(json.contains("topic1"));
   }
 
-
   @Test
   public void testAbstractClass_CanBeExtended() {
     // Arrange
@@ -205,7 +201,7 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     StreamingQuery mockQuery = mock(StreamingQuery.class);
 
     // Act
-    TestApplicationLogsStream concreteStream = 
+    TestApplicationLogsStream concreteStream =
         new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
 
     // Assert
@@ -238,9 +234,9 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     StreamingQuery mockQuery2 = mock(StreamingQuery.class);
 
     // Act
-    TestApplicationLogsStream stream1 = 
+    TestApplicationLogsStream stream1 =
         new TestApplicationLogsStream(config1, mockKafkaService, mockQuery1);
-    TestApplicationLogsStream stream2 = 
+    TestApplicationLogsStream stream2 =
         new TestApplicationLogsStream(config2, mockKafkaService, mockQuery2);
 
     // Assert
@@ -249,14 +245,13 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     assertNotSame(stream1, stream2);
   }
 
-
   @Test
   public void testStartStreams_WithStartingOffsetsTimestampZero_ReturnsStreamingQuery() {
     // Arrange
     config = createTestConfig(0L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
     testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
-    
+
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockValueDataset = mock(Dataset.class);
     when(mockKafkaDataset.selectExpr("value")).thenReturn(mockValueDataset);
@@ -264,7 +259,8 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
         .thenReturn("192.168.1.100:9092");
 
     try (MockedStatic<SparkUtils> mockedSparkUtils = mockStatic(SparkUtils.class)) {
-      mockedSparkUtils.when(() -> SparkUtils.getKafkaReadStream(eq(mockSparkSession), any()))
+      mockedSparkUtils
+          .when(() -> SparkUtils.getKafkaReadStream(eq(mockSparkSession), any()))
           .thenReturn(mockKafkaDataset);
 
       // Act
@@ -284,22 +280,23 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     config = createTestConfig(1609459200000L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
     testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
-    
+
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockValueDataset = mock(Dataset.class);
     when(mockKafkaDataset.selectExpr("value")).thenReturn(mockValueDataset);
-    
+
     StartingOffsetsByTimestampOption startingOffsets = new StartingOffsetsByTimestampOption();
     startingOffsets.addPartition("app-logs-service1", "0", 1000L);
-    
+
     when(mockKafkaService.getStartingOffsetsByTimestamp(
-        "test-kafka-cluster.local", "app-logs-.*", 1609459200000L))
+            "test-kafka-cluster.local", "app-logs-.*", 1609459200000L))
         .thenReturn(startingOffsets);
     when(mockKafkaService.getKafkaBootstrapServerIp("test-kafka-cluster.local"))
         .thenReturn("192.168.1.100:9092");
 
     try (MockedStatic<SparkUtils> mockedSparkUtils = mockStatic(SparkUtils.class)) {
-      mockedSparkUtils.when(() -> SparkUtils.getKafkaReadStream(eq(mockSparkSession), any()))
+      mockedSparkUtils
+          .when(() -> SparkUtils.getKafkaReadStream(eq(mockSparkSession), any()))
           .thenReturn(mockKafkaDataset);
 
       // Act
@@ -320,12 +317,12 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     config = createTestConfig(1609459200000L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
     testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
-    
+
     StartingOffsetsByTimestampOption emptyOffsets = new StartingOffsetsByTimestampOption();
     // emptyOffsets.toJson() returns "{}"
-    
+
     when(mockKafkaService.getStartingOffsetsByTimestamp(
-        "test-kafka-cluster.local", "app-logs-.*", 1609459200000L))
+            "test-kafka-cluster.local", "app-logs-.*", 1609459200000L))
         .thenReturn(emptyOffsets);
 
     // Act - should throw IllegalStateException
@@ -343,10 +340,10 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     configMap.put("kafka.maxRatePerPartition", "1000");
     configMap.put("spark.offsetPerTrigger.default", 50000L);
     config = ConfigFactory.parseMap(configMap);
-    
+
     StreamingQuery mockQuery = mock(StreamingQuery.class);
     testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
-    
+
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockValueDataset = mock(Dataset.class);
     when(mockKafkaDataset.selectExpr("value")).thenReturn(mockValueDataset);
@@ -354,7 +351,8 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
         .thenReturn("192.168.1.100:9092");
 
     try (MockedStatic<SparkUtils> mockedSparkUtils = mockStatic(SparkUtils.class)) {
-      mockedSparkUtils.when(() -> SparkUtils.getKafkaReadStream(eq(mockSparkSession), any()))
+      mockedSparkUtils
+          .when(() -> SparkUtils.getKafkaReadStream(eq(mockSparkSession), any()))
           .thenReturn(mockKafkaDataset);
 
       // Act
@@ -374,7 +372,7 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     config = createTestConfig(0L, "earliest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
     testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
-    
+
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockValueDataset = mock(Dataset.class);
     when(mockKafkaDataset.selectExpr("value")).thenReturn(mockValueDataset);
@@ -382,7 +380,8 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
         .thenReturn("192.168.1.100:9092");
 
     try (MockedStatic<SparkUtils> mockedSparkUtils = mockStatic(SparkUtils.class)) {
-      mockedSparkUtils.when(() -> SparkUtils.getKafkaReadStream(eq(mockSparkSession), any()))
+      mockedSparkUtils
+          .when(() -> SparkUtils.getKafkaReadStream(eq(mockSparkSession), any()))
           .thenReturn(mockKafkaDataset);
 
       // Act

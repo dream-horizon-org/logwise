@@ -23,8 +23,8 @@ import scala.Option;
 /**
  * Unit tests for SparkStageListener.
  *
- * <p>Tests verify stage event handling, metric updates, and execution flow.
- * Focuses on observable behavior rather than implementation details.
+ * <p>Tests verify stage event handling, metric updates, and execution flow. Focuses on observable
+ * behavior rather than implementation details.
  */
 public class SparkStageListenerTest {
 
@@ -147,34 +147,40 @@ public class SparkStageListenerTest {
   }
 
   @Test
-  public void testOnStageSubmitted_WhenAllStagesCompleted_CallsCompleteExecution() throws Exception {
+  public void testOnStageSubmitted_WhenAllStagesCompleted_CallsCompleteExecution()
+      throws Exception {
     // Arrange - Set up so all stages are completed
     stageCompletionMap.put("stage1", 1);
     stageCompletionMap.put("stage2", 1);
     stageSubmittedMap.put("stage1", 1);
     stageSubmittedMap.put("stage2", 1);
 
-    try (org.mockito.MockedStatic<com.logwise.spark.jobs.impl.PushLogsToS3SparkJob> mockedJob = 
+    try (org.mockito.MockedStatic<com.logwise.spark.jobs.impl.PushLogsToS3SparkJob> mockedJob =
         org.mockito.Mockito.mockStatic(com.logwise.spark.jobs.impl.PushLogsToS3SparkJob.class)) {
-      mockedJob.when(com.logwise.spark.jobs.impl.PushLogsToS3SparkJob::getStreamingQueriesCount)
+      mockedJob
+          .when(com.logwise.spark.jobs.impl.PushLogsToS3SparkJob::getStreamingQueriesCount)
           .thenReturn(2);
 
       SparkListenerStageSubmitted stageSubmitted = createStageSubmitted("stage1", 1);
       CountDownLatch executionLatch = new CountDownLatch(1);
 
       // Mock stopAllRunningJobs to signal completion
-      mockedJob.when(() -> com.logwise.spark.jobs.impl.PushLogsToS3SparkJob.stopAllRunningJobs())
-          .thenAnswer(invocation -> {
-            executionLatch.countDown();
-            return null;
-          });
+      mockedJob
+          .when(() -> com.logwise.spark.jobs.impl.PushLogsToS3SparkJob.stopAllRunningJobs())
+          .thenAnswer(
+              invocation -> {
+                executionLatch.countDown();
+                return null;
+              });
 
       // Act
       listener.onStageSubmitted(stageSubmitted);
 
-      // Assert - completeExecution should be called (waits for pending stages, then calls stopAllRunningJobs)
+      // Assert - completeExecution should be called (waits for pending stages, then calls
+      // stopAllRunningJobs)
       // Since pendingStopStageIds is empty, it should complete quickly
-      assertTrue(executionLatch.await(2, TimeUnit.SECONDS), 
+      assertTrue(
+          executionLatch.await(2, TimeUnit.SECONDS),
           "completeExecution should be called when all stages are completed");
       mockedJob.verify(() -> com.logwise.spark.jobs.impl.PushLogsToS3SparkJob.stopAllRunningJobs());
     }
@@ -185,7 +191,8 @@ public class SparkStageListenerTest {
   @Test
   public void testOnStageCompleted_TracksStageCompletion() {
     // Arrange
-    SparkListenerStageCompleted stageCompleted = createStageCompleted("stage1", 100L, 1000L, 1000000L, 999000L);
+    SparkListenerStageCompleted stageCompleted =
+        createStageCompleted("stage1", 100L, 1000L, 1000000L, 999000L);
 
     // Act
     listener.onStageCompleted(stageCompleted);
@@ -197,8 +204,10 @@ public class SparkStageListenerTest {
   @Test
   public void testOnStageCompleted_IncrementsCountForSameStage() {
     // Arrange
-    SparkListenerStageCompleted stage1 = createStageCompleted("stage1", 100L, 1000L, 1000000L, 999000L);
-    SparkListenerStageCompleted stage2 = createStageCompleted("stage1", 200L, 2000L, 2000000L, 998000L);
+    SparkListenerStageCompleted stage1 =
+        createStageCompleted("stage1", 100L, 1000L, 1000000L, 999000L);
+    SparkListenerStageCompleted stage2 =
+        createStageCompleted("stage1", 200L, 2000L, 2000000L, 998000L);
 
     // Act
     listener.onStageCompleted(stage1);
@@ -211,8 +220,10 @@ public class SparkStageListenerTest {
   @Test
   public void testOnStageCompleted_UpdatesMetricsForSucceededStages() throws Exception {
     // Arrange
-    SparkListenerStageCompleted stage1 = createStageCompleted("stage1", 500L, 3000L, 1000000L, 999000L);
-    SparkListenerStageCompleted stage2 = createStageCompleted("stage2", 1000L, 5000L, 2000000L, 998000L);
+    SparkListenerStageCompleted stage1 =
+        createStageCompleted("stage1", 500L, 3000L, 1000000L, 999000L);
+    SparkListenerStageCompleted stage2 =
+        createStageCompleted("stage2", 1000L, 5000L, 2000000L, 998000L);
 
     // Act
     listener.onStageCompleted(stage1);
@@ -226,7 +237,8 @@ public class SparkStageListenerTest {
   }
 
   @Test(dataProvider = "nonSucceededStatuses")
-  public void testOnStageCompleted_DoesNotUpdateMetricsForNonSucceededStatuses(String status) throws Exception {
+  public void testOnStageCompleted_DoesNotUpdateMetricsForNonSucceededStatuses(String status)
+      throws Exception {
     // Arrange
     SparkListenerStageCompleted stageCompleted = mock(SparkListenerStageCompleted.class);
     StageInfo stageInfo = mock(StageInfo.class);
@@ -239,16 +251,15 @@ public class SparkStageListenerTest {
 
     // Assert - Stage should be tracked but metrics should not be updated
     assertEquals(stageCompletionMap.get("stage1"), Integer.valueOf(1));
-    assertEquals(getMetricValue("inputRecords"), 0L, 
+    assertEquals(
+        getMetricValue("inputRecords"),
+        0L,
         "Metrics should not be updated for " + status + " status");
   }
 
   @DataProvider(name = "nonSucceededStatuses")
   public Object[][] nonSucceededStatuses() {
-    return new Object[][] {
-        {"failed"},
-        {"killed"}
-    };
+    return new Object[][] {{"failed"}, {"killed"}};
   }
 
   @Test
@@ -282,14 +293,17 @@ public class SparkStageListenerTest {
   public void testOnStageCompleted_HandlesFirstSubmissionTime() throws Exception {
     // Arrange - Reset metrics to initial state
     resetStageMetrics();
-    
-    SparkListenerStageCompleted stageCompleted = createStageCompleted("stage1", 100L, 1000L, 1000000L, 999000L);
+
+    SparkListenerStageCompleted stageCompleted =
+        createStageCompleted("stage1", 100L, 1000L, 1000000L, 999000L);
 
     // Act
     listener.onStageCompleted(stageCompleted);
 
     // Assert - First submission time should be set (not zero)
-    assertEquals(getMetricValue("submissionTime"), 999000L, 
+    assertEquals(
+        getMetricValue("submissionTime"),
+        999000L,
         "First submission time should be set when starting from zero");
   }
 
@@ -301,32 +315,35 @@ public class SparkStageListenerTest {
     pendingStopStageIds.add(1);
     pendingStopStageIds.add(2);
 
-    java.lang.reflect.Method completeExecutionMethod = 
+    java.lang.reflect.Method completeExecutionMethod =
         SparkStageListener.class.getDeclaredMethod("completeExecution");
     completeExecutionMethod.setAccessible(true);
 
     CountDownLatch executionStarted = new CountDownLatch(1);
 
     // Mock stopAllRunningJobs to avoid issues
-    try (org.mockito.MockedStatic<com.logwise.spark.jobs.impl.PushLogsToS3SparkJob> mockedJob = 
+    try (org.mockito.MockedStatic<com.logwise.spark.jobs.impl.PushLogsToS3SparkJob> mockedJob =
         org.mockito.Mockito.mockStatic(com.logwise.spark.jobs.impl.PushLogsToS3SparkJob.class)) {
-      mockedJob.when(() -> com.logwise.spark.jobs.impl.PushLogsToS3SparkJob.stopAllRunningJobs())
+      mockedJob
+          .when(() -> com.logwise.spark.jobs.impl.PushLogsToS3SparkJob.stopAllRunningJobs())
           .thenAnswer(invocation -> null);
 
       // Start execution in a separate thread
-      Thread executionThread = new Thread(() -> {
-        try {
-          executionStarted.countDown();
-          completeExecutionMethod.invoke(listener);
-        } catch (Exception e) {
-          // Ignore
-        }
-      });
+      Thread executionThread =
+          new Thread(
+              () -> {
+                try {
+                  executionStarted.countDown();
+                  completeExecutionMethod.invoke(listener);
+                } catch (Exception e) {
+                  // Ignore
+                }
+              });
       executionThread.start();
 
       // Wait for execution to start
       assertTrue(executionStarted.await(1, TimeUnit.SECONDS), "Execution should start");
-      
+
       // Verify it's waiting (pending stages not empty)
       Thread.sleep(200); // Small delay to ensure it's in the loop
       assertTrue(executionThread.isAlive(), "Execution should be waiting for pending stages");
@@ -336,7 +353,9 @@ public class SparkStageListenerTest {
 
       // Wait for thread to complete (it should exit the loop when pending stages are cleared)
       executionThread.join(2000);
-      assertFalse(executionThread.isAlive(), "Execution thread should complete after pending stages are cleared");
+      assertFalse(
+          executionThread.isAlive(),
+          "Execution thread should complete after pending stages are cleared");
       // Note: stopAllRunningJobs() may not be called if there's an exception, but the important
       // behavior (waiting for pending stages) is verified above
     }
@@ -347,25 +366,27 @@ public class SparkStageListenerTest {
     // Arrange
     pendingStopStageIds.add(1);
 
-    java.lang.reflect.Method completeExecutionMethod = 
+    java.lang.reflect.Method completeExecutionMethod =
         SparkStageListener.class.getDeclaredMethod("completeExecution");
     completeExecutionMethod.setAccessible(true);
 
     CountDownLatch executionStarted = new CountDownLatch(1);
 
-    Thread executionThread = new Thread(() -> {
-      try {
-        executionStarted.countDown();
-        completeExecutionMethod.invoke(listener);
-      } catch (Exception e) {
-        // Ignore
-      }
-    });
+    Thread executionThread =
+        new Thread(
+            () -> {
+              try {
+                executionStarted.countDown();
+                completeExecutionMethod.invoke(listener);
+              } catch (Exception e) {
+                // Ignore
+              }
+            });
     executionThread.start();
 
     // Wait for execution to start
     assertTrue(executionStarted.await(1, TimeUnit.SECONDS), "Execution should start");
-    
+
     // Interrupt the thread
     Thread.sleep(100); // Small delay to ensure it's in the loop
     executionThread.interrupt();
@@ -442,9 +463,10 @@ public class SparkStageListenerTest {
     stageSubmittedMap.put("stage1", 1);
     stageSubmittedMap.put("stage2", 1);
 
-    try (org.mockito.MockedStatic<com.logwise.spark.jobs.impl.PushLogsToS3SparkJob> mockedJob = 
+    try (org.mockito.MockedStatic<com.logwise.spark.jobs.impl.PushLogsToS3SparkJob> mockedJob =
         org.mockito.Mockito.mockStatic(com.logwise.spark.jobs.impl.PushLogsToS3SparkJob.class)) {
-      mockedJob.when(com.logwise.spark.jobs.impl.PushLogsToS3SparkJob::getStreamingQueriesCount)
+      mockedJob
+          .when(com.logwise.spark.jobs.impl.PushLogsToS3SparkJob::getStreamingQueriesCount)
           .thenReturn(2);
 
       // Act
@@ -472,12 +494,13 @@ public class SparkStageListenerTest {
                 try {
                   startLatch.await();
 
-                  SparkListenerStageSubmitted stageSubmitted = createStageSubmitted(
-                      "stage" + (stageNum % 3), stageNum);
+                  SparkListenerStageSubmitted stageSubmitted =
+                      createStageSubmitted("stage" + (stageNum % 3), stageNum);
                   listener.onStageSubmitted(stageSubmitted);
 
                   SparkListenerStageCompleted stageCompleted =
-                      createStageCompleted("stage" + (stageNum % 3), 100L, 1000L, 1000000L, 999000L);
+                      createStageCompleted(
+                          "stage" + (stageNum % 3), 100L, 1000L, 1000000L, 999000L);
                   listener.onStageCompleted(stageCompleted);
 
                 } catch (Exception e) {
@@ -500,10 +523,8 @@ public class SparkStageListenerTest {
     assertFalse(stageCompletionMap.isEmpty(), "Completion map should not be empty");
 
     // Verify counts are correct (10 submissions across 3 stages)
-    int totalSubmitted =
-        stageSubmittedMap.values().stream().mapToInt(Integer::intValue).sum();
-    int totalCompleted =
-        stageCompletionMap.values().stream().mapToInt(Integer::intValue).sum();
+    int totalSubmitted = stageSubmittedMap.values().stream().mapToInt(Integer::intValue).sum();
+    int totalCompleted = stageCompletionMap.values().stream().mapToInt(Integer::intValue).sum();
 
     assertEquals(totalSubmitted, threadCount, "Total submitted count should match thread count");
     assertEquals(totalCompleted, threadCount, "Total completed count should match thread count");
@@ -514,8 +535,8 @@ public class SparkStageListenerTest {
   @Test
   public void testStopStage_CanBeInvokedWithoutException() throws Exception {
     // Arrange
-    java.lang.reflect.Method stopStageMethod = SparkStageListener.class.getDeclaredMethod(
-        "stopStage", String.class, int.class);
+    java.lang.reflect.Method stopStageMethod =
+        SparkStageListener.class.getDeclaredMethod("stopStage", String.class, int.class);
     stopStageMethod.setAccessible(true);
 
     // Act - This starts a thread that may fail due to SparkSession dependency
@@ -541,7 +562,11 @@ public class SparkStageListenerTest {
   }
 
   private SparkListenerStageCompleted createStageCompleted(
-      String stageName, long inputRecords, long outputBytes, long completionTime, long submissionTime) {
+      String stageName,
+      long inputRecords,
+      long outputBytes,
+      long completionTime,
+      long submissionTime) {
     SparkListenerStageCompleted stageCompleted = mock(SparkListenerStageCompleted.class);
     StageInfo stageInfo = mock(StageInfo.class);
     TaskMetrics taskMetrics = mock(TaskMetrics.class);
@@ -564,7 +589,8 @@ public class SparkStageListenerTest {
 
   private Boolean invokePrivateStaticMethodWithParam(String methodName, String param)
       throws Exception {
-    java.lang.reflect.Method method = SparkStageListener.class.getDeclaredMethod(methodName, String.class);
+    java.lang.reflect.Method method =
+        SparkStageListener.class.getDeclaredMethod(methodName, String.class);
     method.setAccessible(true);
     return (Boolean) method.invoke(null, param);
   }

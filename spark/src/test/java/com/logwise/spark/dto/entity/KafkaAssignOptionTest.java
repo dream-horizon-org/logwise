@@ -42,10 +42,7 @@ public class KafkaAssignOptionTest {
     assertEquals(assign.size(), 1, "Should contain one topic");
     assertTrue(assign.containsKey("test-topic"), "Should contain test-topic");
     assertEquals(assign.get("test-topic").size(), 1, "test-topic should have one partition");
-    assertEquals(
-        assign.get("test-topic").get(0),
-        Integer.valueOf(0),
-        "Partition should be 0");
+    assertEquals(assign.get("test-topic").get(0), Integer.valueOf(0), "Partition should be 0");
   }
 
   @Test
@@ -131,14 +128,10 @@ public class KafkaAssignOptionTest {
     Map<String, List<Integer>> assign = assignOption.getAssign();
     assertEquals(assign.size(), 1, "Should contain one topic");
     assertTrue(assign.containsKey("test-topic"), "Should contain test-topic");
-    assertEquals(
-        assign.get("test-topic").size(), 3, "test-topic should have three partitions");
-    assertEquals(
-        assign.get("test-topic").get(0), Integer.valueOf(0), "Partition 0 mismatch");
-    assertEquals(
-        assign.get("test-topic").get(1), Integer.valueOf(1), "Partition 1 mismatch");
-    assertEquals(
-        assign.get("test-topic").get(2), Integer.valueOf(2), "Partition 2 mismatch");
+    assertEquals(assign.get("test-topic").size(), 3, "test-topic should have three partitions");
+    assertEquals(assign.get("test-topic").get(0), Integer.valueOf(0), "Partition 0 mismatch");
+    assertEquals(assign.get("test-topic").get(1), Integer.valueOf(1), "Partition 1 mismatch");
+    assertEquals(assign.get("test-topic").get(2), Integer.valueOf(2), "Partition 2 mismatch");
   }
 
   @Test
@@ -181,8 +174,7 @@ public class KafkaAssignOptionTest {
     assignOption.addTopic("test-topic", partitions);
 
     // Assert
-    assertTrue(
-        assignOption.getAssign().containsKey("test-topic"), "Should contain test-topic");
+    assertTrue(assignOption.getAssign().containsKey("test-topic"), "Should contain test-topic");
     assertEquals(
         assignOption.getAssign().get("test-topic").size(),
         0,
@@ -236,12 +228,8 @@ public class KafkaAssignOptionTest {
 
     assertEquals(result.size(), 1, "JSON should contain one topic");
     assertTrue(result.containsKey("test-topic"), "JSON should contain test-topic");
-    assertEquals(
-        result.get("test-topic").size(), 1, "test-topic should have one partition");
-    assertEquals(
-        result.get("test-topic").get(0),
-        Integer.valueOf(0),
-        "Partition should be 0");
+    assertEquals(result.get("test-topic").size(), 1, "test-topic should have one partition");
+    assertEquals(result.get("test-topic").get(0), Integer.valueOf(0), "Partition should be 0");
   }
 
   @Test
@@ -276,8 +264,7 @@ public class KafkaAssignOptionTest {
 
     // Assert
     assertNotNull(result, "toString should not return null");
-    assertTrue(
-        result.contains("KafkaAssignOption"), "toString should contain class name");
+    assertTrue(result.contains("KafkaAssignOption"), "toString should contain class name");
     assertTrue(result.contains("test-topic"), "toString should contain topic name");
   }
 
@@ -339,10 +326,7 @@ public class KafkaAssignOptionTest {
 
     // Assert
     List<Integer> resultPartitions = assignOption.getAssign().get("test-topic");
-    assertEquals(
-        resultPartitions.size(),
-        5,
-        "Should contain all 5 elements including duplicates");
+    assertEquals(resultPartitions.size(), 5, "Should contain all 5 elements including duplicates");
 
     // Count occurrences
     long count0 = resultPartitions.stream().filter(p -> p == 0).count();
@@ -377,12 +361,9 @@ public class KafkaAssignOptionTest {
 
     // Assert
     List<Integer> partitions = assignOption.getAssign().get("test-topic");
-    assertEquals(
-        partitions.get(0), Integer.valueOf(5), "First added partition should be first");
-    assertEquals(
-        partitions.get(1), Integer.valueOf(2), "Second added partition should be second");
-    assertEquals(
-        partitions.get(2), Integer.valueOf(8), "Third added partition should be third");
+    assertEquals(partitions.get(0), Integer.valueOf(5), "First added partition should be first");
+    assertEquals(partitions.get(1), Integer.valueOf(2), "Second added partition should be second");
+    assertEquals(partitions.get(2), Integer.valueOf(8), "Third added partition should be third");
   }
 
   @Test
@@ -399,11 +380,7 @@ public class KafkaAssignOptionTest {
     // Assert
     List<Integer> resultPartitions = assignOption.getAssign().get("test-topic");
     assertEquals(resultPartitions.size(), 1000, "Should handle large partition lists");
-    assertEquals(
-        resultPartitions.get(0), Integer.valueOf(0), "First partition should be 0");
-    assertEquals(
-        resultPartitions.get(999), Integer.valueOf(999), "Last partition should be 999");
+    assertEquals(resultPartitions.get(0), Integer.valueOf(0), "First partition should be 0");
+    assertEquals(resultPartitions.get(999), Integer.valueOf(999), "Last partition should be 999");
   }
 }
-
-

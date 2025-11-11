@@ -56,7 +56,7 @@ public class PushLogsToS3SparkJobTest {
     } catch (Exception e) {
       // Ignore cleanup errors
     }
-    
+
     resetStaticFields();
     if (mockSparkSession != null) {
       mockSparkSession.close();
@@ -68,8 +68,7 @@ public class PushLogsToS3SparkJobTest {
     Map<String, Object> configMap = new HashMap<>();
     configMap.put("app.job.name", "PUSH_LOGS_TO_S3");
     configMap.put("spark.streamingquery.timeout.minutes", 1);
-    configMap.put(
-        "spark.streams.name", Collections.singletonList("application-logs-stream-to-s3"));
+    configMap.put("spark.streams.name", Collections.singletonList("application-logs-stream-to-s3"));
     configMap.put("tenant.name", "test-tenant");
     configMap.put("kafka.bootstrap.servers.port", "9092");
     configMap.put("logCentral.orchestrator.url", "http://localhost:8081");
@@ -86,8 +85,7 @@ public class PushLogsToS3SparkJobTest {
     try {
       Field runningJobsField = PushLogsToS3SparkJob.class.getDeclaredField("RUNNING_JOBS");
       runningJobsField.setAccessible(true);
-      CopyOnWriteArrayList<?> runningJobs =
-          (CopyOnWriteArrayList<?>) runningJobsField.get(null);
+      CopyOnWriteArrayList<?> runningJobs = (CopyOnWriteArrayList<?>) runningJobsField.get(null);
       runningJobs.clear();
 
       Field countField = PushLogsToS3SparkJob.class.getDeclaredField("streamingQueriesCount");
@@ -113,27 +111,29 @@ public class PushLogsToS3SparkJobTest {
   public void testStart_ReturnsCompletableFuture() {
     // Arrange - Start job in background thread since monitorJob() blocks forever
     CompletableFuture<Void> future = null;
-    Thread startThread = new Thread(() -> {
-      try {
-        job.start();
-      } catch (Exception e) {
-        // Expected - monitorJob blocks
-      }
-    });
+    Thread startThread =
+        new Thread(
+            () -> {
+              try {
+                job.start();
+              } catch (Exception e) {
+                // Expected - monitorJob blocks
+              }
+            });
     startThread.setDaemon(true);
     startThread.start();
-    
+
     // Wait briefly to allow start() to be called
     try {
       Thread.sleep(100);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    
+
     // Act - Call start() again would block, so we verify the method signature exists
     // The actual behavior is tested in other tests that use background threads
     assertNotNull(job, "Job should be initialized");
-    
+
     // Clean up
     job.stop();
     startThread.interrupt();
@@ -145,43 +145,46 @@ public class PushLogsToS3SparkJobTest {
     Stream mockStream = mock(Stream.class);
     when(mockStream.startStreams(any(SparkSession.class)))
         .thenReturn(Collections.emptyList()); // Return empty to avoid blocking
-    
+
     SparkSession mockNewSession = mock(SparkSession.class);
     when(mockSparkSession.newSession()).thenReturn(mockNewSession);
-    
+
     try (MockedStatic<StreamFactory> mockedFactory = mockStatic(StreamFactory.class)) {
       mockedFactory.when(() -> StreamFactory.getStream(any())).thenReturn(mockStream);
-      
+
       // Start job in background thread to avoid blocking test
-      Thread startThread = new Thread(() -> {
-        try {
-          job.start();
-        } catch (Exception e) {
-          // Expected - monitorJob blocks
-        }
-      });
+      Thread startThread =
+          new Thread(
+              () -> {
+                try {
+                  job.start();
+                } catch (Exception e) {
+                  // Expected - monitorJob blocks
+                }
+              });
       startThread.setDaemon(true);
       startThread.start();
-      
+
       // Wait briefly for thread to be created
       Thread.sleep(500);
-      
+
       // Get the thread via reflection
       Field threadField = PushLogsToS3SparkJob.class.getDeclaredField("pushLogsToS3Thread");
       threadField.setAccessible(true);
       Thread jobThread = (Thread) threadField.get(job);
-      
+
       if (jobThread != null && jobThread.isAlive()) {
         // Act
         job.stop();
-        
+
         // Assert - Wait for interrupt to be processed
         Thread.sleep(200);
         // Thread should be interrupted OR not alive (completed)
-        assertTrue(!jobThread.isAlive() || jobThread.isInterrupted(), 
+        assertTrue(
+            !jobThread.isAlive() || jobThread.isInterrupted(),
             "Thread should be interrupted or completed");
       }
-      
+
       // Clean up - interrupt monitorJob thread
       startThread.interrupt();
     }
@@ -190,7 +193,7 @@ public class PushLogsToS3SparkJobTest {
   @Test
   public void testStop_WhenThreadIsNull_DoesNotThrow() {
     // Arrange - thread is null by default
-    
+
     // Act & Assert - should not throw exception
     try {
       job.stop();
@@ -259,21 +262,23 @@ public class PushLogsToS3SparkJobTest {
     Stream mockStream = mock(Stream.class);
     when(mockStream.startStreams(any(SparkSession.class)))
         .thenThrow(new RuntimeException("Stream creation failed"));
-    
+
     SparkSession mockNewSession = mock(SparkSession.class);
     when(mockSparkSession.newSession()).thenReturn(mockNewSession);
-    
+
     try (MockedStatic<StreamFactory> mockedFactory = mockStatic(StreamFactory.class)) {
       mockedFactory.when(() -> StreamFactory.getStream(any())).thenReturn(mockStream);
 
       // Act - Start job in background thread to avoid blocking
-      Thread startThread = new Thread(() -> {
-        try {
-          job.start();
-        } catch (Exception e) {
-          // Expected - monitorJob blocks
-        }
-      });
+      Thread startThread =
+          new Thread(
+              () -> {
+                try {
+                  job.start();
+                } catch (Exception e) {
+                  // Expected - monitorJob blocks
+                }
+              });
       startThread.setDaemon(true);
       startThread.start();
 
@@ -282,7 +287,7 @@ public class PushLogsToS3SparkJobTest {
 
       // Assert - Job should handle exception gracefully (no crash)
       assertTrue(true, "Job should handle stream creation exceptions gracefully");
-      
+
       // Clean up
       job.stop();
       startThread.interrupt();
@@ -295,37 +300,39 @@ public class PushLogsToS3SparkJobTest {
     Stream mockStream = mock(Stream.class);
     when(mockStream.startStreams(any(SparkSession.class)))
         .thenThrow(new RuntimeException("Test exception"));
-    
+
     SparkSession mockNewSession = mock(SparkSession.class);
     when(mockSparkSession.newSession()).thenReturn(mockNewSession);
-    
+
     Field runningJobsField = PushLogsToS3SparkJob.class.getDeclaredField("RUNNING_JOBS");
     runningJobsField.setAccessible(true);
     @SuppressWarnings("unchecked")
     List<PushLogsToS3SparkJob> runningJobs =
         (List<PushLogsToS3SparkJob>) runningJobsField.get(null);
-    
+
     try (MockedStatic<StreamFactory> mockedFactory = mockStatic(StreamFactory.class)) {
       mockedFactory.when(() -> StreamFactory.getStream(any())).thenReturn(mockStream);
 
       // Act - Start job in background thread
-      Thread startThread = new Thread(() -> {
-        try {
-          job.start();
-        } catch (Exception e) {
-          // Expected
-        }
-      });
+      Thread startThread =
+          new Thread(
+              () -> {
+                try {
+                  job.start();
+                } catch (Exception e) {
+                  // Expected
+                }
+              });
       startThread.setDaemon(true);
       startThread.start();
-      
+
       Thread.sleep(500); // Wait for exception handling
 
       // Assert - Job should be removed from running jobs in finally block
       // Note: The job may or may not be in runningJobs depending on timing
       // The important thing is that it doesn't crash
       assertTrue(true, "Job should handle exceptions gracefully");
-      
+
       // Clean up
       job.stop();
       startThread.interrupt();
@@ -353,13 +360,15 @@ public class PushLogsToS3SparkJobTest {
       mockedFactory.when(() -> StreamFactory.getStream(any())).thenReturn(mockStream);
 
       // Act - Start job in background thread to avoid blocking
-      Thread startThread = new Thread(() -> {
-        try {
-          job.start();
-        } catch (Exception e) {
-          // Expected - monitorJob blocks
-        }
-      });
+      Thread startThread =
+          new Thread(
+              () -> {
+                try {
+                  job.start();
+                } catch (Exception e) {
+                  // Expected - monitorJob blocks
+                }
+              });
       startThread.setDaemon(true);
       startThread.start();
 
@@ -376,15 +385,14 @@ public class PushLogsToS3SparkJobTest {
 
       // Assert - Job should handle stop gracefully
       assertTrue(true, "Job lifecycle should complete without errors");
-      
+
       // Clean up
       startThread.interrupt();
     }
   }
 
   @Test
-  public void testAwaitAndStopStreamingQueries_HandlesStreamingQueryException()
-      throws Exception {
+  public void testAwaitAndStopStreamingQueries_HandlesStreamingQueryException() throws Exception {
     // Arrange - Create a scenario where awaitTermination throws
     StreamingQuery mockQuery = mock(StreamingQuery.class);
     when(mockQuery.name()).thenReturn("test-query");
@@ -406,16 +414,18 @@ public class PushLogsToS3SparkJobTest {
       mockedFactory.when(() -> StreamFactory.getStream(any())).thenReturn(mockStream);
 
       // Act - Start job in background thread
-      Thread startThread = new Thread(() -> {
-        try {
-          job.start();
-        } catch (Exception e) {
-          // Expected
-        }
-      });
+      Thread startThread =
+          new Thread(
+              () -> {
+                try {
+                  job.start();
+                } catch (Exception e) {
+                  // Expected
+                }
+              });
       startThread.setDaemon(true);
       startThread.start();
-      
+
       // Wait longer for stream to be created and processed
       Thread.sleep(1000);
 
@@ -429,7 +439,7 @@ public class PushLogsToS3SparkJobTest {
         // This is acceptable - the important thing is the job doesn't crash
         assertTrue(true, "Job handles exceptions gracefully even if stream creation timing varies");
       }
-      
+
       // Clean up
       job.stop();
       startThread.interrupt();
@@ -437,8 +447,7 @@ public class PushLogsToS3SparkJobTest {
   }
 
   @Test
-  public void testAwaitAndStopStreamingQueries_HandlesStopTimeoutException()
-      throws Exception {
+  public void testAwaitAndStopStreamingQueries_HandlesStopTimeoutException() throws Exception {
     // Arrange
     StreamingQuery mockQuery = mock(StreamingQuery.class);
     when(mockQuery.name()).thenReturn("test-query");
@@ -456,16 +465,18 @@ public class PushLogsToS3SparkJobTest {
       mockedFactory.when(() -> StreamFactory.getStream(any())).thenReturn(mockStream);
 
       // Act - Start job in background thread
-      Thread startThread = new Thread(() -> {
-        try {
-          job.start();
-        } catch (Exception e) {
-          // Expected
-        }
-      });
+      Thread startThread =
+          new Thread(
+              () -> {
+                try {
+                  job.start();
+                } catch (Exception e) {
+                  // Expected
+                }
+              });
       startThread.setDaemon(true);
       startThread.start();
-      
+
       // Wait longer for stream to be created and processed
       Thread.sleep(1000);
 
@@ -478,13 +489,14 @@ public class PushLogsToS3SparkJobTest {
       } catch (AssertionError e) {
         // If verification fails, it means the stream wasn't created in time
         // This is acceptable - the important thing is the job doesn't crash
-        assertTrue(true, "Job handles timeout exceptions gracefully even if stream creation timing varies");
+        assertTrue(
+            true,
+            "Job handles timeout exceptions gracefully even if stream creation timing varies");
       }
-      
+
       // Clean up
       job.stop();
       startThread.interrupt();
     }
   }
 }
-

@@ -48,8 +48,7 @@ public class SchemaTest {
     StructType schema = Schema.getVectorApplicationLogsSchema();
 
     // Assert
-    assertEquals(
-        schema.fields().length, 10, "Schema should contain exactly 10 fields");
+    assertEquals(schema.fields().length, 10, "Schema should contain exactly 10 fields");
   }
 
   @Test
@@ -72,19 +71,15 @@ public class SchemaTest {
     StructType schema = Schema.getVectorApplicationLogsSchema();
 
     // Assert
-    assertTrue(
-        schema.fieldNames().length > 0,
-        "Schema should contain at least one field");
-    
+    assertTrue(schema.fieldNames().length > 0, "Schema should contain at least one field");
+
     StructField messageField = schema.fields()[0];
     assertEquals(
         messageField.name(),
         Constants.APPLICATION_LOG_COLUMN_MESSAGE,
         "First field should be message");
     assertEquals(
-        messageField.dataType(),
-        DataTypes.StringType,
-        "Message field should be StringType");
+        messageField.dataType(), DataTypes.StringType, "Message field should be StringType");
   }
 
   @Test
@@ -99,10 +94,7 @@ public class SchemaTest {
         ddtagsField.name(),
         Constants.APPLICATION_LOG_COLUMN_DDTAGS,
         "Field name should match constant");
-    assertEquals(
-        ddtagsField.dataType(),
-        DataTypes.StringType,
-        "DDtags field should be StringType");
+    assertEquals(ddtagsField.dataType(), DataTypes.StringType, "DDtags field should be StringType");
   }
 
   @Test
@@ -118,9 +110,7 @@ public class SchemaTest {
         Constants.APPLICATION_LOG_COLUMN_TIMESTAMP,
         "Field name should match constant");
     assertEquals(
-        timestampField.dataType(),
-        DataTypes.StringType,
-        "Timestamp field should be StringType");
+        timestampField.dataType(), DataTypes.StringType, "Timestamp field should be StringType");
   }
 
   @Test
@@ -132,9 +122,7 @@ public class SchemaTest {
     // Assert
     assertNotNull(envField, "Environment field should exist");
     assertEquals(
-        envField.name(),
-        Constants.APPLICATION_LOG_COLUMN_ENV,
-        "Field name should match constant");
+        envField.name(), Constants.APPLICATION_LOG_COLUMN_ENV, "Field name should match constant");
   }
 
   @Test
@@ -155,8 +143,7 @@ public class SchemaTest {
   public void testGetVectorApplicationLogsSchema_ComponentNameFieldExists() {
     // Act
     StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField componentNameField =
-        schema.apply(Constants.APPLICATION_LOG_COLUMN_COMPONENT_NAME);
+    StructField componentNameField = schema.apply(Constants.APPLICATION_LOG_COLUMN_COMPONENT_NAME);
 
     // Assert
     assertNotNull(componentNameField, "Component name field should exist");
@@ -246,5 +233,3 @@ public class SchemaTest {
     }
   }
 }
-
-

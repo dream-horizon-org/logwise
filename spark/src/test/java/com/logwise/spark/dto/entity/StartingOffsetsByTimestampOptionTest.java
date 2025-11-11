@@ -40,8 +40,7 @@ public class StartingOffsetsByTimestampOptionTest {
     Map<String, Map<String, Long>> offsets = offsetOption.getOffsetByTimestamp();
     assertEquals(offsets.size(), 1, "Should contain one topic");
     assertTrue(offsets.containsKey("test-topic"), "Should contain test-topic");
-    assertEquals(
-        offsets.get("test-topic").size(), 1, "test-topic should have one partition");
+    assertEquals(offsets.get("test-topic").size(), 1, "test-topic should have one partition");
     assertEquals(
         offsets.get("test-topic").get("0"),
         Long.valueOf(1000L),
@@ -118,9 +117,7 @@ public class StartingOffsetsByTimestampOptionTest {
     Map<String, Long> partitions = offsetOption.getOffsetByTimestamp().get("test-topic");
     assertEquals(partitions.size(), 1, "Should still have one partition");
     assertEquals(
-        partitions.get("0"),
-        Long.valueOf(5000L),
-        "Partition 0 should have updated offset");
+        partitions.get("0"), Long.valueOf(5000L), "Partition 0 should have updated offset");
   }
 
   @Test
@@ -137,16 +134,11 @@ public class StartingOffsetsByTimestampOptionTest {
     Map<String, Map<String, Long>> offsets = offsetOption.getOffsetByTimestamp();
     assertEquals(offsets.size(), 1, "Should contain one topic");
     assertTrue(offsets.containsKey("test-topic"), "Should contain test-topic");
+    assertEquals(offsets.get("test-topic").size(), 2, "test-topic should have two partitions");
     assertEquals(
-        offsets.get("test-topic").size(), 2, "test-topic should have two partitions");
+        offsets.get("test-topic").get("0"), Long.valueOf(1000L), "Partition 0 offset mismatch");
     assertEquals(
-        offsets.get("test-topic").get("0"),
-        Long.valueOf(1000L),
-        "Partition 0 offset mismatch");
-    assertEquals(
-        offsets.get("test-topic").get("1"),
-        Long.valueOf(2000L),
-        "Partition 1 offset mismatch");
+        offsets.get("test-topic").get("1"), Long.valueOf(2000L), "Partition 1 offset mismatch");
   }
 
   @Test
@@ -159,9 +151,7 @@ public class StartingOffsetsByTimestampOptionTest {
     assertEquals(offsets.size(), 1, "Should contain one topic");
     assertTrue(offsets.containsKey("test-topic"), "Should contain test-topic");
     assertEquals(
-        offsets.get("test-topic").size(),
-        0,
-        "test-topic should have empty partitions map");
+        offsets.get("test-topic").size(), 0, "test-topic should have empty partitions map");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
@@ -194,8 +184,7 @@ public class StartingOffsetsByTimestampOptionTest {
 
     // Assert
     assertTrue(
-        offsetOption.getOffsetByTimestamp().containsKey("test-topic"),
-        "Should contain test-topic");
+        offsetOption.getOffsetByTimestamp().containsKey("test-topic"), "Should contain test-topic");
     assertEquals(
         offsetOption.getOffsetByTimestamp().get("test-topic").size(),
         0,
@@ -216,10 +205,7 @@ public class StartingOffsetsByTimestampOptionTest {
 
     // Assert
     Map<String, Long> partitions = offsetOption.getOffsetByTimestamp().get("test-topic");
-    assertEquals(
-        partitions.size(),
-        1,
-        "Should have only one partition after overwriting");
+    assertEquals(partitions.size(), 1, "Should have only one partition after overwriting");
     assertFalse(partitions.containsKey("0"), "Old partition 0 should be removed");
     assertFalse(partitions.containsKey("1"), "Old partition 1 should be removed");
     assertTrue(partitions.containsKey("5"), "New partition 5 should be present");
@@ -252,8 +238,7 @@ public class StartingOffsetsByTimestampOptionTest {
 
     assertEquals(result.size(), 1, "JSON should contain one topic");
     assertTrue(result.containsKey("test-topic"), "JSON should contain test-topic");
-    assertEquals(
-        result.get("test-topic").size(), 1, "test-topic should have one partition");
+    assertEquals(result.get("test-topic").size(), 1, "test-topic should have one partition");
     assertEquals(
         result.get("test-topic").get("0"),
         Integer.valueOf(1000),
@@ -293,8 +278,7 @@ public class StartingOffsetsByTimestampOptionTest {
     // Assert
     assertNotNull(result, "toString should not return null");
     assertTrue(
-        result.contains("StartingOffsetsByTimestampOption"),
-        "toString should contain class name");
+        result.contains("StartingOffsetsByTimestampOption"), "toString should contain class name");
     assertTrue(result.contains("test-topic"), "toString should contain topic name");
   }
 
@@ -363,5 +347,3 @@ public class StartingOffsetsByTimestampOptionTest {
         "Should handle high partition numbers");
   }
 }
-
-

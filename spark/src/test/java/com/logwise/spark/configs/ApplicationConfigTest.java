@@ -13,7 +13,6 @@ import org.testng.annotations.Test;
  */
 public class ApplicationConfigTest {
 
-
   @Test
   public void testGetConfig_WithCommandLineArguments_ReturnsConfig() {
     // Arrange
@@ -58,21 +57,24 @@ public class ApplicationConfigTest {
       // Act - use reflection to call private init() method to get initialized ApplicationConfig
       Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
       initMethod.setAccessible(true);
-      appConfig = (ApplicationConfig) initMethod.invoke(null, (Object) new String[]{configArg});
-      
+      appConfig = (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
+
       // Assert - instance creation must succeed
       assertNotNull(appConfig, "ApplicationConfig instance creation failed");
       Config systemConfig = appConfig.getSystemProperties();
       assertNotNull(systemConfig);
       // Verify system property is accessible
       assertTrue(systemConfig.hasPath(testPropertyKey), "System property should be accessible");
-      assertEquals(systemConfig.getString(testPropertyKey), testPropertyValue, 
-                   "System property value should match");
+      assertEquals(
+          systemConfig.getString(testPropertyKey),
+          testPropertyValue,
+          "System property value should match");
     } finally {
       // Cleanup
       System.clearProperty(testPropertyKey);
       // Fail test if instance creation did not succeed
-      assertNotNull(appConfig, "Test failed: ApplicationConfig instance was not created successfully");
+      assertNotNull(
+          appConfig, "Test failed: ApplicationConfig instance was not created successfully");
     }
   }
 
@@ -86,18 +88,20 @@ public class ApplicationConfigTest {
       // Act - use reflection to call private init() method to get initialized ApplicationConfig
       Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
       initMethod.setAccessible(true);
-      appConfig = (ApplicationConfig) initMethod.invoke(null, (Object) new String[]{configArg});
-      
+      appConfig = (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
+
       // Assert - instance creation must succeed
       assertNotNull(appConfig, "ApplicationConfig instance creation failed");
       Config envConfig = appConfig.getSystemEnvironment();
       assertNotNull(envConfig);
       // Verify environment config is not empty (should contain at least PATH or similar)
-      assertTrue(envConfig.entrySet().size() > 0, 
-                 "Environment config should contain environment variables");
+      assertTrue(
+          envConfig.entrySet().size() > 0,
+          "Environment config should contain environment variables");
     } finally {
       // Fail test if instance creation did not succeed
-      assertNotNull(appConfig, "Test failed: ApplicationConfig instance was not created successfully");
+      assertNotNull(
+          appConfig, "Test failed: ApplicationConfig instance was not created successfully");
     }
   }
 
@@ -114,10 +118,10 @@ public class ApplicationConfigTest {
   public void testGetConfig_WithTenantName_ReturnsConfig() {
     // Arrange - provide tenant.name to resolve substitution
     String configArg = "tenant.name=test-tenant";
-    
+
     // Act
     Config config = ApplicationConfig.getConfig(configArg);
-    
+
     // Assert
     assertNotNull(config);
     assertEquals(config.getString("tenant.name"), "test-tenant");
@@ -127,10 +131,8 @@ public class ApplicationConfigTest {
   public void testGetConfig_ConfigFactoryCacheInvalidation() {
     // Arrange
     String propertyKey = "test.property";
-    String configString1 = propertyKey + "=value1\n"
-        + "tenant.name=test-tenant";
-    String configString2 = propertyKey + "=value2\n"
-        + "tenant.name=test-tenant";
+    String configString1 = propertyKey + "=value1\n" + "tenant.name=test-tenant";
+    String configString2 = propertyKey + "=value2\n" + "tenant.name=test-tenant";
 
     // Act
     Config config1 = ApplicationConfig.getConfig(configString1);
@@ -140,17 +142,18 @@ public class ApplicationConfigTest {
     assertNotNull(config1);
     assertNotNull(config2);
     // Verify cache invalidation works - each config should have different values
-    assertEquals(config1.getString(propertyKey), "value1", 
-                 "First config should have value1");
-    assertEquals(config2.getString(propertyKey), "value2", 
-                 "Second config should have value2 after cache invalidation");
+    assertEquals(config1.getString(propertyKey), "value1", "First config should have value1");
+    assertEquals(
+        config2.getString(propertyKey),
+        "value2",
+        "Second config should have value2 after cache invalidation");
   }
 
   @Test(expectedExceptions = com.typesafe.config.ConfigException.UnresolvedSubstitution.class)
   public void testGetConfig_WithEmptyArgs_RequiresSubstitutionResolution() {
     // Arrange - This test verifies that empty args require substitution to be provided
     // Since application.conf has ${X-Tenant-Name}, it will fail without providing it
-    
+
     // Act & Assert - Should throw UnresolvedSubstitution exception
     // Note: System properties are not automatically included in config resolution chain
     // by the current implementation, so this will fail as expected
@@ -163,8 +166,7 @@ public class ApplicationConfigTest {
     // application.conf has app.job.name = push-logs-to-s3
     // We'll override it with command-line arg
     String overriddenJobName = "custom-job-name";
-    String configArg = "app.job.name=" + overriddenJobName + "\n"
-        + "tenant.name=test-tenant";
+    String configArg = "app.job.name=" + overriddenJobName + "\n" + "tenant.name=test-tenant";
 
     // Act
     Config config = ApplicationConfig.getConfig(configArg);
@@ -172,13 +174,18 @@ public class ApplicationConfigTest {
     // Assert
     assertNotNull(config);
     // Command-line arg should override application.conf value
-    assertEquals(config.getString("app.job.name"), overriddenJobName,
-                 "Command-line arg should override application.conf value");
+    assertEquals(
+        config.getString("app.job.name"),
+        overriddenJobName,
+        "Command-line arg should override application.conf value");
     // Verify other application.conf values are still present (fallback works)
-    assertTrue(config.hasPath("kafka.bootstrap.servers.port"),
-               "Should have kafka.bootstrap.servers.port from application.conf");
-    assertEquals(config.getInt("kafka.bootstrap.servers.port"), 9092,
-                 "Should have correct value from application.conf");
+    assertTrue(
+        config.hasPath("kafka.bootstrap.servers.port"),
+        "Should have kafka.bootstrap.servers.port from application.conf");
+    assertEquals(
+        config.getInt("kafka.bootstrap.servers.port"),
+        9092,
+        "Should have correct value from application.conf");
   }
 
   @Test
@@ -192,22 +199,26 @@ public class ApplicationConfigTest {
     try {
       // Act - Get config and access system properties
       Config config = ApplicationConfig.getConfig(configArg);
-      
+
       // Use reflection to get ApplicationConfig instance to access system properties
       Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
       initMethod.setAccessible(true);
-      ApplicationConfig appConfig = (ApplicationConfig) initMethod.invoke(null, (Object) new String[]{configArg});
-      
+      ApplicationConfig appConfig =
+          (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
+
       Config systemConfig = appConfig.getSystemProperties();
 
       // Assert
       assertNotNull(config);
       assertNotNull(systemConfig);
       // Verify system properties are accessible via getSystemProperties()
-      assertTrue(systemConfig.hasPath(customPropertyKey),
-                 "System property should be accessible via getSystemProperties()");
-      assertEquals(systemConfig.getString(customPropertyKey), customPropertyValue,
-                   "System property value should match");
+      assertTrue(
+          systemConfig.hasPath(customPropertyKey),
+          "System property should be accessible via getSystemProperties()");
+      assertEquals(
+          systemConfig.getString(customPropertyKey),
+          customPropertyValue,
+          "System property value should match");
     } catch (Exception e) {
       fail("Test should not throw exception: " + e.getMessage());
     } finally {
@@ -216,4 +227,3 @@ public class ApplicationConfigTest {
     }
   }
 }
-
