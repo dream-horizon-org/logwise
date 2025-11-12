@@ -120,24 +120,28 @@ public class SparkService {
     sparkProperties.put("spark.executorEnv.AWS_REGION", awsRegion);
 
     // S3A Hadoop configuration properties
-    if (awsAccessKeyId != null && !awsAccessKeyId.isEmpty() 
-        && awsSecretAccessKey != null && !awsSecretAccessKey.isEmpty()) {
+    if (awsAccessKeyId != null
+        && !awsAccessKeyId.isEmpty()
+        && awsSecretAccessKey != null
+        && !awsSecretAccessKey.isEmpty()) {
       sparkProperties.put("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
       sparkProperties.put("spark.hadoop.fs.s3a.path.style.access", "false");
-      
+
       // Set credentials provider based on whether session token is present
       if (awsSessionToken != null && !awsSessionToken.isEmpty()) {
-        sparkProperties.put("spark.hadoop.fs.s3a.aws.credentials.provider", 
+        sparkProperties.put(
+            "spark.hadoop.fs.s3a.aws.credentials.provider",
             "org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider");
         sparkProperties.put("spark.hadoop.fs.s3a.session.token", awsSessionToken);
       } else {
-        sparkProperties.put("spark.hadoop.fs.s3a.aws.credentials.provider", 
+        sparkProperties.put(
+            "spark.hadoop.fs.s3a.aws.credentials.provider",
             "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider");
       }
-      
+
       sparkProperties.put("spark.hadoop.fs.s3a.access.key", awsAccessKeyId);
       sparkProperties.put("spark.hadoop.fs.s3a.secret.key", awsSecretAccessKey);
-      
+
       // Set S3A endpoint based on region
       String s3aEndpoint;
       if ("us-east-1".equals(awsRegion)) {
