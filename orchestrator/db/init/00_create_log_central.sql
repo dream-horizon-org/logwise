@@ -1,10 +1,34 @@
+<<<<<<< HEAD
+-- Create DB and use it
+CREATE DATABASE IF NOT EXISTS log_central
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE log_central;
+
+-- Optional user + grant
+=======
 CREATE DATABASE IF NOT EXISTS log_central CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Optional: create a custom user and grant privileges
+>>>>>>> e1bd36d46bd584db876e62fa6e7d6df10c6c0212
 CREATE USER IF NOT EXISTS 'myapp'@'%' IDENTIFIED BY 'myapp_pass';
 GRANT ALL PRIVILEGES ON log_central.* TO 'myapp'@'%';
 FLUSH PRIVILEGES;
 
+<<<<<<< HEAD
+-- Tables
+DROP TABLE IF EXISTS service_details;
+    
+CREATE TABLE `service_details` (
+  `env` varchar(128) NOT NULL,
+  `serviceName` varchar(50) NOT NULL,
+  `componentName` varchar(50) NOT NULL,
+  `retentionDays` mediumint unsigned NOT NULL,
+  `tenant` enum('ABC') NOT NULL,
+  `lastCheckedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY (`env`, `serviceName`, `componentName`, `tenant`)
+);
+=======
 DROP TABLE IF EXISTS service_details;
 CREATE TABLE `service_details` (
                                    `env` varchar(128) NOT NULL,
@@ -38,3 +62,4 @@ ALTER TABLE service_details
 
 ALTER TABLE spark_submit_status
     MODIFY COLUMN tenant ENUM('D11-Prod-AWS', 'D11-Stag-AWS', 'DP-Logs-AWS', 'Hulk-Prod-AWS', 'Delivr-AWS') NOT NULL;
+>>>>>>> e1bd36d46bd584db876e62fa6e7d6df10c6c0212

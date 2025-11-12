@@ -1,0 +1,44 @@
+data_dir: "/var/lib/vector"
+
+sources:
+  otlp_logs:
+    type: "opentelemetry"
+    grpc:
+      address: "0.0.0.0:4317"
+    http:
+      address: "0.0.0.0:4318"
+
+transforms:
+  my_transform_id:
+    type: remap
+    inputs: ["otlp_logs.logs"]
+    source: |
+      .ddtags = {}
+      .component_name = "healthcheck-dummy"
+      .env = "prod"
+      .service_name = "healthcheck"
+
+      .message = string!(.message)
+    timezone: local
+
+sinks:
+  my_sink_id:
+    type: kafka
+    inputs:
+      - my_transform_id
+    bootstrap_servers: "${KAFKA_BROKERS}"
+    topic: "logs.{{.env}}_{{.service_name}}_{{.component_name}}"
+    compression: zstd
+    encoding:
+      codec: protobuf
+      protobuf:
+        message_type: logcentral.logs.VectorLogs
+        desc_file: "/etc/vector/logwise-vector.desc"
+    librdkafka_options:
+      linger.ms: "100"
+      batch.size: "2500000"
+  
+
+api:
+  enabled: true
+  address: "0.0.0.0:8686"
