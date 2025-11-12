@@ -69,16 +69,53 @@ jobs:
           retention-days: 7
 
       # ============================================================================
-      # 3. SonarCloud Analysis
+      # 3. SonarCloud/SonarQube Analysis
       # ============================================================================
+      # IMPORTANT: Coverage Report Flow
+      # 1. The previous step (mvn clean verify) runs JaCoCo plugin which:
+      #    - Instruments code during test execution
+      #    - Generates coverage data in target/site/jacoco/jacoco.xml
+      # 2. Sonar scanner (mvn sonar:sonar) automatically reads this file from:
+      #    - Default location: target/site/jacoco/jacoco.xml
+      #    - Configured via: sonar.java.coveragePlugin=jacoco (in sonar-project.properties)
+      # 3. Sonar uploads coverage data along with code analysis to SonarCloud/SonarQube
+      # 4. Coverage metrics appear in Sonar dashboard
       - name: SonarCloud Scan
         working-directory: spark
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatically provided by GitHub Actions
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # Must be set in repository secrets
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}  # Optional: Set if SonarCloud doesn't auto-detect
-        run: mvn sonar:sonar
+          # Sonar server endpoint configuration
+          # REQUIRED: Set SONAR_HOST_URL secret in GitHub: Settings → Secrets → Actions
+          # For SonarCloud: https://sonarcloud.io
+          # For self-hosted SonarQube: http://your-sonarqube-server:9000 (or https://your-domain.com)
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          if [ -n "$SONAR_HOST_URL" ]; then
+            mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL
+          else
+            echo "❌ SONAR_HOST_URL secret is not configured!"
+            echo ""
+            echo "Please configure the SONAR_HOST_URL secret in GitHub:"
+            echo "1. Go to: Settings → Secrets and variables → Actions"
+            echo "2. Click 'New repository secret'"
+            echo "3. Name: SONAR_HOST_URL"
+            echo "4. Value:"
+            echo "   - For SonarCloud: https://sonarcloud.io"
+            echo "   - For self-hosted SonarQube: http://your-sonarqube-server:9000"
+            echo ""
+            exit 1
+          fi
         # Note: SonarCloud quality gate status is automatically reported via PR checks
         # Configure quality gate in SonarCloud dashboard to fail PRs if not met
         # See: docs/setup-guides/sonarcloud-quality-gate-guide.md
+        #
+        # Required Secrets:
+        # 1. SONAR_HOST_URL - Sonar server endpoint (REQUIRED)
+        #    - For SonarCloud: https://sonarcloud.io
+        #    - For self-hosted SonarQube: http://your-sonarqube-server:9000
+        # 2. SONAR_TOKEN - Authentication token (REQUIRED)
+        #    - Generate in SonarCloud/SonarQube: My Account → Security → Generate Token
+        # 3. SONAR_ORGANIZATION - SonarCloud organization key (optional, auto-detected if not set)
 
