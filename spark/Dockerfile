@@ -98,6 +98,26 @@ RUN echo "Downloading required JARs..." && \
     "https://repo1.maven.org/maven2/org/xerial/snappy/snappy-java/${SNAPPY_JAVA_VERSION}/snappy-java-${SNAPPY_JAVA_VERSION}.jar" && \
     echo "All JARs downloaded successfully"
 
+# Build stage - Build Spark application JAR using Maven
+FROM maven:3.9-eclipse-temurin-11 AS spark-app-builder
+WORKDIR /app
+
+# Copy pom.xml first (for better layer caching)
+COPY pom.xml .
+
+# Download dependencies with parallel downloads and cache mount for Maven repository
+# Using cache mount to persist Maven repository between builds for faster subsequent builds
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -T 4 dependency:go-offline -Dmaven.artifact.threads=10
+
+# Copy source code
+COPY src ./src
+
+# Build the application JAR with the specified Maven command
+# Using cache mount to reuse Maven repository from dependency download step
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -T 4 clean package -Dmaven.test.skip -Dmaven.artifact.threads=10
+
 # Final stage - extract and setup (optimized for Java JAR apps)
 FROM base
 ARG SPARK_VERSION=3.1.2
@@ -118,6 +138,10 @@ RUN SPARK_FILE="spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" && \
 
 # Copy JARs from jar-downloader stage (faster than downloading again)
 COPY --from=jar-downloader /tmp/jars/*.jar ${SPARK_HOME}/jars/
+
+# Copy the built Spark application JAR from the build stage to /opt/app/app.jar
+RUN mkdir -p /opt/app
+COPY --from=spark-app-builder /app/target/logwise-spark-*.jar /opt/app/app.jar
 
 # Setup directories and permissions in a single layer
 RUN echo "Setting up directories and permissions..." && \

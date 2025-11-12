@@ -177,7 +177,7 @@ services:
       - "${SPARK_MASTER_UI_PORT:-18080}:8080"
       - 6066:6066
     volumes:
-      - ../spark/logwise-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
+      # - ../spark/logwise-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
       - ../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
       - spark_master_logs:/opt/spark/logs
     networks:
@@ -203,7 +203,7 @@ services:
     networks:
       - lc_net
     volumes:
-      - ../spark/logwise-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
+      # - ../spark/logwise-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
       # - ./spark-kafka-vector:/opt/spark/work-dir
       - ../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
       - spark_worker_logs:/opt/spark/logs
@@ -277,7 +277,7 @@ services:
     volumes:
       - ../spark/rest-submit.sh:/opt/rest-submit.sh:ro
       - ../spark/entrypoint.sh:/opt/spark-entrypoint.sh:ro
-      - ../spark/logwise-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
+      # - ../spark/logwise-spark-2.0.4-SNAPSHOT.jar:/opt/app/app.jar:ro
       - spark_checkpoint:/opt/checkpoints
       - spark_logs:/opt/spark/logs
     entrypoint: ["/bin/bash", "/opt/spark-entrypoint.sh"]

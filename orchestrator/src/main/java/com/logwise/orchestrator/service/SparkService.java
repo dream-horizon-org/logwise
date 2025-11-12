@@ -95,7 +95,6 @@ public class SparkService {
     sparkProperties.put("spark.shuffle.service.enabled", true);
     sparkProperties.put("spark.dynamicAllocation.executorIdleTimeout", 15);
 
-<<<<<<< HEAD
     // AWS credentials for driver and executor environments
     String awsAccessKeyId = sparkConf.getAwsAccessKeyId();
     String awsSecretAccessKey = sparkConf.getAwsSecretAccessKey();
@@ -149,8 +148,6 @@ public class SparkService {
       sparkProperties.put("spark.hadoop.fs.s3a.endpoint", s3aEndpoint);
     }
 
-=======
->>>>>>> e1bd36d46bd584db876e62fa6e7d6df10c6c0212
     return SubmitSparkJobRequest.builder()
         .appArgs(appArgs)
         .appResource(sparkConf.getSparkJarPath())

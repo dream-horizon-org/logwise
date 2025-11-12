@@ -53,17 +53,7 @@ public class ObjectStoreAwsImpl implements ObjectStoreClient {
 
   private void createS3Client() {
     S3AsyncClientBuilder builder = S3AsyncClient.builder();
-<<<<<<< HEAD
     AwsCredentialsProvider credentialsProvider = AwsClientUtils.getDefaultCredentialsProvider();
-=======
-    AwsCredentialsProvider credentialsProvider =
-        s3Config.getRoleArn() == null
-            ? AwsClientUtils.getDefaultCredentialsProvider()
-            : AwsClientUtils.getRoleArnCredentialsProvider(
-                s3Config.getRoleArn(),
-                StringUtils.substringAfterLast(this.toString(), "."),
-                Region.of(s3Config.getRegion()));
->>>>>>> e1bd36d46bd584db876e62fa6e7d6df10c6c0212
 
     if (s3Config.getEndpointOverride() != null) {
       log.info("Initialising s3 on endpoint override {}", s3Config.getEndpointOverride());
