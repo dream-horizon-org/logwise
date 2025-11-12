@@ -45,27 +45,20 @@ jobs:
         run: mvn -B fmt:check
 
       # ============================================================================
-      # 2. Build and Test
+      # 2. Build, Test, and Coverage Check
       # ============================================================================
-      - name: Build project
+      - name: Build, run tests, and check coverage
         working-directory: spark
-        run: mvn clean compile -B
-
-      - name: Run unit tests
-        working-directory: spark
-        run: mvn test -B
-
-      - name: Run integration tests
-        working-directory: spark
-        run: mvn verify -B
-
-      - name: Check code coverage
-        working-directory: spark
-        run: mvn jacoco:check -B
-        # Coverage thresholds enforced:
-        # - Line coverage: 80%
-        # - Branch coverage: 75%
-        # - Method coverage: 80%
+        run: mvn clean verify -B
+        # This single command:
+        # - Compiles the project
+        # - Runs unit tests (with JaCoCo coverage)
+        # - Runs integration tests (with JaCoCo coverage)
+        # - Generates coverage reports
+        # - Checks coverage thresholds (fails if not met):
+        #   * Line coverage: 80%
+        #   * Branch coverage: 75%
+        #   * Method coverage: 80%
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
