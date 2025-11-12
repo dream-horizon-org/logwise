@@ -61,7 +61,7 @@ public class KafkaServiceTest {
     when(mockFactory.apply(any())).thenReturn(mockConsumer);
 
     // Create KafkaService with mocked factory
-    kafkaService = new KafkaService(mockConfig, mockFactory);
+    kafkaService = new KafkaService(mockConfig, true);
   }
 
   @Test

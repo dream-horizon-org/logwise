@@ -3,8 +3,6 @@ package com.logwise.spark.stream.impl;
 import com.google.inject.Inject;
 import com.logwise.spark.constants.Constants;
 import com.logwise.spark.dto.entity.KafkaReadStreamOptions;
-import com.logwise.spark.dto.entity.StartingOffsetsByTimestampOption;
-import com.logwise.spark.dto.mapper.KafkaAssignOptionMapper;
 import com.logwise.spark.services.KafkaService;
 import com.logwise.spark.stream.Stream;
 import com.logwise.spark.utils.SparkUtils;
@@ -29,38 +27,14 @@ public abstract class AbstractApplicationLogsStream implements Stream {
 
     log.info("maxOffset: {}", maxOffset);
 
-    String startingOffsetsByTimestampJson = null;
-    String assign = null;
-
     String kafkaHostname = config.getString("kafka.cluster.dns");
-    // If kafka.startingOffsetsTimestamp is set, then get
-    // startingOffsetsByTimestampJson
-    if (config.getLong("kafka.startingOffsetsTimestamp") != 0) {
-      StartingOffsetsByTimestampOption startingOffsetsByTimestamp =
-          getStartingOffsetsByTimestamp(kafkaHostname);
-      startingOffsetsByTimestampJson = startingOffsetsByTimestamp.toJson();
-
-      if (startingOffsetsByTimestampJson.equals("{}")) {
-        throw new IllegalStateException("startingOffsetsByTimestampJson is empty");
-      } else {
-        // startingOffsetsByTimestamp only works with assign not with
-        // subscribePattern/subscribe
-        assign =
-            KafkaAssignOptionMapper.toKafkaAssignOption.apply(startingOffsetsByTimestamp).toJson();
-
-        log.info("kafka assign option: {}", assign);
-      }
-    }
 
     KafkaReadStreamOptions appKafkaReadStreamOptions =
         KafkaReadStreamOptions.builder()
             .failOnDataLoss("false")
             .maxOffsetsPerTrigger(String.valueOf(maxOffset))
             .startingOffsets(config.getString("kafka.startingOffsets"))
-            .startingOffsetsByTimestamp(startingOffsetsByTimestampJson)
-            .assign(assign)
-            .subscribePattern(
-                assign == null ? config.getString("kafka.topic.prefix.application") : null)
+            .subscribePattern(config.getString("kafka.topic.prefix.application"))
             .kafkaBootstrapServers(kafkaService.getKafkaBootstrapServerIp(kafkaHostname))
             .maxRatePerPartition(config.getString("kafka.maxRatePerPartition"))
             .groupIdPrefix(Constants.APPLICATION_LOGS_KAFKA_GROUP_ID)
@@ -75,12 +49,6 @@ public abstract class AbstractApplicationLogsStream implements Stream {
     List<StreamingQuery> streamingQueries = new ArrayList<>();
     streamingQueries.add(appLogsStreamingQuery);
     return streamingQueries;
-  }
-
-  private StartingOffsetsByTimestampOption getStartingOffsetsByTimestamp(String kafkaHostname) {
-    String topicRegexPattern = config.getString("kafka.topic.prefix.application");
-    Long timestamp = config.getLong("kafka.startingOffsetsTimestamp");
-    return kafkaService.getStartingOffsetsByTimestamp(kafkaHostname, topicRegexPattern, timestamp);
   }
 
   private Long getMaxOffsetPerTrigger() {
