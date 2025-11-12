@@ -51,7 +51,7 @@ print_footer() {
   local text_len=${#text}
   local padding=$(( (box_width - text_len) / 2 ))
   local left_pad=$padding
-  local right_pad=$(( box_width - text_len - left_pad ))
+  local right_pad=$(( box_width - text_len - left_pad - 1 ))
   
   echo ""
   printf "${bold}${green}"
@@ -209,59 +209,20 @@ main() {
   print_info "Waiting for services to become healthy..."
   echo ""
   
-  # Track unhealthy services
-  UNHEALTHY_SERVICES=()
-  
   # Wait for Kafka
-  if ! wait_with_spinner "Kafka" \
+  wait_with_spinner "Kafka" \
     'docker compose ps kafka 2>/dev/null | grep -q "healthy"' \
-    40; then
-    UNHEALTHY_SERVICES+=("kafka:Kafka")
-  fi
+    40
   
   # Wait for MySQL
-  if ! wait_with_spinner "MySQL Database" \
+  wait_with_spinner "MySQL Database" \
     "docker compose exec -T db mysqladmin ping -h localhost -uroot -p\"${MYSQL_ROOT_PASSWORD:-root_pass}\" --silent" \
-    40; then
-    UNHEALTHY_SERVICES+=("db:MySQL Database")
-  fi
+    40
   
   # Wait for Orchestrator
-  if ! wait_with_spinner "Orchestrator Service" \
+  wait_with_spinner "Orchestrator Service" \
     "curl -fsS http://localhost:${ORCH_PORT:-8080}/healthcheck 2>/dev/null | grep -q \"UP\"" \
-    40; then
-    UNHEALTHY_SERVICES+=("orchestrator:Orchestrator Service")
-  fi
-  
-  # Show logs for unhealthy services
-  if [ ${#UNHEALTHY_SERVICES[@]} -gt 0 ]; then
-    echo ""
-    print_error "The following services did not become healthy:"
-    echo ""
-    for service_info in "${UNHEALTHY_SERVICES[@]}"; do
-      IFS=':' read -r service_name display_name <<< "$service_info"
-      printf "  ${red}✗${reset} ${bold}${display_name}${reset} (${service_name})\n"
-      printf "    ${dim}Status:${reset}\n"
-      docker compose ps "$service_name" 2>/dev/null | grep -v "NAME" | grep "$service_name" | sed 's/^/      /' || printf "      ${dim}Not found${reset}\n"
-      printf "    ${dim}Recent logs (last 20 lines):${reset}\n"
-      docker compose logs --tail=20 "$service_name" 2>/dev/null | sed 's/^/      /' || printf "      ${dim}No logs available${reset}\n"
-      echo ""
-    done
-    
-    print_separator
-    echo ""
-    print_error "Setup incomplete: Some services failed to become healthy"
-    echo ""
-    print_info "Troubleshooting steps:"
-    echo ""
-    printf "  ${dim}1.${reset} Check service logs: ${bold}docker compose logs <service-name>${reset}\n"
-    printf "  ${dim}2.${reset} Check service status: ${bold}docker compose ps${reset}\n"
-    printf "  ${dim}3.${reset} Verify .env configuration is correct\n"
-    printf "  ${dim}4.${reset} Check Docker resources (memory/CPU limits)\n"
-    printf "  ${dim}5.${reset} Try restarting services: ${bold}make down && make up${reset}\n"
-    echo ""
-    exit 1
-  fi
+    40
   
   print_separator
   

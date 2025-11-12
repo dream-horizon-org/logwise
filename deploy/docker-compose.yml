@@ -136,7 +136,7 @@ services:
       - DB_USER=${MYSQL_USER:-myapp}
       - DB_PASS=${MYSQL_PASSWORD:-myapp_pass}
       - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-myapp_pass}
-      - DB_HOST=logwise_mysql
+      - DB_HOST=db
       - DB_PORT=3306
       - ORCH_INTERNAL_BASE_URL=http://orchestrator:8080
 
