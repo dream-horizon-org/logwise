@@ -78,10 +78,10 @@ services:
       - ../vector/vector.yaml:/etc/vector/vector.yaml:ro
       - ../vector/logcentral_logs.desc:/etc/vector/logwise-vector.desc:ro
 
-    expose:
-      - "8686" # internal-only Vector API
-      - "4317" # OTLP gRPC
-      - "4318" # OTLP HTTP
+    ports:
+      - "8686:8686" # Vector API
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
     networks:
       - lc_net
     depends_on:
@@ -108,7 +108,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_pass}
       DB_HOST: db
     ports:
-      - "3306:3306"
+      - "3306"
     networks:
       - lc_net
     volumes:

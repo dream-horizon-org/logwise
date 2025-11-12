@@ -286,9 +286,9 @@ main() {
   printf "     ${dim}Health: http://localhost:${ORCH_PORT:-8080}/healthcheck${reset}\n"
   echo ""
   printf "  ${green}📡${reset} ${bold}Vector API${reset}\n"
-  printf "     ${dim}Internal API: http://vector:8686${reset}\n"
-  printf "     ${dim}OTLP gRPC: vector:4317${reset}\n"
-  printf "     ${dim}OTLP HTTP: http://vector:4318${reset}\n"
+  printf "     ${dim}API: http://localhost:8686${reset}\n"
+  printf "     ${dim}OTLP gRPC: localhost:4317${reset}\n"
+  printf "     ${dim}OTLP HTTP: http://localhost:4318${reset}\n"
   echo ""
   
   printf "${bold}${cyan}Useful Commands:${reset}\n"
