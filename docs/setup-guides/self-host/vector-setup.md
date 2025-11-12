@@ -30,16 +30,17 @@ sudo firewall-cmd --permanent --add-port=4318/tcp
 sudo firewall-cmd --reload
 ```
 
-## Steps
+## 1) Clone repository
 
-### 1) Clone repository
 ```bash
 git clone https://github.com/ds-horizon/logwise.git
 cd logwise/vector/
 ```
 
-### 2) Set Kafka broker address in [`vector.toml`](https://github.com/ds-horizon/logwise/blob/main/vector/vector.toml)
+## 2) Set Kafka broker address
+
 Edit [`vector.toml`](https://github.com/ds-horizon/logwise/blob/main/vector/vector.toml) and update the Kafka bootstrap servers. Use comma-separated values for multiple brokers.
+
 ```toml
 # Before
 bootstrap_servers = "kafka:29092"
@@ -48,20 +49,23 @@ bootstrap_servers = "kafka:29092"
 bootstrap_servers = "<YOUR_KAFKA_ADDRESS>:<KAFKA_PORT>"
 ```
 
-### 3) Compile the protobuf descriptor
+## 3) Compile the protobuf descriptor
+
 From the `logwise/vector/` directory (where you are after Step 1), run:
+
 ```bash
 protoc --include_imports --descriptor_set_out=logwise-vector.desc logwise-vector.proto
 ```
 
-### 4) Install Vector configuration
+## 4) Install Vector configuration
+
 ```bash
 sudo mkdir -p /etc/vector
 sudo cp vector.toml /etc/vector/vector.toml
 sudo cp logwise-vector.desc /etc/vector/logwise-vector.desc
 ```
 
-### 5) Configure Vector environment
+## 5) Configure Vector environment
 
 Create or edit the Vector environment file `/etc/default/vector` with the following content to enable configuration watching and specify the config file path:
 
@@ -71,6 +75,7 @@ VECTOR_CONFIG=/etc/vector/vector.toml
 ```
 
 You can create this file using:
+
 ```bash
 FILE="/etc/default/vector"
 
@@ -80,9 +85,10 @@ VECTOR_CONFIG=/etc/vector/vector.toml
 EOM
 ```
 
-## Run Vector
+## 6) Run Vector
 
 Start Vector as a service (recommended) or run in the foreground for development/testing.
+
 ```bash
 # Production: systemd service (Linux)
 sudo systemctl start vector
@@ -92,9 +98,10 @@ sudo systemctl enable vector
 vector --config /etc/vector/vector.toml
 ```
 
-## Verify
+## 7) Verify
 
 Check that Vector is up and processing logs.
+
 ```bash
 # Service status
 sudo systemctl status vector

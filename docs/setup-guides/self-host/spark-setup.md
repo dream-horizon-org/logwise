@@ -15,9 +15,9 @@ via EC2 instance tags.
 | OS        | Amazon Linux 2 / Ubuntu                  |
 | Storage   | S3 Supported (Hadoop AWS + AWS SDK Jars) |
 
-# Common Setup (Run on Both Master & Worker)
+## Common Setup (Run on Both Master & Worker)
 
-## Install Java 11
+### 1) Install Java 11
 
 ```bash
 sudo yum install java-11-amazon-corretto -y
@@ -25,7 +25,7 @@ sudo yum install java-11-amazon-corretto -y
 # sudo apt-get install -y openjdk-11-jdk
 ```
 
-##  Download & Install Spark
+### 2) Download & Install Spark
 
 ```bash 
 cd /root
@@ -34,7 +34,7 @@ tar -xvzf spark-3.1.2-bin-hadoop3.2.tgz
 mv spark-3.1.2-bin-hadoop3.2 spark
 ```
 
-### Add to PATH (~/.bashrc) and Apply:
+Add to PATH (~/.bashrc) and apply:
 
 ```bash 
 export SPARK_HOME=/root/spark
@@ -42,7 +42,7 @@ export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
 source ~/.bashrc
 ```
 
-## Add S3 Support Jars 
+### 3) Add S3 Support Jars
 
 ```bash
 mkdir /root/spark-jars
@@ -50,59 +50,59 @@ wget -P /root/spark-jars https://repo1.maven.org/maven2/org/apache/hadoop/hadoop
 wget -P /root/spark-jars https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar
 
 cp /root/spark-jars/*.jar $SPARK_HOME/jars/
-
 ```
 
-# Master Setup (Run only on Master node)
+## Master Setup (Run only on Master node)
 
-### Enable REST API on Spark Master
+### 1) Enable REST API on Spark Master
 
-### Edit:
+Edit `$SPARK_HOME/conf/spark-defaults.conf`:
 
 ```bash
 nano $SPARK_HOME/conf/spark-defaults.conf
 ```
 
-### Add:
+Add:
 
 ```bash
 spark.master.rest.enabled true
 ```
 
-### Start Master:
+### 2) Start Master
 
 ```bash
 $SPARK_HOME/sbin/start-master.sh
 ```
 
-### Spark UI:
+### 3) Access Spark UI
 
 ```bash
 http://<MASTER_PUBLIC_IP>:8080
 ```
 
-### Note the master URL (example):
+Note the master URL (example):
 
 ```bash 
 spark://<MASTER_PUBLIC_IP>:7077
 ```
 
-# Worker Setup (Run only on Worker nodes)
+## Worker Setup (Run only on Worker nodes)
 
-### Edit Worker environment file:
+### 1) Configure Worker environment
+
+Edit `$SPARK_HOME/conf/spark-env.sh`:
 
 ```bash
 nano $SPARK_HOME/conf/spark-env.sh
 ```
 
-### Add:
+Add:
 
 ```bash
 SPARK_WORKER_OPTS="$SPARK_WORKER_OPTS -Dspark.shuffle.service.enabled=true"
 ```
 
-
-### Start Worker and attach to Master:
+### 2) Start Worker and attach to Master
 
 ```bash
 $SPARK_HOME/sbin/start-worker.sh spark://<MASTER_PRIVATE_IP>:7077
@@ -110,7 +110,7 @@ $SPARK_HOME/sbin/start-worker.sh spark://<MASTER_PRIVATE_IP>:7077
 
 ## Verify Cluster Status
 
-### Open:
+Open the Spark UI:
 
 ```bash
 http://<MASTER_PUBLIC_IP>:8080
@@ -118,31 +118,27 @@ http://<MASTER_PUBLIC_IP>:8080
 
 You should see all Workers under Workers section.
 
+## Running a Spark Job on the Cluster (REST API Submit)
 
-##  Running a Spark Job on the Cluster (REST API Submit)
-
-Once the Spark cluster (Master + Workers) is up and running, you can submit jobs using the Spark REST Submission API (
-port 6066).
+Once the Spark cluster (Master + Workers) is up and running, you can submit jobs using the Spark REST Submission API (port 6066).
 
 This repository includes a folder named `spark/`, which contains the complete Spark streaming application source code.
-
-## Building the Spark Job JAR
-
-Before submitting the job, you need to build the JAR file from the source code.
 
 ### Prerequisites
 
 - Java 11 (JDK) installed
 - Maven 3.6+ installed
 
-### Build Steps
+### 1) Build the Spark Job JAR
 
-1. Navigate to the spark directory:
+Navigate to the spark directory:
+
 ```bash
 cd spark/
 ```
 
-2. Build the JAR using Maven:
+Build the JAR using Maven:
+
 ```bash
 mvn clean package -DskipTests
 ```
@@ -150,24 +146,25 @@ mvn clean package -DskipTests
 This will create a JAR file in the `target/` directory. The JAR file will be named something like:
 - `logwise-spark-<VERSION>-SNAPSHOT.jar`
 
-3. (Optional) If you want to include tests:
+(Optional) If you want to include tests:
+
 ```bash
 mvn clean package
 ```
 
-4. Verify the JAR was created:
+Verify the JAR was created:
+
 ```bash
 ls -lh target/*.jar
 ```
 
-### Host the JAR
+### 2) Host the JAR
 
 Once built, you need to host the JAR file in a location accessible by the Spark cluster.
 
-You may store the JAR in S3 or any reachable artifact location. Then reference it when submitting the job as mentioned
-below
+You may store the JAR in S3 or any reachable artifact location. Then reference it when submitting the job as mentioned below.
 
-### Submit the job to Spark Master
+### 3) Submit the job to Spark Master
 
 ```bash
 curl --location '<SPARK_MASTER_HOST>:6066/v1/submissions/create' \
