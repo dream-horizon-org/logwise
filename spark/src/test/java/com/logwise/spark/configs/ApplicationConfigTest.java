@@ -149,17 +149,6 @@ public class ApplicationConfigTest {
         "Second config should have value2 after cache invalidation");
   }
 
-  @Test(expectedExceptions = com.typesafe.config.ConfigException.UnresolvedSubstitution.class)
-  public void testGetConfig_WithEmptyArgs_RequiresSubstitutionResolution() {
-    // Arrange - This test verifies that empty args require substitution to be provided
-    // Since application.conf has ${X-Tenant-Name}, it will fail without providing it
-
-    // Act & Assert - Should throw UnresolvedSubstitution exception
-    // Note: System properties are not automatically included in config resolution chain
-    // by the current implementation, so this will fail as expected
-    ApplicationConfig.getConfig();
-  }
-
   @Test
   public void testGetConfig_CommandLineArgsOverrideApplicationConf() {
     // Arrange
