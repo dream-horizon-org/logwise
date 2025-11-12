@@ -124,10 +124,45 @@ You should see all Workers under Workers section.
 Once the Spark cluster (Master + Workers) is up and running, you can submit jobs using the Spark REST Submission API (
 port 6066).
 
-This repository includes a folder named spark/, which contains Complete Spark streaming application source code and
-Pre-built runnable Spark job JAR (ready to deploy)
+This repository includes a folder named `spark/`, which contains the complete Spark streaming application source code.
 
-### Host the JAR anywhere
+## Building the Spark Job JAR
+
+Before submitting the job, you need to build the JAR file from the source code.
+
+### Prerequisites
+
+- Java 11 (JDK) installed
+- Maven 3.6+ installed
+
+### Build Steps
+
+1. Navigate to the spark directory:
+```bash
+cd spark/
+```
+
+2. Build the JAR using Maven:
+```bash
+mvn clean package -DskipTests
+```
+
+This will create a JAR file in the `target/` directory. The JAR file will be named something like:
+- `logwise-spark-<VERSION>-SNAPSHOT.jar`
+
+3. (Optional) If you want to include tests:
+```bash
+mvn clean package
+```
+
+4. Verify the JAR was created:
+```bash
+ls -lh target/*.jar
+```
+
+### Host the JAR
+
+Once built, you need to host the JAR file in a location accessible by the Spark cluster.
 
 You may store the JAR in S3 or any reachable artifact location. Then reference it when submitting the job as mentioned
 below
