@@ -16,7 +16,8 @@ public class ApplicationConfigValidationTest {
   @Test
   public void testGetConfig_WithValidConfigFile_ReturnsConfig() {
     // Act - ApplicationConfig loads from application.conf by default
-    Config config = ApplicationConfig.getConfig();
+    // Provide s3.bucket to resolve substitution
+    Config config = ApplicationConfig.getConfig("s3.bucket=test-bucket");
 
     // Assert
     Assert.assertNotNull(config);
@@ -28,7 +29,7 @@ public class ApplicationConfigValidationTest {
   @Test
   public void testGetConfig_WithCommandLineArgs_OverridesFileConfig() {
     // Arrange
-    String commandLineConfig = "app.job.name = \"test-job-from-args\"";
+    String commandLineConfig = "app.job.name = \"test-job-from-args\"\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(commandLineConfig);
@@ -43,9 +44,10 @@ public class ApplicationConfigValidationTest {
     // Arrange
     String config1 = "app.job.name = \"job1\"";
     String config2 = "kafka.bootstrap.servers.port = \"9093\"";
+    String config3 = "s3.bucket=test-bucket";
 
     // Act
-    Config config = ApplicationConfig.getConfig(config1, config2);
+    Config config = ApplicationConfig.getConfig(config1, config2, config3);
 
     // Assert
     Assert.assertNotNull(config);
@@ -74,9 +76,12 @@ public class ApplicationConfigValidationTest {
     String originalValue = System.getProperty("app.job.name");
     try {
       System.setProperty("app.job.name", "system-property-job");
+      // Provide s3.bucket as command-line arg since system properties aren't merged before
+      // resolve()
+      String configArg = "s3.bucket=test-bucket";
 
       // Act
-      Config config = ApplicationConfig.getConfig();
+      Config config = ApplicationConfig.getConfig(configArg);
 
       // Assert - System properties should be available (though file config takes
       // precedence in
@@ -93,13 +98,14 @@ public class ApplicationConfigValidationTest {
       } else {
         System.clearProperty("app.job.name");
       }
+      System.clearProperty("s3.bucket");
     }
   }
 
   @Test
   public void testGetConfig_WithEnvironmentVariables_AvailableInConfig() {
-    // Act
-    Config config = ApplicationConfig.getConfig();
+    // Act - Provide s3.bucket to resolve substitution
+    Config config = ApplicationConfig.getConfig("s3.bucket=test-bucket");
 
     // Assert - Environment variables are loaded but may not override file config
     // The exact behavior depends on ConfigFactory resolution order
@@ -112,7 +118,8 @@ public class ApplicationConfigValidationTest {
   @Test
   public void testGetConfig_WithNestedConfig_ResolvesCorrectly() {
     // Arrange
-    String nestedConfig = "spark.config.key1 = \"value1\"\nspark.config.key2 = \"value2\"";
+    String nestedConfig =
+        "spark.config.key1 = \"value1\"\nspark.config.key2 = \"value2\"\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(nestedConfig);
@@ -127,7 +134,8 @@ public class ApplicationConfigValidationTest {
   @Test
   public void testGetConfig_WithVariableSubstitution_ResolvesCorrectly() {
     // Arrange - Use variable substitution syntax
-    String configWithSubstitution = "base.path = \"/tmp\"\nfull.path = ${base.path}\"/logs\"";
+    String configWithSubstitution =
+        "base.path = \"/tmp\"\nfull.path = ${base.path}\"/logs\"\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(configWithSubstitution);
@@ -139,8 +147,8 @@ public class ApplicationConfigValidationTest {
 
   @Test
   public void testGetConfig_WithEmptyArgs_LoadsDefaultConfig() {
-    // Act
-    Config config = ApplicationConfig.getConfig();
+    // Act - Provide s3.bucket to resolve substitution
+    Config config = ApplicationConfig.getConfig("s3.bucket=test-bucket");
 
     // Assert
     Assert.assertNotNull(config);
@@ -151,7 +159,8 @@ public class ApplicationConfigValidationTest {
   @Test
   public void testGetConfig_WithInvalidKafkaConfig_ThrowsExceptionOnAccess() {
     // Arrange
-    String invalidKafkaConfig = "kafka.bootstrap.servers.port = invalid_port_value";
+    String invalidKafkaConfig =
+        "kafka.bootstrap.servers.port = invalid_port_value\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(invalidKafkaConfig);
@@ -172,7 +181,8 @@ public class ApplicationConfigValidationTest {
   @Test
   public void testGetConfig_WithInvalidS3Config_HandlesGracefully() {
     // Arrange
-    String invalidS3Config = "s3.path.checkpoint.application = \"invalid://path\"";
+    String invalidS3Config =
+        "s3.path.checkpoint.application = \"invalid://path\"\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(invalidS3Config);
@@ -187,7 +197,8 @@ public class ApplicationConfigValidationTest {
   @Test
   public void testGetConfig_WithInvalidSparkConfig_HandlesGracefully() {
     // Arrange
-    String invalidSparkConfig = "spark.streamingquery.timeout.minutes = \"not-a-number\"";
+    String invalidSparkConfig =
+        "spark.streamingquery.timeout.minutes = \"not-a-number\"\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(invalidSparkConfig);
@@ -208,7 +219,7 @@ public class ApplicationConfigValidationTest {
   public void testGetConfig_WithCommandLineArgsOverridesFile_RespectsPrecedence() {
     // Arrange
     // File has: app.job.name = push-logs-to-s3
-    String commandLineOverride = "app.job.name = \"overridden-job-name\"";
+    String commandLineOverride = "app.job.name = \"overridden-job-name\"\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(commandLineOverride);
@@ -220,7 +231,7 @@ public class ApplicationConfigValidationTest {
   @Test
   public void testGetConfig_WithPartialOverride_KeepsOtherFileValues() {
     // Arrange
-    String partialOverride = "app.job.name = \"new-job-name\"";
+    String partialOverride = "app.job.name = \"new-job-name\"\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(partialOverride);
