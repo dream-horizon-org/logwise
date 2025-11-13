@@ -81,6 +81,10 @@ public class ApplicationConfig {
     @NonFinal @NotNull String checkPointDir;
     @NonFinal @Optional String s3aAccessKey;
     @NonFinal @Optional String s3aSecretKey;
+    @NonFinal @Optional String awsAccessKeyId;
+    @NonFinal @Optional String awsSecretAccessKey;
+    @NonFinal @Optional String awsSessionToken;
+    @NonFinal @Optional String awsRegion;
   }
 
   @Data

@@ -12,7 +12,6 @@ import java.net.URI;
 import java.util.List;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -53,13 +52,7 @@ public class ObjectStoreAwsImpl implements ObjectStoreClient {
 
   private void createS3Client() {
     S3AsyncClientBuilder builder = S3AsyncClient.builder();
-    AwsCredentialsProvider credentialsProvider =
-        s3Config.getRoleArn() == null
-            ? AwsClientUtils.getDefaultCredentialsProvider()
-            : AwsClientUtils.getRoleArnCredentialsProvider(
-                s3Config.getRoleArn(),
-                StringUtils.substringAfterLast(this.toString(), "."),
-                Region.of(s3Config.getRegion()));
+    AwsCredentialsProvider credentialsProvider = AwsClientUtils.getDefaultCredentialsProvider();
 
     if (s3Config.getEndpointOverride() != null) {
       log.info("Initialising s3 on endpoint override {}", s3Config.getEndpointOverride());
