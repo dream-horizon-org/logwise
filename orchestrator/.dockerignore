@@ -1,8 +1,0 @@
-build
-.gradle
-.mvn
-node_modules
-.git
-.gitignore
-Dockerfile
-docker-compose.yml

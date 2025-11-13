@@ -1,0 +1,603 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-athena-datasource",
+        "uid": "asadsadf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text",
+              "wrapText": false
+            },
+            "filterable": true,
+            "inspect": true,
+            "minWidth": 200
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "message 1"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 901
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ddtags"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 575
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "HOSTNAME"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 248
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 172
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 23,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.4.5",
+      "targets": [
+        {
+          "connectionArgs": {
+            "catalog": "__default",
+            "database": "__default",
+            "region": "__default",
+            "resultReuseEnabled": true,
+            "resultReuseMaxAgeInMinutes": 60
+          },
+          "datasource": {
+            "type": "grafana-athena-datasource",
+            "uid": "asadsadf"
+          },
+          "format": 1,
+          "rawSQL": "-- Dashboard: ${__dashboard.title}\n-- User Email: ${__user.email}\nSELECT ${columns:raw}\nFROM \"logwise\".\"application-logs\"\nWHERE \n  time BETWEEN date_format(TIMESTAMP $__rawTimeFrom(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i') AND date_format(TIMESTAMP $__rawTimeTo(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i')\n  AND env = '${env}'\n  AND service_name IN (${service_name:singlequote})\n  AND component_name IN (${component_name:singlequote})\n  AND (length('$text_search') = 0 OR REGEXP_LIKE(message, REGEXP_REPLACE('$text_search', ',', '|')))\n  AND (length('$exclude_text') = 0 OR NOT REGEXP_LIKE(message, REGEXP_REPLACE('$exclude_text', ',', '|')))\n  AND (length('$regex_search') = 0 OR REGEXP_LIKE(message, '$regex_search'))\n  AND (length('$instanceIds') = 0 OR hostname IN (SELECT * FROM UNNEST(split('$instanceIds', ',')) AS t(value)))\n  AND (length('$file_name') = 0 OR json_extract_scalar(ddtags, '$[\"filename\"]') = '${file_name:raw}')\nORDER BY \"timestamp\" ${sortby:raw}\nLIMIT $limit",
+          "refId": "A"
+        }
+      ],
+      "title": "log-search",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "format": "json",
+            "keepTime": false,
+            "replace": false,
+            "source": "message"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": []
+            }
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "prod",
+          "value": "prod"
+        },
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "wakask"
+        },
+        "definition": "log-central-orchestrator- (infinity) json",
+        "description": "",
+        "hide": 0,
+        "includeAll": false,
+        "label": "env",
+        "multi": false,
+        "name": "env",
+        "options": [],
+        "query": {
+          "infinityQuery": {
+            "columns": [],
+            "data": "$service_details",
+            "filters": [],
+            "format": "table",
+            "parser": "backend",
+            "refId": "variable",
+            "root_selector": "$.data.serviceDetails[*].env",
+            "source": "url",
+            "type": "json",
+            "url": "http://localhost:8080/service-details",
+            "url_options": {
+              "data": "",
+              "headers": [
+                {
+                  "key": "X-Tenant-Name",
+                  "value": "ABC"
+                }
+              ],
+              "method": "GET"
+            }
+          },
+          "query": "",
+          "queryType": "infinity"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 5,
+        "type": "query",
+        "staticOptions": [
+          {
+            "text": "prod",
+            "value": "prod"
+          }
+        ]
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "healthcheck"
+          ],
+          "value": [
+            "healthcheck"
+          ]
+        },
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "wakask"
+        },
+        "definition": "log-central-orchestrator- (infinity) json",
+        "hide": 0,
+        "includeAll": false,
+        "label": "service_name",
+        "multi": true,
+        "name": "service_name",
+        "options": [],
+        "query": {
+          "infinityQuery": {
+            "columns": [],
+            "computed_columns": [
+              {
+                "selector": "",
+                "text": "",
+                "type": "string"
+              }
+            ],
+            "data": "$service_details",
+            "filterExpression": "",
+            "filters": [],
+            "format": "table",
+            "groq": "*[\"data\" in keys(@)][0].data.serviceDetails[env in $env]{ serviceName }",
+            "parser": "backend",
+            "refId": "variable",
+            "root_selector": "$.data.serviceDetails[env in [${env:singlequote}]].serviceName",
+            "source": "url",
+            "summarizeBy": "serviceName",
+            "type": "json",
+            "uql": "parse-json\n",
+            "url": "http://localhost:8080/service-details",
+            "url_options": {
+              "data": "",
+              "headers": [
+                {
+                  "key": "X-Tenant-Name",
+                  "value": "ABC"
+                }
+              ],
+              "method": "GET"
+            }
+          },
+          "query": "",
+          "queryType": "infinity"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 5,
+        "type": "query",
+        "staticOptions": [
+          {
+            "text": "healthcheck",
+            "value": "healthcheck"
+          }
+        ]
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "healthcheck-dummy"
+          ],
+          "value": [
+            "healthcheck-dummy"
+          ]
+        },
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "wakask"
+        },
+        "definition": "log-central-orchestrator- (infinity) json",
+        "hide": 0,
+        "includeAll": false,
+        "label": "component_name",
+        "multi": true,
+        "name": "component_name",
+        "options": [],
+        "query": {
+          "infinityQuery": {
+            "columns": [],
+            "computed_columns": [
+              {
+                "selector": "",
+                "text": "",
+                "type": "string"
+              }
+            ],
+            "data": "$service_details",
+            "filterExpression": "",
+            "filters": [],
+            "format": "table",
+            "parser": "backend",
+            "refId": "variable",
+            "root_selector": "$.data.serviceDetails[env in [${env:singlequote}] and serviceName in [${service_name:singlequote}]].componentName",
+            "source": "url",
+            "summarizeBy": "componentName",
+            "type": "json",
+            "uql": "parse-json\n$.data.serviceDetails[env == '${env}' && serviceName == '${service_name}'].componentName",
+            "url": "http://localhost:8080/service-details",
+            "url_options": {
+              "data": "",
+              "headers": [
+                {
+                  "key": "X-Tenant-Name",
+                  "value": "ABC"
+                }
+              ],
+              "method": "GET"
+            }
+          },
+          "query": "",
+          "queryType": "infinity"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 5,
+        "type": "query",
+        "staticOptions": [
+          {
+            "text": "healthcheck-dummy",
+            "value": "healthcheck-dummy"
+          }
+        ]
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        },
+        "description": "Comma Separated Search Strings",
+        "hide": 0,
+        "label": "Text Search",
+        "name": "text_search",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        },
+        "description": "Comma Separated String To Exclude In Search Result",
+        "hide": 0,
+        "label": "Exclude Text",
+        "name": "exclude_text",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        },
+        "description": "Search Logs With Regex",
+        "hide": 0,
+        "label": "Regex Search",
+        "name": "regex_search",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        },
+        "description": "Comma separated aws instanceIds",
+        "hide": 0,
+        "label": "Instance Ids",
+        "name": "instanceIds",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "message"
+          ],
+          "value": [
+            "message"
+          ]
+        },
+        "description": "Columns To Display In Search Results",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Columns",
+        "multi": true,
+        "name": "columns",
+        "options": [
+          {
+            "selected": false,
+            "text": "env",
+            "value": "env"
+          },
+          {
+            "selected": false,
+            "text": "service_name",
+            "value": "service_name"
+          },
+          {
+            "selected": false,
+            "text": "component_name",
+            "value": "component_name"
+          },
+          {
+            "selected": false,
+            "text": "timestamp",
+            "value": "timestamp"
+          },
+          {
+            "selected": false,
+            "text": "hostname",
+            "value": "hostname"
+          },
+          {
+            "selected": true,
+            "text": "message",
+            "value": "message"
+          },
+          {
+            "selected": false,
+            "text": "ddtags",
+            "value": "ddtags"
+          }
+        ],
+        "query": "env,service_name,component_name,timestamp,hostname,message,ddtags",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        },
+        "description": "File Name To Fetch Logs From In Case Of Multiple Log Files. Eg. err.log (only file name)",
+        "hide": 0,
+        "label": "Log File Name",
+        "name": "file_name",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "desc",
+          "value": "desc"
+        },
+        "description": "Timestamp Wise Sorting Order Of Search Results",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Sorting",
+        "multi": false,
+        "name": "sortby",
+        "options": [
+          {
+            "selected": true,
+            "text": "desc",
+            "value": "desc"
+          },
+          {
+            "selected": false,
+            "text": "asc",
+            "value": "asc"
+          }
+        ],
+        "query": "desc,asc",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "60",
+          "value": "60"
+        },
+        "hide": 0,
+        "label": "Limit",
+        "name": "limit",
+        "options": [
+          {
+            "selected": true,
+            "text": "60",
+            "value": "60"
+          }
+        ],
+        "query": "60",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now-5s"
+  },
+  "timepicker": {
+    "nowDelay": "5s"
+  },
+  "timezone": "",
+  "title": "Application Logs",
+  "uid": "ferlywfmzk1kwb",
+  "version": 2,
+  "weekStart": ""
+}

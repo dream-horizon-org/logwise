@@ -17,7 +17,7 @@ public class ApplicationConfig {
     ConfigFactory.invalidateCaches();
     applicationConfig.system = ConfigFactory.systemProperties();
     applicationConfig.environment = ConfigFactory.systemEnvironment();
-    applicationConfig.properties = new Builder().build(configargs);
+    applicationConfig.properties = new Builder(applicationConfig).build(configargs);
     return applicationConfig;
   }
 
@@ -38,7 +38,11 @@ public class ApplicationConfig {
   }
 
   private static class Builder {
-    private Builder() {}
+    private final ApplicationConfig applicationConfig;
+
+    private Builder(ApplicationConfig applicationConfig) {
+      this.applicationConfig = applicationConfig;
+    }
 
     private Config build(String... configargs) {
 
@@ -48,17 +52,6 @@ public class ApplicationConfig {
         Config argsConfig = ConfigFactory.parseString(conf);
         appConfig = appConfig.withFallback(argsConfig);
       }
-
-      // Provide default value for X-Tenant-Name if not set in system properties or
-      // environment
-      // This must be in the config tree before file config is loaded so substitutions
-      // can resolve
-      String defaultTenantName =
-          System.getProperty(
-              "X-Tenant-Name", System.getenv().getOrDefault("X-Tenant-Name", "default-tenant"));
-      Config defaultTenantConfig =
-          ConfigFactory.parseString(String.format("X-Tenant-Name = \"%s\"", defaultTenantName));
-      appConfig = appConfig.withFallback(defaultTenantConfig);
 
       Config configFromDefaultConfFile =
           ConfigFactory.parseResources(

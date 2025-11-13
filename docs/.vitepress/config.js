@@ -33,7 +33,7 @@ export default defineConfig({
                             text: 'Docker Logwise',
                             collapsed: true,
                             items: [
-                                { text: 'Docker Setup Guide', link: '/setup/docker' }
+                                { text: 'Docker Setup Guide', link: '/setup-guides/docker/index' }
                             ]
                         },
                         {
