@@ -10,6 +10,7 @@ import com.logwise.spark.guice.injectors.ApplicationInjector;
 import com.logwise.spark.guice.modules.MainModule;
 import com.logwise.spark.jobs.impl.PushLogsToS3SparkJob;
 import com.typesafe.config.Config;
+import java.lang.reflect.Field;
 import org.apache.spark.sql.SparkSession;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -37,7 +38,18 @@ public class JobFactoryTest {
     if (mockSparkSession != null) {
       mockSparkSession.close();
     }
-    ApplicationInjector.reset();
+    resetApplicationInjector();
+  }
+
+  /** Resets ApplicationInjector singleton using reflection. */
+  private static void resetApplicationInjector() {
+    try {
+      Field field = ApplicationInjector.class.getDeclaredField("applicationInjector");
+      field.setAccessible(true);
+      field.set(null, null);
+    } catch (Exception e) {
+      // Ignore reflection errors - reset is best effort
+    }
   }
 
   @Test

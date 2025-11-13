@@ -36,7 +36,17 @@ public class CurrentSparkSessionTest {
   @AfterMethod
   public void tearDown() {
     resetSingleton();
-    ApplicationInjector.reset();
+    resetApplicationInjector();
+  }
+
+  private static void resetApplicationInjector() {
+    try {
+      Field field = ApplicationInjector.class.getDeclaredField("applicationInjector");
+      field.setAccessible(true);
+      field.set(null, null);
+    } catch (Exception e) {
+      // Ignore reflection errors - reset is best effort
+    }
   }
 
   private void resetSingleton() {
