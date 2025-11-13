@@ -11,8 +11,7 @@ export default defineConfig({
         nav: [
             { text: 'Home', link: '/' },
             { text: 'Overview', link: '/what-is-logwise' },
-            { text: 'Setup', link: '/setup/kafka' },
-            { text: 'Components', link: '/components/vector' },
+            { text: 'Setup', link: '/setup-guides/docker' },
             { text: 'GitHub', link: 'https://github.com/ds-horizon/logwise' }
         ],
 
@@ -23,7 +22,19 @@ export default defineConfig({
                     items: [
                         { text: 'Introduction', link: '/' },
                         { text: 'What is Logwise?', link: '/what-is-logwise' },
-                        { text: 'Architecture Overview', link: '/architecture-overview' }
+                        {
+                            text: 'Architecture Overview',
+                            link: '/architecture-overview',
+                            collapsed: true,
+                            items: [
+                                { text: 'Vector', link: '/components/vector' },
+                                { text: 'Kafka', link: '/components/kafka' },
+                                { text: 'S3 + Athena', link: '/components/s3-athena' },
+                                { text: 'Apache Spark', link: '/components/spark' },
+                                { text: 'Grafana', link: '/components/grafana' },
+                                { text: 'Orchestrator Service', link: '/components/orchestrator' }
+                            ]
+                        }
                     ]
                 },
                 {
@@ -40,8 +51,8 @@ export default defineConfig({
                             text: 'Self-Host Logwise',
                             collapsed: true,
                             items: [
-                                { text: 'Vector', link: '/setup-guides/self-host/vector-setup' },
                                 { text: 'Kafka', link: '/setup-guides/self-host/kafka-setup' },
+                                { text: 'Vector', link: '/setup-guides/self-host/vector-setup' },
                                 { text: 'S3 + Athena', link: '/setup-guides/self-host/s3-athena-setup' },
                                 { text: 'Spark', link: '/setup-guides/self-host/spark-setup' },
                                 { text: 'Grafana', link: '/setup-guides/self-host/grafana-setup' },
@@ -55,17 +66,6 @@ export default defineConfig({
                     items: [
                         { text: 'OpenTelemetry - EC2', link: '/send-logs/ec2/opentelemetry' },
                         { text: 'OpenTelemetry - Kubernetes', link: '/send-logs/kubernetes/opentelemetry' }
-                    ]
-                },
-                {
-                    text: 'Components',
-                    items: [
-                        { text: 'Vector', link: '/components/vector' },
-                        { text: 'Kafka', link: '/components/kafka' },
-                        { text: 'S3 + Athena', link: '/components/s3-athena' },
-                        { text: 'Apache Spark', link: '/components/spark' },
-                        { text: 'Grafana', link: '/components/grafana' },
-                        { text: 'Orchestrator Service', link: '/components/orchestrator' }
                     ]
                 },
             ]
