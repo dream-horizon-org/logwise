@@ -1,0 +1,10 @@
+# m h dom mon dow  command
+# Every 1 minute - POST
+*/1 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: ABC" \
+  http://orchestrator:8080/component/sync?componentType=application || echo "$(date -Is) Component Sync failed" >&2
+
+
+*/1 * * * * curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+  -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: ABC" \
+  http://orchestrator:8080/monitor-spark-job || echo "$(date -Is) Monitor Spark Job failed" >&2

@@ -1,0 +1,406 @@
+# Log Central local stack: Vector → Kafka (KRaft) → Spark (to S3/Athena),
+# Vert.x Orchestrator + MySQL, Grafana, and Cron jobs.
+
+name: logwise
+
+networks:
+  lc_net:
+    name: lc_net
+
+volumes:
+  kafka_data: {}
+  mysql_data: {}
+  grafana_data: {}
+  spark_checkpoint: {}
+  spark_logs: {}
+  spark_master_logs: {}
+  spark_worker_logs: {}
+  db_data: {}
+  healthcheck_logs: {}
+  otel_storage: {}
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: logwise_kafka
+    env_file:
+      - .env
+    environment:
+      KAFKA_BROKER_ID: 1
+      # KRaft mode (no ZooKeeper)
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      # Cluster ID required in KRaft mode (static ID; can be customized via .env)
+      KAFKA_CLUSTER_ID: ${KAFKA_CLUSTER_ID:-9ZkYwXlQ2Tq8rBn5JcH0xA}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-9ZkYwXlQ2Tq8rBn5JcH0xA}
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://kafka:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      # Enable JMX for Kafka Manager polling
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: kafka
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.rmi.port=9999 -Djava.rmi.server.hostname=kafka
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    expose:
+      - "9092"
+      - "9999"  # JMX port for Kafka Manager polling
+    networks:
+      - lc_net
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.00"
+
+  vector:
+    image: timberio/vector:0.45.0-alpine
+    container_name: logwise_vector
+    env_file:
+      - .env
+    environment:
+      - KAFKA_BROKERS=${KAFKA_BROKERS}
+      - VECTOR_API_VERSION=2
+      - VECTOR_API_ADDRESS=0.0.0.0:8686
+      - VECTOR_WATCH_CONFIG=true
+    volumes:
+      - ../vector/vector.yaml:/etc/vector/vector.yaml:ro
+      - ../vector/logcentral_logs.desc:/etc/vector/logwise-vector.desc:ro
+    expose:
+      - "8686" # internal-only Vector API
+      - "4317" # OTLP gRPC
+      - "4318" # OTLP HTTP
+    networks:
+      - lc_net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "sh", "-lc", "curl -fsS http://127.0.0.1:8686/health || vector --version"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.50"
+
+  db:
+    image: mysql:8.0
+    container_name: logwise_mysql
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_0900_ai_ci
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-myapp}
+      MYSQL_USER: ${MYSQL_USER:-myapp}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-myapp_pass}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_pass}
+      DB_HOST: db
+    ports:
+      - "3306"
+    networks:
+      - lc_net
+    volumes:
+      - db_data:/var/lib/mysql
+      - ../orchestrator/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root_pass}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.50"
+
+  orchestrator:
+    # Uses existing Dockerfile in module: log-central-orchestror
+    build:
+      context: ../orchestrator
+      dockerfile: docker/Dockerfile
+    container_name: logwise_orchestrator
+    env_file:
+      - .env
+    environment:
+      # Database envs consumed by application.yml placeholders
+      - DB_NAME=${MYSQL_DATABASE:-myapp}
+      - DB_USER=${MYSQL_USER:-myapp}
+      - DB_PASS=${MYSQL_PASSWORD:-myapp_pass}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-myapp_pass}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - ORCH_INTERNAL_BASE_URL=http://orchestrator:8080
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
+      - S3_BUCKET_NAME=${S3_BUCKET}
+    ports:
+      - "${ORCH_PORT:-8080}:8080" # user-facing (optional for local dev)
+    networks:
+      - lc_net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "curl -fsS http://localhost:8080/health | grep 'UP' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.00"
+
+  spark-master:
+    build:
+      context: ../spark
+      dockerfile: docker/Dockerfile
+    image: logwise-spark:latest
+    container_name: logwise_spark_master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_OPTS=-Dspark.master.rest.enabled=true
+    command: ["bash", "-lc", 
+      "mkdir -p /opt/spark/logs && /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --host spark-master --port 7077 --webui-port 8080"]
+    expose:
+      - "7077"
+      - "8080"
+      - "6066"
+    ports:
+      - 7077:7077
+      - "${SPARK_MASTER_UI_PORT:-18080}:8080"
+      - 6066:6066
+    volumes:
+      - ../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
+      - spark_master_logs:/opt/spark/logs
+    networks:
+      - lc_net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.00"
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "curl -fsS http://localhost:8080 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  spark-worker:
+    image: logwise-spark:latest
+    container_name: logwise_spark_worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_CORES=2
+    command: ["bash", "-lc", 
+      "mkdir -p /opt/spark/logs && SPARK_WORKER_OPTS='-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true' /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8081 --memory 2048m --cores 2"]
+    networks:
+      - lc_net
+    volumes:
+      - ../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
+      - spark_worker_logs:/opt/spark/logs
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    ports: 
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "wget -qO- http://localhost:8081 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+    mem_limit: 3g
+    cpus: "2.00"
+
+  spark-worker-2:
+    image: logwise-spark:latest
+    container_name: logwise_spark_worker_2
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_CORES=2
+    command: ["bash", "-lc",
+              "mkdir -p /opt/spark/logs && SPARK_WORKER_WEBUI_PORT=8082 && SPARK_WORKER_OPTS='-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true' /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8082 --memory 2048m --cores 2"]
+    networks:
+      - lc_net
+    volumes:
+      - ../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
+      - spark_worker_logs:/opt/spark/logs
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "wget -qO- http://localhost:8082 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+    mem_limit: 3g
+    cpus: "2.00"
+
+
+  healthcheck-dummy:
+    build:
+      context: ./healthcheck-dummy
+      dockerfile: Dockerfile
+    container_name: logwise_healthcheck_dummy
+    environment:
+      - SERVICE_NAME=healthcheck-dummy
+      - ENVIRONMENT=local
+      - TYPE=healthcheck
+    volumes:
+      - healthcheck_logs:/var/log/healthcheck
+      - otel_storage:/var/lib/otelcol/storage
+    networks:
+      - lc_net
+    depends_on:
+      vector:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.25"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:13133"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+
+  mysql:
+    image: mysql:8.0
+    container_name: logwise_grafana_mysql
+    restart: unless-stopped
+    networks:
+      - lc_net
+    environment:
+      MYSQL_ROOT_PASSWORD: grafana_root_password
+      MYSQL_DATABASE: grafana
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: grafana_password
+      DB_HOST: mysql
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pgrafana_root_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+    cpus: "0.50"
+
+  grafana-db-init:
+    image: mysql:8.0
+    container_name: logwise_grafana_db_init
+    networks:
+      - lc_net
+    environment:
+      MYSQL_ROOT_PASSWORD: grafana_root_password
+    depends_on:
+      mysql:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command: >
+      "mysql -h mysql -uroot -pgrafana_root_password -e
+      \"CREATE DATABASE IF NOT EXISTS grafana CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+      CREATE USER IF NOT EXISTS 'grafana'@'%' IDENTIFIED BY 'grafana_password';
+      GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'%';
+      FLUSH PRIVILEGES;\""
+    restart: "no"
+    mem_limit: 256m
+    cpus: "0.25"
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: logwise_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - lc_net
+    env_file:
+      - .env
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-athena-datasource,yesoreyeram-infinity-datasource
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=mysql:3306
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=grafana_password
+      - GF_DATABASE_SSL_MODE=disable
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
+      - ATHENA_WORKGROUP=${ATHENA_WORKGROUP}
+      - ATHENA_CATALOG=${ATHENA_CATALOG}
+      - ATHENA_DATABASE=${ATHENA_DATABASE}
+      - S3_ATHENA_OUTPUT=${S3_ATHENA_OUTPUT}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      mysql:
+        condition: service_healthy
+      grafana-db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    mem_limit: 512m
+    cpus: "0.50"
+
+  scheduler:
+    image: alpine:3.20
+    container_name: logwise_scheduler
+    depends_on:
+      orchestrator: { condition: service_started }
+    environment:
+      TZ: Asia/Kolkata
+    volumes:
+      - ./cron/crontab:/crontab:ro
+    networks:
+      - lc_net
+    entrypoint: [ "/bin/sh","-lc" ]
+    command: >
+      'apk add --no-cache curl tzdata &&
+       crontab /crontab &&
+       crond -f -l 8'
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: "0.25"
+    healthcheck:
+      test: ["CMD", "pgrep", "crond"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  

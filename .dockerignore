@@ -1,0 +1,150 @@
+# Build artifacts
+target/
+build/
+dist/
+out/
+*.jar
+*.war
+*.ear
+*.class
+*.o
+*.a
+*.so
+*.dylib
+
+# Maven
+.mvn/wrapper/maven-wrapper.properties
+dependency-reduced-pom.xml
+
+# IDE / Editor Files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.buildpath
+*.swp
+*.swo
+*.swn
+*.sublime-project
+*.sublime-workspace
+.apt_generated
+.factorypath
+.springBeans
+nbproject/
+nbbuild/
+nbdist/
+.nb-gradle/
+.externalToolBuilders/
+*.launch
+
+# Version Control
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+.svn/
+.hg/
+
+# Documentation
+docs/
+*.md
+README*
+LICENSE
+SECURITY.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+*.env
+.secrets/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+
+# Test files and reports
+test-output/
+TestReport
+result.txt
+coverage/
+.nyc_output/
+*.lcov
+**/test/**
+**/tests/**
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*~
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+
+# Secrets and credentials
+secrets/
+credentials/
+*.pem
+*.key
+*.cert
+id_rsa*
+*.p12
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Generated files
+**/generated/**
+**/asciidoc/**
+**/webroot/swagger/
+
+# Maven wrapper (optional - uncomment if you don't need it in images)
+# .mvn/
+
+# Application specific
+*.html
+local.properties
+
