@@ -32,8 +32,8 @@ public class Constants {
   public final String APPLICATION_LOG_COLUMN_HOSTNAME = "hostname";
   public final String APPLICATION_LOG_COLUMN_MESSAGE = "message";
   public final String APPLICATION_LOG_COLUMN_SERVICE_NAME = "service_name";
-  public final String APPLICATION_LOG_COLUMN_ENV = "env";
-  public final String APPLICATION_LOG_COLUMN_COMPONENT_NAME = "component_name";
+  public final String APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME = "environment_name";
+  public final String APPLICATION_LOG_COLUMN_COMPONENT_TYPE = "component_type";
   public final String APPLICATION_LOG_COLUMN_SOURCE_TYPE = "source_type";
   public final String APPLICATION_LOG_COLUMN_STATUS = "status";
   public final String APPLICATION_LOG_COLUMN_TIMESTAMP = "timestamp";
@@ -45,9 +45,9 @@ public class Constants {
 
   // Partition Columns
   public final String[] APPLICATION_LOG_S3_PARTITION_COLUMNS = {
-    Constants.APPLICATION_LOG_COLUMN_ENV,
+    Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME,
+    Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE,
     Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME,
-    Constants.APPLICATION_LOG_COLUMN_COMPONENT_NAME,
     Constants.APPLICATION_LOG_COLUMN_YEAR,
     Constants.APPLICATION_LOG_COLUMN_MONTH,
     Constants.APPLICATION_LOG_COLUMN_DAY,

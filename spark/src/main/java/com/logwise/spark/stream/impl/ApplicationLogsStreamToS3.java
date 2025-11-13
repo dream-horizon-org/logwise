@@ -61,15 +61,10 @@ public class ApplicationLogsStreamToS3 extends AbstractApplicationLogsStream {
                       VectorLogs vectorLogs = VectorLogs.parseFrom(bytes);
                       return RowFactory.create(
                           vectorLogs.getMessage(),
-                          ApplicationUtils.convertMapToJsonString(vectorLogs.getDdtagsMap()),
                           ApplicationUtils.convertProtoTimestampToIso(vectorLogs.getTimestamp()),
-                          vectorLogs.getEnv(),
-                          vectorLogs.getServiceName(),
-                          vectorLogs.getComponentName(),
-                          vectorLogs.getHostname(),
-                          vectorLogs.getDdsource(),
-                          vectorLogs.getSourceType(),
-                          vectorLogs.getStatus());
+                          vectorLogs.getEnvironmentName(),
+                          vectorLogs.getComponentType(),
+                          vectorLogs.getServiceName());
                     },
                 rowEncoder)
             .withColumn(
