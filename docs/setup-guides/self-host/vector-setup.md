@@ -39,14 +39,14 @@ cd logwise/vector/
 
 ## 2) Set Kafka broker address
 
-Edit [`vector.toml`](https://github.com/ds-horizon/logwise/blob/main/vector/vector.toml) and update the Kafka bootstrap servers. Use comma-separated values for multiple brokers.
+Edit [`vector.yaml`](https://github.com/ds-horizon/logwise/blob/main/vector/vector.yaml) directly and replace the environment variable with your Kafka address:
 
-```toml
+```yaml
 # Before
-bootstrap_servers = "kafka:29092"
+bootstrap_servers: "${KAFKA_BROKERS}"
 
 # After
-bootstrap_servers = "<YOUR_KAFKA_ADDRESS>:<KAFKA_PORT>"
+bootstrap_servers: "<YOUR_KAFKA_ADDRESS>:<KAFKA_PORT>"
 ```
 
 ## 3) Compile the protobuf descriptor
@@ -57,35 +57,18 @@ From the `logwise/vector/` directory (where you are after Step 1), run:
 protoc --include_imports --descriptor_set_out=logwise-vector.desc logwise-vector.proto
 ```
 
+> **Important:** The protobuf schema defined in `logwise-vector.proto` uses the package `logwise.vector.logs` with message type `VectorLogs`. Ensure that your Spark jobs are configured to consume messages with this schema. If you're upgrading from an older version, you may need to regenerate the Spark protobuf classes and update the Spark code to match the new schema fields (`service_name`, `environment_name`, `type`, `log_level`, `timestamp`, `message`).
+
 ## 4) Install Vector configuration
 
 ```bash
 sudo mkdir -p /etc/vector
-sudo cp vector.toml /etc/vector/vector.toml
+sudo cp vector.yaml /etc/vector/vector.yaml
 sudo cp logwise-vector.desc /etc/vector/logwise-vector.desc
 ```
 
-## 5) Configure Vector environment
 
-Create or edit the Vector environment file `/etc/default/vector` with the following content to enable configuration watching and specify the config file path:
-
-```text
-VECTOR_WATCH_CONFIG=true
-VECTOR_CONFIG=/etc/vector/vector.toml
-```
-
-You can create this file using:
-
-```bash
-FILE="/etc/default/vector"
-
-sudo /bin/cat <<EOM >$FILE
-VECTOR_WATCH_CONFIG=true
-VECTOR_CONFIG=/etc/vector/vector.toml
-EOM
-```
-
-## 6) Run Vector
+## 5) Run Vector
 
 Start Vector as a service (recommended) or run in the foreground for development/testing.
 
@@ -95,10 +78,10 @@ sudo systemctl start vector
 sudo systemctl enable vector
 
 # Development: run manually
-vector --config /etc/vector/vector.toml
+vector --config /etc/vector/vector.yaml
 ```
 
-## 7) Verify
+## 6) Verify
 
 Check that Vector is up and processing logs.
 

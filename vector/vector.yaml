@@ -13,12 +13,26 @@ transforms:
     type: remap
     inputs: ["otlp_logs.logs"]
     source: |
-      .ddtags = {}
-      .component_name = "healthcheck-dummy"
-      .env = "prod"
-      .service_name = "healthcheck"
+      if !is_string(.resources."service.name") { abort }
+      if !is_string(.resources.environment)    { abort }
+      if !is_string(.resources.type)    { abort }
 
-      .message = string!(.message)
+
+      # Normalize as strings (infallible)
+      .service_name     = to_string(.resources."service.name") ?? "unknown"
+      .environment_name = to_string(.resources.environment)    ?? "unknown"
+      .type = to_string(.resources.type)    ?? "unknown"
+
+
+      # sanitize service_name and environment_name
+      .service_name = replace(.service_name, r'[^a-zA-Z0-9._-]', "_")
+      .environment_name = replace(.environment_name, r'[^a-zA-Z0-9._-]', "_")
+      .type = replace(.type, r'[^a-zA-Z0-9._-]', "_")
+
+      # Handle attributes with fallible assignments and defaults
+      .message    = to_string(.attributes.message) ?? "no_message"
+      .log_level  = to_string(.attributes.level) ?? "unknown"
+      .timestamp  = to_string(.attributes.time) ?? "unknown"
     timezone: local
 
 sinks:
@@ -27,12 +41,12 @@ sinks:
     inputs:
       - my_transform_id
     bootstrap_servers: "${KAFKA_BROKERS}"
-    topic: "logs.{{.env}}_{{.service_name}}_{{.component_name}}"
+    topic: "logs.{{.type}}_{{.environment_name}}_{{.service_name}}"
     compression: zstd
     encoding:
       codec: protobuf
       protobuf:
-        message_type: logcentral.logs.VectorLogs
+        message_type: logwise.vector.logs.VectorLogs
         desc_file: "/etc/vector/logwise-vector.desc"
     librdkafka_options:
       linger.ms: "100"
