@@ -7,18 +7,14 @@ WORKDIR /app
 # Copy pom.xml first (for better layer caching)
 COPY pom.xml .
 
-# Download dependencies with parallel downloads and cache mount for Maven repository
-# Using cache mount to persist Maven repository between builds for faster subsequent builds
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -T 4 dependency:go-offline -Dmaven.artifact.threads=10
+# Download dependencies with parallel downloads
+RUN mvn -B -T 4 dependency:go-offline -Dmaven.artifact.threads=10
 
 # Copy source code
 COPY src ./src
 
 # Build the application JAR
-# Using cache mount to reuse Maven repository from dependency download step
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -T 4 clean package -DskipTests -Dmaven.artifact.threads=10
+RUN mvn -B -T 4 clean package -DskipTests -Dmaven.artifact.threads=10
 
 # Runtime stage: Use a Java 11 JRE base image
 FROM eclipse-temurin:11-jre
