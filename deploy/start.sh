@@ -24,7 +24,7 @@ install_mac() {
 install_linux_apt() {
   note "Installing prerequisites via apt (sudo required)..."
   sudo apt-get update -y
-  sudo apt-get install -y ca-certificates curl gnupg lsb-release make jq wget awscli
+  sudo apt-get install -y ca-certificates curl gnupg lsb-release make jq wget
 
   if ! need_cmd docker; then
     # Docker Engine install
@@ -70,7 +70,7 @@ main() {
   (docker --version || true)
   (docker compose version || true)
   (make --version | head -n1 || true)
-  (aws --version || true)
+
   (curl --version | head -n1 || true)
   (jq --version || true)
   (wget --version | head -n1 || true)

@@ -53,13 +53,14 @@ public class ApplicationUtils {
   }
 
   public ServiceDetails getServiceFromObjectKey(String logPath) {
-    Pattern pattern = Pattern.compile("env=(.+?)/service_name=(.+?)/component_name=(.+?)/");
+    Pattern pattern =
+        Pattern.compile("environment_name=(.+?)/component_type=(.+?)/service_name=(.+?)/");
     Matcher matcher = pattern.matcher(logPath);
     if (matcher.find()) {
       return ServiceDetails.builder()
-          .env(matcher.group(1))
-          .serviceName(matcher.group(2))
-          .componentName(matcher.group(3))
+          .environmentName(matcher.group(1))
+          .componentType(matcher.group(2))
+          .serviceName(matcher.group(3))
           .build();
     }
     log.error("Error in getting service details from object key: {}", logPath);

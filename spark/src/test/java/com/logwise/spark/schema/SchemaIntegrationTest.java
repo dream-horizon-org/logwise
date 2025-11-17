@@ -93,7 +93,7 @@ public class SchemaIntegrationTest {
     StructField[] fields = df.schema().fields();
     assertEquals(fields.length, 10);
     assertEquals(fields[0].name(), Constants.APPLICATION_LOG_COLUMN_MESSAGE);
-    assertEquals(fields[3].name(), Constants.APPLICATION_LOG_COLUMN_ENV);
+    assertEquals(fields[3].name(), Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME);
     assertEquals(fields[4].name(), Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME);
   }
 
@@ -253,7 +253,7 @@ public class SchemaIntegrationTest {
     Dataset<Row> selected =
         df.select(
             Constants.APPLICATION_LOG_COLUMN_MESSAGE,
-            Constants.APPLICATION_LOG_COLUMN_ENV,
+            Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME,
             Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME);
 
     // Assert
@@ -261,7 +261,7 @@ public class SchemaIntegrationTest {
     StructField[] fields = selected.schema().fields();
     assertEquals(fields.length, 3);
     assertEquals(fields[0].name(), Constants.APPLICATION_LOG_COLUMN_MESSAGE);
-    assertEquals(fields[1].name(), Constants.APPLICATION_LOG_COLUMN_ENV);
+    assertEquals(fields[1].name(), Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME);
     assertEquals(fields[2].name(), Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME);
   }
 
@@ -274,9 +274,9 @@ public class SchemaIntegrationTest {
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_MESSAGE));
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_DDTAGS));
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_TIMESTAMP));
-    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_ENV));
+    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME));
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME));
-    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_COMPONENT_NAME));
+    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE));
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_HOSTNAME));
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_DDSOURCE));
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_SOURCE_TYPE));

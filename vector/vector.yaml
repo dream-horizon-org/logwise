@@ -12,14 +12,27 @@ transforms:
   my_transform_id:
     type: remap
     inputs: ["otlp_logs.logs"]
+    drop_on_abort: true
     source: |
-      .ddtags = {}
-      .component_name = "healthcheck-dummy"
-      .env = "prod"
-      .service_name = "healthcheck"
-
+      # Set required fields with defaults
+      # .component_type = "application"
+      # .environment_name = "prod"
+      # .service_name = "healthcheck"
       .message = string!(.message)
-    timezone: local
+      
+      
+      # Extract from OTLP resources if available
+      if exists(.resources."service_name") {
+        .service_name = string!(.resources."service_name")
+      }
+      if exists(.resources.environment_name) {
+        .environment_name = string!(.resources.environment_name)
+      }
+      if exists(.resources.component_type) {
+        .component_type = string!(.resources.component_type)
+      }
+      
+      .timestamp = .observed_timestamp
 
 sinks:
   my_sink_id:
@@ -27,12 +40,12 @@ sinks:
     inputs:
       - my_transform_id
     bootstrap_servers: "${KAFKA_BROKERS}"
-    topic: "logs.{{.env}}_{{.service_name}}_{{.component_name}}"
+    topic: "logs.{{.environment_name}}_{{.component_type}}_{{.service_name}}"
     compression: zstd
     encoding:
       codec: protobuf
       protobuf:
-        message_type: logcentral.logs.VectorLogs
+        message_type: logwise.vector.logs.VectorLogs
         desc_file: "/etc/vector/logwise-vector.desc"
     librdkafka_options:
       linger.ms: "100"

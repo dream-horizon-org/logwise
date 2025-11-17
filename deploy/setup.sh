@@ -132,6 +132,35 @@ check_port_available() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Track if services have been started (so we know when to cleanup on failure)
+SERVICES_STARTED=false
+
+# Cleanup function to remove containers and volumes on failure
+cleanup_on_failure() {
+  local exit_code=$?
+  # Only cleanup if services were started and we're exiting with an error
+  if [ "$SERVICES_STARTED" = true ] && [ $exit_code -ne 0 ]; then
+    echo ""
+    print_separator
+    print_error "Setup failed with exit code $exit_code"
+    print_info "Cleaning up containers and volumes..."
+    echo ""
+    
+    # Run teardown to remove containers and volumes
+    if make teardown >/dev/null 2>&1; then
+      print_success "Containers and volumes removed"
+    else
+      print_warn "Failed to run teardown automatically"
+      print_info "You can manually clean up by running: make teardown"
+    fi
+    
+    echo ""
+  fi
+}
+
+# Set trap to cleanup on error (only if services were started)
+trap cleanup_on_failure ERR EXIT
+
 main() {
   print_header
   
@@ -272,6 +301,7 @@ main() {
   if make up >"$TEMP_LOG" 2>&1; then
     printf "\r${green}✓${reset} All services started successfully\n"
     rm -f "$TEMP_LOG"
+    SERVICES_STARTED=true
   else
     # Even if make up returned non-zero, check actual service status
     # Docker Compose might return non-zero for warnings but services may still be starting
@@ -402,6 +432,7 @@ main() {
         # No services actually failed, just warnings or transient issues
         printf "\r${green}✓${reset} All services started successfully (warnings in output are non-critical)\n"
         rm -f "$TEMP_LOG"
+        SERVICES_STARTED=true
       fi
     else
       # Couldn't get service list, show the error output

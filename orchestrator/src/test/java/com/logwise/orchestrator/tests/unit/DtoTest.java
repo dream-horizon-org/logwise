@@ -27,11 +27,11 @@ public class DtoTest {
   @Test
   public void testServiceDetails_AllArgsConstructor_CreatesInstance() {
 
-    ServiceDetails details = new ServiceDetails("prod", "service1", "component1", 30, "tenant1");
+    ServiceDetails details = new ServiceDetails("prod", "service1", "application", 30, "tenant1");
 
-    Assert.assertEquals(details.getEnv(), "prod");
+    Assert.assertEquals(details.getEnvironmentName(), "prod");
     Assert.assertEquals(details.getServiceName(), "service1");
-    Assert.assertEquals(details.getComponentName(), "component1");
+    Assert.assertEquals(details.getComponentType(), "application");
     Assert.assertEquals(details.getRetentionDays(), Integer.valueOf(30));
     Assert.assertEquals(details.getTenant(), "tenant1");
   }
@@ -41,16 +41,16 @@ public class DtoTest {
 
     ServiceDetails details =
         ServiceDetails.builder()
-            .env("dev")
+            .environmentName("dev")
             .serviceName("service2")
-            .componentName("component2")
+            .componentType("application")
             .retentionDays(60)
             .tenant("tenant2")
             .build();
 
-    Assert.assertEquals(details.getEnv(), "dev");
+    Assert.assertEquals(details.getEnvironmentName(), "dev");
     Assert.assertEquals(details.getServiceName(), "service2");
-    Assert.assertEquals(details.getComponentName(), "component2");
+    Assert.assertEquals(details.getComponentType(), "application");
     Assert.assertEquals(details.getRetentionDays(), Integer.valueOf(60));
     Assert.assertEquals(details.getTenant(), "tenant2");
   }
@@ -58,8 +58,8 @@ public class DtoTest {
   @Test
   public void testServiceDetails_Equals_WithSameValues_ReturnsTrue() {
 
-    ServiceDetails details1 = new ServiceDetails("prod", "service1", "component1", 30, "tenant1");
-    ServiceDetails details2 = new ServiceDetails("prod", "service1", "component1", 30, "tenant1");
+    ServiceDetails details1 = new ServiceDetails("prod", "service1", "application", 30, "tenant1");
+    ServiceDetails details2 = new ServiceDetails("prod", "service1", "application", 30, "tenant1");
 
     Assert.assertTrue(details1.equals(details2));
   }
@@ -67,8 +67,8 @@ public class DtoTest {
   @Test
   public void testServiceDetails_Equals_WithDifferentEnv_ReturnsFalse() {
 
-    ServiceDetails details1 = new ServiceDetails("prod", "service1", "component1", 30, "tenant1");
-    ServiceDetails details2 = new ServiceDetails("dev", "service1", "component1", 30, "tenant1");
+    ServiceDetails details1 = new ServiceDetails("prod", "service1", "application", 30, "tenant1");
+    ServiceDetails details2 = new ServiceDetails("dev", "service1", "application", 30, "tenant1");
 
     Assert.assertFalse(details1.equals(details2));
   }
@@ -210,9 +210,9 @@ public class DtoTest {
     List<ServiceDetails> details =
         Arrays.asList(
             ServiceDetails.builder()
-                .env("dev")
+                .environmentName("dev")
                 .serviceName("service2")
-                .componentName("component2")
+                .componentType("application")
                 .build());
 
     GetServiceDetailsResponse response =

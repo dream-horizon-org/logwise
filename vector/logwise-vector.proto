@@ -2,11 +2,16 @@ syntax = "proto3";
 
 package logwise.vector.logs;
 
+option java_package = "com.logwise.spark.protobuf";
+
+import "google/protobuf/timestamp.proto";
+option java_multiple_files = true;
+
 message VectorLogs {
   string service_name = 1;
   string environment_name = 2;
   string message = 3;
   string log_level = 4;
-  string timestamp = 5;
-  string type = 6;
+  google.protobuf.Timestamp timestamp = 5;
+  string component_type = 6;
 }

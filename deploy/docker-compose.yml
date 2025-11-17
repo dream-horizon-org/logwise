@@ -77,7 +77,7 @@ services:
       - VECTOR_WATCH_CONFIG=true
     volumes:
       - ../vector/vector.yaml:/etc/vector/vector.yaml:ro
-      - ../vector/logcentral_logs.desc:/etc/vector/logwise-vector.desc:ro
+      - ../vector/logwise-vector.desc:/etc/vector/logwise-vector.desc:ro
     expose:
       - "8686" # internal-only Vector API
       - "4317" # OTLP gRPC
@@ -138,6 +138,10 @@ services:
       - DB_NAME=${MYSQL_DATABASE:-myapp}
       - DB_USER=${MYSQL_USER:-myapp}
       - DB_PASS=${MYSQL_PASSWORD:-myapp_pass}
+      - DB_USERNAME=${MYSQL_USER:-myapp}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-myapp_pass}
+      - DB_MASTER_HOST=db
+      - DB_SLAVE_HOST=db
       - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-myapp_pass}
       - DB_HOST=db
       - DB_PORT=3306
@@ -147,6 +151,10 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
       - S3_BUCKET_NAME=${S3_BUCKET}
+      - KAFKA_BROKERS_HOST=${KAFKA_BROKERS_HOST:-kafka:9092}
+      - SPARK_MASTER_HOST=${SPARK_MASTER_HOST:-spark://spark-master:7077}
+      - SPARK_JAR_PATH=${SPARK_JAR_PATH:-/tmp/spark.jar}
+      - LOG4J_PROPERTIES_FILE_PATH=${LOG4J_PROPERTIES_FILE_PATH:-/tmp/log4j.properties}
     ports:
       - "${ORCH_PORT:-8080}:8080" # user-facing (optional for local dev)
     networks:
@@ -365,7 +373,7 @@ services:
       - S3_ATHENA_OUTPUT=${S3_ATHENA_OUTPUT}
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ../grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       mysql:
         condition: service_healthy
