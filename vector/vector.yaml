@@ -15,56 +15,24 @@ transforms:
     drop_on_abort: true
     source: |
       # Set required fields with defaults
-      .component_type = "application"
-      .environment_name = "prod"
-      .service_name = "healthcheck"
+      # .component_type = "application"
+      # .environment_name = "prod"
+      # .service_name = "healthcheck"
       .message = string!(.message)
       
       
-      # # Extract from OTLP resources if available
-      # if exists(.resources."service.name") {
-      #   .service_name = string!(.resources."service.name")
-      # }
-      # if exists(.resources.environment) {
-      #   .environment_name = string!(.resources.environment)
-      # }
-      # if exists(.resources.type) {
-      #   .type = string!(.resources.type)
-      # }
+      # Extract from OTLP resources if available
+      if exists(.resources."service_name") {
+        .service_name = string!(.resources."service_name")
+      }
+      if exists(.resources.environment_name) {
+        .environment_name = string!(.resources.environment_name)
+      }
+      if exists(.resources.component_type) {
+        .component_type = string!(.resources.component_type)
+      }
       
-      # # Extract message - handle both body and attributes
-      # if exists(.body) {
-      #   .message = to_string(.body) ?? "no_message"
-      # } else if exists(.attributes.message) {
-      #   .message = to_string(.attributes.message) ?? "no_message"
-      # } else {
-      #   .message = "no_message"
-      # }
-      
-      # # Extract log level
-      # if exists(.attributes."log.level") {
-      #   .log_level = to_string(.attributes."log.level") ?? "unknown"
-      # } else if exists(.attributes.level) {
-      #   .log_level = to_string(.attributes.level) ?? "unknown"
-      # } else if exists(.severity_text) {
-      #   .log_level = to_string(.severity_text) ?? "unknown"
-      # } else {
-      #   .log_level = "unknown"
-      # }
-      
-      # # Extract and convert timestamp for protobuf Timestamp message
-      # # OTLP timestamp is nanoseconds since epoch, protobuf Timestamp needs seconds (int64) and nanos (int32)
-      # if exists(.timestamp) {
-      #   .timestamp_nanos = to_int(.timestamp) ?? 0
-      #   .timestamp_seconds = to_int(.timestamp_nanos / 1000000000)
-      #   .timestamp_nanos_remainder = to_int(.timestamp_nanos - (.timestamp_seconds * 1000000000))
-      #   .timestamp = {"seconds": .timestamp_seconds, "nanos": .timestamp_nanos_remainder}
-      # } else {
-      #   # Fallback to current time - convert float to int
-      #   .now_ts = to_int(now().timestamp)
-      #   .timestamp = {"seconds": .now_ts, "nanos": 0}
-      # }
-    timezone: local
+      .timestamp = .observed_timestamp
 
 sinks:
   my_sink_id:

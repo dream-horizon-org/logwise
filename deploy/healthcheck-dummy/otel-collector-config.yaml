@@ -25,17 +25,14 @@ processors:
 
   resource:
     attributes:
-      - key: service.name
+      - key: service_name
         value: healthcheck-dummy
         action: upsert
-      - key: component.name
-        value: healthcheck-dummy
+      - key: component_type
+        value: application
         action: upsert
-      - key: environment
+      - key: environment_name
         value: local
-        action: upsert
-      - key: type
-        value: healthcheck
         action: upsert
 
   batch:

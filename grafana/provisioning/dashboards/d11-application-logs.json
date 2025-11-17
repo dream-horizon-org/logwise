@@ -193,7 +193,7 @@
             "format": "table",
             "parser": "backend",
             "refId": "variable",
-            "root_selector": "$.data.serviceDetails[*].environment_name",
+            "root_selector": "$.data.serviceDetails[*].environmentName",
             "source": "url",
             "type": "json",
             "url": "http://orchestrator:8080/service-details",
@@ -258,10 +258,10 @@
             "filterExpression": "",
             "filters": [],
             "format": "table",
-            "groq": "*[\"data\" in keys(@)][0].data.serviceDetails[environment_name in $environment_name]{ componentType }",
+            "groq": "*[\"data\" in keys(@)][0].data.serviceDetails[environmentName in $environment_name]{ componentType }",
             "parser": "backend",
             "refId": "variable",
-            "root_selector": "$.data.serviceDetails[environment_name in [${environment_name:singlequote}]].componentType",
+            "root_selector": "$.data.serviceDetails[environmentName in [${environment_name:singlequote}]].componentType",
             "source": "url",
             "summarizeBy": "componentType",
             "type": "json",
@@ -318,7 +318,7 @@
           "infinityQuery": {
             "columns": [],
             "computed_columns": [
-              { 
+              {
                 "selector": "",
                 "text": "",
                 "type": "string"
@@ -330,11 +330,11 @@
             "format": "table",
             "parser": "backend",
             "refId": "variable",
-            "root_selector": "$.data.serviceDetails[environment_name in [${environment_name:singlequote}] and componentType in [${component_type:singlequote}]].serviceName",
+            "root_selector": "$.data.serviceDetails[environmentName in [${environment_name:singlequote}] and componentType in [${component_type:singlequote}]].serviceName",
             "source": "url",
             "summarizeBy": "serviceName",
             "type": "json",
-            "uql": "parse-json\n$.data.serviceDetails[environment_name == '${environment_name}' && componentType == '${component_type}'].serviceName",
+            "uql": "parse-json\n$.data.serviceDetails[environmentName == '${environment_name}' && componentType == '${component_type}'].serviceName",
             "url": "http://orchestrator:8080/service-details",
             "url_options": {
               "data": "",
