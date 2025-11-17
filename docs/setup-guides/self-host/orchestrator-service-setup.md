@@ -35,27 +35,14 @@ USE log_central;
 
 DROP TABLE IF EXISTS service_details;
 CREATE TABLE `service_details` (
-  `env` varchar(128) NOT NULL,
+  `environmentName` varchar(128) NOT NULL,
+  `componentType` varchar(50) NOT NULL,
   `serviceName` varchar(50) NOT NULL,
-  `componentName` varchar(50) NOT NULL,
   `retentionDays` mediumint unsigned NOT NULL,
-  `tenant` enum('D11-Prod-AWS', 'D11-Stag-AWS', 'DP-Logs-AWS', 'Hulk-Prod-AWS', 'Delivr-AWS') NOT NULL,
-  `lastCheckedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY (`env`, `serviceName`, `componentName`, `tenant`)
-);
-
-DROP TABLE IF EXISTS spark_submit_status;
-CREATE TABLE `spark_submit_status` (
-  `id` int auto_increment,
-  `startingOffsetsTimestamp` bigint unsigned NOT NULL,
-  `resumeToSubscribePatternTimestamp` bigint unsigned NOT NULL,
-  `isSubmittedForOffsetsTimestamp` boolean default false,
-  `isResumedToSubscribePattern` boolean default false,
-  `tenant` enum('D11-Prod-AWS', 'D11-Stag-AWS', 'DP-Logs-AWS', 'Hulk-Prod-AWS', 'Delivr-AWS') NOT NULL,
-  `createdAt` timestamp default CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `startingOffsetsTimestamp_UNIQUE` (`startingOffsetsTimestamp`)
-);
+  `tenant` enum('ABC') NOT NULL,
+  `lastCheckedAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `environmentName` (`environmentName`,`componentType`,`serviceName`,`tenant`)
+)
 ```
 
 ## 2) Build the Application

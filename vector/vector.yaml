@@ -14,29 +14,6 @@ transforms:
     inputs: ["otlp_logs.logs"]
     drop_on_abort: true
     source: |
-<<<<<<< HEAD
-      if !is_string(.resources."service.name") { abort }
-      if !is_string(.resources.environment)    { abort }
-      if !is_string(.resources.type)    { abort }
-
-
-      # Normalize as strings (infallible)
-      .service_name     = to_string(.resources."service.name") ?? "unknown"
-      .environment_name = to_string(.resources.environment)    ?? "unknown"
-      .type = to_string(.resources.type)    ?? "unknown"
-
-
-      # sanitize service_name and environment_name
-      .service_name = replace(.service_name, r'[^a-zA-Z0-9._-]', "_")
-      .environment_name = replace(.environment_name, r'[^a-zA-Z0-9._-]', "_")
-      .type = replace(.type, r'[^a-zA-Z0-9._-]', "_")
-
-      # Handle attributes with fallible assignments and defaults
-      .message    = to_string(.attributes.message) ?? "no_message"
-      .log_level  = to_string(.attributes.level) ?? "unknown"
-      .timestamp  = to_string(.attributes.time) ?? "unknown"
-    timezone: local
-=======
       # Set required fields with defaults
       # .component_type = "application"
       # .environment_name = "prod"
@@ -56,7 +33,6 @@ transforms:
       }
       
       .timestamp = .observed_timestamp
->>>>>>> main
 
 sinks:
   my_sink_id:
@@ -64,11 +40,7 @@ sinks:
     inputs:
       - my_transform_id
     bootstrap_servers: "${KAFKA_BROKERS}"
-<<<<<<< HEAD
-    topic: "logs.{{.type}}_{{.environment_name}}_{{.service_name}}"
-=======
     topic: "logs.{{.environment_name}}_{{.component_type}}_{{.service_name}}"
->>>>>>> main
     compression: zstd
     encoding:
       codec: protobuf
