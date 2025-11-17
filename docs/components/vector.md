@@ -30,13 +30,13 @@ Vector handles:
 
 ## Topic Routing
 
-Vector automatically creates Kafka topics using the naming convention: `{type}_{env}_{service_name}` based on log metadata tags.
+Vector automatically creates Kafka topics using the naming convention: `logs.{type}_{environment_name}_{service_name}` based on log metadata tags.
 
-**Example:** `application_prod_order-service`
+**Example:** `logs.application_prod_order-service`
 
 ## Configuration
 
-Key configuration points in `vector.toml`:
+Key configuration points in `vector.yaml`:
 - `bootstrap_servers` - Kafka broker address
 - `topic` - Dynamic topic routing based on log metadata
 - `encoding.codec` - Set to `protobuf` (requires Vector v0.45.0+) to optimize network usage
@@ -55,7 +55,7 @@ Key configuration points in `vector.toml`:
 **Kafka Connection Failures:**
 - Common cause: Kafka's `advertised.listeners` misconfigured
 - Kafka must advertise its reachable hostname/IP, not localhost
-- Verify `bootstrap_servers` in `vector.toml` matches Kafka's network address
+- Verify `bootstrap_servers` in `vector.yaml` matches Kafka's network address
 
 ## Integration with Other Components
 
