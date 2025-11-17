@@ -18,9 +18,10 @@ public class ApplicationConfigTest {
     // Arrange
     String arg1 = "app.job.name=TEST_JOB";
     String arg2 = "tenant.name=test-tenant";
+    String arg3 = "s3.bucket=test-bucket";
 
     // Act
-    Config config = ApplicationConfig.getConfig(arg1, arg2);
+    Config config = ApplicationConfig.getConfig(arg1, arg2, arg3);
 
     // Assert
     assertNotNull(config);
@@ -34,9 +35,10 @@ public class ApplicationConfigTest {
     String arg1 = "app.job.name=JOB1";
     String arg2 = "app.job.name=JOB2";
     String arg3 = "tenant.name=test-tenant"; // Required to resolve substitution
+    String arg4 = "s3.bucket=test-bucket"; // Required to resolve substitution
 
     // Act
-    Config config = ApplicationConfig.getConfig(arg1, arg2, arg3);
+    Config config = ApplicationConfig.getConfig(arg1, arg2, arg3, arg4);
 
     // Assert
     assertNotNull(config);
@@ -50,7 +52,7 @@ public class ApplicationConfigTest {
     String testPropertyKey = "test.system.property";
     String testPropertyValue = "system-value";
     System.setProperty(testPropertyKey, testPropertyValue);
-    String configArg = "tenant.name=test-tenant";
+    String configArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
     ApplicationConfig appConfig = null;
 
     try {
@@ -81,7 +83,7 @@ public class ApplicationConfigTest {
   @Test
   public void testGetConfig_SystemEnvironmentIsLoaded() throws Exception {
     // Arrange
-    String configArg = "tenant.name=test-tenant";
+    String configArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
     ApplicationConfig appConfig = null;
 
     try {
@@ -116,8 +118,8 @@ public class ApplicationConfigTest {
 
   @Test
   public void testGetConfig_WithTenantName_ReturnsConfig() {
-    // Arrange - provide tenant.name to resolve substitution
-    String configArg = "tenant.name=test-tenant";
+    // Arrange - provide tenant.name and s3.bucket to resolve substitution
+    String configArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(configArg);
@@ -131,8 +133,10 @@ public class ApplicationConfigTest {
   public void testGetConfig_ConfigFactoryCacheInvalidation() {
     // Arrange
     String propertyKey = "test.property";
-    String configString1 = propertyKey + "=value1\n" + "tenant.name=test-tenant";
-    String configString2 = propertyKey + "=value2\n" + "tenant.name=test-tenant";
+    String configString1 =
+        propertyKey + "=value1\n" + "tenant.name=test-tenant\ns3.bucket=test-bucket";
+    String configString2 =
+        propertyKey + "=value2\n" + "tenant.name=test-tenant\ns3.bucket=test-bucket";
 
     // Act
     Config config1 = ApplicationConfig.getConfig(configString1);
@@ -155,7 +159,11 @@ public class ApplicationConfigTest {
     // application.conf has app.job.name = push-logs-to-s3
     // We'll override it with command-line arg
     String overriddenJobName = "custom-job-name";
-    String configArg = "app.job.name=" + overriddenJobName + "\n" + "tenant.name=test-tenant";
+    String configArg =
+        "app.job.name="
+            + overriddenJobName
+            + "\n"
+            + "tenant.name=test-tenant\ns3.bucket=test-bucket";
 
     // Act
     Config config = ApplicationConfig.getConfig(configArg);
@@ -183,7 +191,7 @@ public class ApplicationConfigTest {
     String customPropertyKey = "custom.test.property";
     String customPropertyValue = "custom-value";
     System.setProperty(customPropertyKey, customPropertyValue);
-    String configArg = "tenant.name=test-tenant";
+    String configArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
 
     try {
       // Act - Get config and access system properties

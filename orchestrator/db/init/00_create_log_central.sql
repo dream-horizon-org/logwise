@@ -13,11 +13,11 @@ FLUSH PRIVILEGES;
 DROP TABLE IF EXISTS service_details;
     
 CREATE TABLE `service_details` (
-  `env` varchar(128) NOT NULL,
+  `environmentName` varchar(128) NOT NULL,
+  `componentType` varchar(50) NOT NULL,
   `serviceName` varchar(50) NOT NULL,
-  `componentName` varchar(50) NOT NULL,
   `retentionDays` mediumint unsigned NOT NULL,
   `tenant` enum('ABC') NOT NULL,
   `lastCheckedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY (`env`, `serviceName`, `componentName`, `tenant`)
+  UNIQUE KEY (`environmentName`, `componentType`, `serviceName`, `tenant`)
 );

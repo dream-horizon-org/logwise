@@ -47,9 +47,9 @@ public class ServicesDao {
             .map(
                 s ->
                     Tuple.of(
-                        s.getEnv(),
+                        s.getEnvironmentName(),
+                        s.getComponentType(),
                         s.getServiceName(),
-                        s.getComponentName(),
                         s.getRetentionDays(),
                         s.getTenant()))
             .collect(Collectors.toList());
@@ -69,7 +69,7 @@ public class ServicesDao {
     log.info("Deleting service details: {}", serviceDetails);
     List<Tuple> tuples =
         serviceDetails.stream()
-            .map(s -> Tuple.of(s.getEnv(), s.getServiceName(), s.getComponentName(), s.getTenant()))
+            .map(s -> Tuple.of(s.getEnvironmentName(), s.getServiceName(), s.getTenant()))
             .collect(Collectors.toList());
     String query = Query.DELETE_SERVICE_DETAILS;
     return mysqlClient

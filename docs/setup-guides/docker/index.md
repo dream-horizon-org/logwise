@@ -137,11 +137,11 @@ docker compose logs kafka
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| **Grafana** | http://localhost:3000 | `admin` / `admin` (default) |
-| **Spark Master UI** | http://localhost:18080 | - |
-| **Spark Worker UI** | http://localhost:8081 | - |
-| **Orchestrator** | http://localhost:8080 | - |
-| **Orchestrator Health** | http://localhost:8080/actuator/health | - |
+| **Grafana** | `http://localhost:3000` | `admin` / `admin` (default) |
+| **Spark Master UI** | `http://localhost:18080` | - |
+| **Spark Worker UI** | `http://localhost:8081` | - |
+| **Orchestrator** | `http://localhost:8080` | - |
+| **Orchestrator Health** | `http://localhost:8080/actuator/health` | - |
 
 ## ⚙️ Configuration Details
 
@@ -451,18 +451,18 @@ log-wise-deploy/
 
 ## 📚 Additional Resources
 
-- [Architecture Documentation](../docs/architecture-overview.md)
-- [Component Guides](../docs/components/)
-- [Setup Guides](../docs/setup-guides/)
-- [Spark Application README](./d11-log-management-spark/README.md)
+- [Architecture Documentation](../../architecture-overview)
+- [Component Guides](../../components/vector)
+- [Setup Guides](../self-host/kafka-setup)
+- [Spark Application README](https://github.com/ds-horizon/logwise/blob/main/spark/README.md)
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](https://github.com/ds-horizon/logwise/blob/main/CONTRIBUTING.md) for guidelines.
 
 ## 📝 License
 
-This project is licensed under the GNU Lesser General Public License v3.0. See [LICENSE](../LICENSE) for details.
+This project is licensed under the MIT License. See [LICENSE](https://github.com/ds-horizon/logwise/blob/main/LICENSE) for details.
 
 ## 💬 Support
 

@@ -155,15 +155,15 @@ public class ServiceTest extends BaseTest {
 
     ServiceDetails service1 =
         ServiceDetails.builder()
-            .env("prod")
+            .environmentName("prod")
             .serviceName("service1")
-            .componentName("component1")
+            .componentType("application")
             .build();
     ServiceDetails service2 =
         ServiceDetails.builder()
-            .env("staging")
+            .environmentName("staging")
             .serviceName("service2")
-            .componentName("component2")
+            .componentType("application")
             .build();
 
     try (MockedStatic<ObjectStoreFactory> mockedFactory =
@@ -219,9 +219,8 @@ public class ServiceTest extends BaseTest {
 
       Assert.assertNotNull(services);
       Assert.assertEquals(services.size(), 2);
-      Assert.assertEquals(services.get(0).getEnv(), "prod");
+      Assert.assertEquals(services.get(0).getEnvironmentName(), "prod");
       Assert.assertEquals(services.get(0).getServiceName(), "service1");
-      Assert.assertEquals(services.get(0).getComponentName(), "component1");
       Assert.assertEquals(services.get(0).getRetentionDays(), Integer.valueOf(30));
       Assert.assertEquals(services.get(0).getTenant(), tenant.getValue());
     }
@@ -452,9 +451,9 @@ public class ServiceTest extends BaseTest {
     List<ServiceDetails> serviceDetailsList = new ArrayList<>();
     serviceDetailsList.add(
         ServiceDetails.builder()
-            .env("prod")
+            .environmentName("prod")
             .serviceName("test-service")
-            .componentName("test-component")
+            .componentType("application")
             .build());
 
     when(mockServicesDaoForManager.getAllServiceDetails(tenant))
@@ -480,9 +479,9 @@ public class ServiceTest extends BaseTest {
     List<ServiceDetails> objectStoreServices = new ArrayList<>();
     ServiceDetails newService =
         ServiceDetails.builder()
-            .env("prod")
+            .environmentName("prod")
             .serviceName("new-service")
-            .componentName("new-component")
+            .componentType("application")
             .build();
     objectStoreServices.add(newService);
 
@@ -507,9 +506,9 @@ public class ServiceTest extends BaseTest {
 
     ServiceDetails service =
         ServiceDetails.builder()
-            .env("prod")
+            .environmentName("prod")
             .serviceName("test-service")
-            .componentName("test-component")
+            .componentType("application")
             .build();
 
     List<ServiceDetails> services = Collections.singletonList(service);

@@ -27,15 +27,15 @@ public class ObjectStoreService {
     TenantConfig tenantConfig = ApplicationConfigUtil.getTenantConfig(tenant);
 
     return objectStoreClient
-        .listCommonPrefix(tenantConfig.getSpark().getLogsDir() + "/env=", "/")
+        .listCommonPrefix(tenantConfig.getSpark().getLogsDir() + "/environment_name=", "/")
         .flatMapObservable(Observable::fromIterable)
         .flatMap(
             prefix ->
-                objectStoreClient.listCommonPrefix(prefix + "service_name=", "/").toObservable())
+                objectStoreClient.listCommonPrefix(prefix + "component_type=", "/").toObservable())
         .flatMap(Observable::fromIterable)
         .flatMap(
             prefix ->
-                objectStoreClient.listCommonPrefix(prefix + "component_name=", "/").toObservable())
+                objectStoreClient.listCommonPrefix(prefix + "service_name=", "/").toObservable())
         .flatMap(Observable::fromIterable)
         .toList()
         .map(
@@ -54,7 +54,8 @@ public class ObjectStoreService {
   private static Integer getEnvRetentionDays(TenantConfig config, ServiceDetails serviceDetails) {
     return config.getEnvLogsRetentionDays().stream()
         .filter(
-            retentionDaysConfig -> retentionDaysConfig.getEnvs().contains(serviceDetails.getEnv()))
+            retentionDaysConfig ->
+                retentionDaysConfig.getEnvs().contains(serviceDetails.getEnvironmentName()))
         .findFirst()
         .map(EnvLogsRetentionDaysConfig::getRetentionDays)
         .orElse(config.getDefaultLogsRetentionDays());

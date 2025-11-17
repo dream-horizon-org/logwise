@@ -12,7 +12,9 @@ transforms:
   my_transform_id:
     type: remap
     inputs: ["otlp_logs.logs"]
+    drop_on_abort: true
     source: |
+<<<<<<< HEAD
       if !is_string(.resources."service.name") { abort }
       if !is_string(.resources.environment)    { abort }
       if !is_string(.resources.type)    { abort }
@@ -34,6 +36,27 @@ transforms:
       .log_level  = to_string(.attributes.level) ?? "unknown"
       .timestamp  = to_string(.attributes.time) ?? "unknown"
     timezone: local
+=======
+      # Set required fields with defaults
+      # .component_type = "application"
+      # .environment_name = "prod"
+      # .service_name = "healthcheck"
+      .message = string!(.message)
+      
+      
+      # Extract from OTLP resources if available
+      if exists(.resources."service_name") {
+        .service_name = string!(.resources."service_name")
+      }
+      if exists(.resources.environment_name) {
+        .environment_name = string!(.resources.environment_name)
+      }
+      if exists(.resources.component_type) {
+        .component_type = string!(.resources.component_type)
+      }
+      
+      .timestamp = .observed_timestamp
+>>>>>>> main
 
 sinks:
   my_sink_id:
@@ -41,7 +64,11 @@ sinks:
     inputs:
       - my_transform_id
     bootstrap_servers: "${KAFKA_BROKERS}"
+<<<<<<< HEAD
     topic: "logs.{{.type}}_{{.environment_name}}_{{.service_name}}"
+=======
+    topic: "logs.{{.environment_name}}_{{.component_type}}_{{.service_name}}"
+>>>>>>> main
     compression: zstd
     encoding:
       codec: protobuf

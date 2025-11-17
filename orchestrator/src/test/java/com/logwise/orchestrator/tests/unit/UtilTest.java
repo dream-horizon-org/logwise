@@ -508,9 +508,8 @@ public class UtilTest extends BaseTest {
     ServiceDetails result = ApplicationUtils.getServiceFromObjectKey(logPath);
 
     Assert.assertNotNull(result);
-    Assert.assertEquals(result.getEnv(), "prod");
+    Assert.assertEquals(result.getEnvironmentName(), "prod");
     Assert.assertEquals(result.getServiceName(), "test-service");
-    Assert.assertEquals(result.getComponentName(), "test-component");
   }
 
   @Test
@@ -547,9 +546,8 @@ public class UtilTest extends BaseTest {
     ServiceDetails result = ApplicationUtils.getServiceFromObjectKey(logPath);
 
     Assert.assertNotNull(result);
-    Assert.assertEquals(result.getEnv(), "staging");
+    Assert.assertEquals(result.getEnvironmentName(), "staging");
     Assert.assertEquals(result.getServiceName(), "api");
-    Assert.assertEquals(result.getComponentName(), "web");
   }
 
   @Test

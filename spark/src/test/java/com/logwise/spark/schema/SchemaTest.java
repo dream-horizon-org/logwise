@@ -33,9 +33,9 @@ public class SchemaTest {
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_MESSAGE));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_DDTAGS));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_TIMESTAMP));
-    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_ENV));
+    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME));
-    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_COMPONENT_NAME));
+    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_HOSTNAME));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_DDSOURCE));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_SOURCE_TYPE));
@@ -117,12 +117,14 @@ public class SchemaTest {
   public void testGetVectorApplicationLogsSchema_EnvironmentFieldExists() {
     // Act
     StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField envField = schema.apply(Constants.APPLICATION_LOG_COLUMN_ENV);
+    StructField envField = schema.apply(Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME);
 
     // Assert
     assertNotNull(envField, "Environment field should exist");
     assertEquals(
-        envField.name(), Constants.APPLICATION_LOG_COLUMN_ENV, "Field name should match constant");
+        envField.name(),
+        Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME,
+        "Field name should match constant");
   }
 
   @Test
@@ -143,13 +145,13 @@ public class SchemaTest {
   public void testGetVectorApplicationLogsSchema_ComponentNameFieldExists() {
     // Act
     StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField componentNameField = schema.apply(Constants.APPLICATION_LOG_COLUMN_COMPONENT_NAME);
+    StructField componentNameField = schema.apply(Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE);
 
     // Assert
     assertNotNull(componentNameField, "Component name field should exist");
     assertEquals(
         componentNameField.name(),
-        Constants.APPLICATION_LOG_COLUMN_COMPONENT_NAME,
+        Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE,
         "Field name should match constant");
   }
 

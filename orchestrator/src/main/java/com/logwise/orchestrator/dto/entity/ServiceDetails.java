@@ -8,9 +8,9 @@ import lombok.experimental.NonFinal;
 @AllArgsConstructor
 @Builder
 public class ServiceDetails {
-  @NonFinal @NonNull String env;
+  @NonFinal @NonNull String environmentName;
   @NonFinal @NonNull String serviceName;
-  @NonFinal @NonNull String componentName;
+  @NonFinal String componentType;
   @NonFinal Integer retentionDays;
   @NonFinal String tenant;
 
@@ -19,8 +19,6 @@ public class ServiceDetails {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ServiceDetails that = (ServiceDetails) o;
-    return env.equals(that.env)
-        && serviceName.equals(that.serviceName)
-        && componentName.equals(that.componentName);
+    return environmentName.equals(that.environmentName) && serviceName.equals(that.serviceName);
   }
 }

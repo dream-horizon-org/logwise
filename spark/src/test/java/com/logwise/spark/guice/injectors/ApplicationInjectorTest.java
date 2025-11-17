@@ -6,6 +6,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import java.lang.reflect.Field;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -20,13 +21,24 @@ public class ApplicationInjectorTest {
   @BeforeMethod
   public void setUp() {
     // Reset before each test
-    ApplicationInjector.reset();
+    resetApplicationInjector();
   }
 
   @AfterMethod
   public void tearDown() {
     // Clean up after each test
-    ApplicationInjector.reset();
+    resetApplicationInjector();
+  }
+
+  /** Resets ApplicationInjector singleton using reflection. */
+  private static void resetApplicationInjector() {
+    try {
+      Field field = ApplicationInjector.class.getDeclaredField("applicationInjector");
+      field.setAccessible(true);
+      field.set(null, null);
+    } catch (Exception e) {
+      // Ignore reflection errors - reset is best effort
+    }
   }
 
   @Test
@@ -89,7 +101,7 @@ public class ApplicationInjectorTest {
     // Arrange
     Module testModule1 = createTestModule();
     ApplicationInjector.initInjection(testModule1);
-    ApplicationInjector.reset();
+    resetApplicationInjector();
 
     // Act - Should be able to initialize again after reset
     Module testModule2 = createTestModule();
@@ -106,9 +118,9 @@ public class ApplicationInjectorTest {
     ApplicationInjector.initInjection(testModule);
 
     // Act - Multiple reset calls should not throw
-    ApplicationInjector.reset();
-    ApplicationInjector.reset();
-    ApplicationInjector.reset();
+    resetApplicationInjector();
+    resetApplicationInjector();
+    resetApplicationInjector();
 
     // Assert - Should not throw exception
     assertTrue(true, "Multiple reset calls should not throw exception");

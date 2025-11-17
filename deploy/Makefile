@@ -25,11 +25,6 @@ logs:
 
 ps:
 	$(COMPOSE) ps
-
-# Create Kafka topic if not exists
-topics:
-	$(COMPOSE) exec -T kafka bash -lc "kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic $$KAFKA_TOPIC --partitions 3 --replication-factor 1"
-
 # List all Kafka topics
 list-topics:
 	$(COMPOSE) exec kafka bash -lc "kafka-topics --bootstrap-server kafka:9092 --list"
@@ -51,5 +46,5 @@ spark-rest-submit:
 
 
 teardown:
-	$(COMPOSE) down -v
+	$(COMPOSE) down --volumes --remove-orphans
 
