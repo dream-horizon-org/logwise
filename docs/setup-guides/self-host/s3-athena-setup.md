@@ -52,38 +52,41 @@ The workgroup's output location stores query results. Make sure you have appropr
 3. Run the following DDL to create the table:
 
 ```sql
-CREATE EXTERNAL TABLE `logs`.`application-logs`(
-  `ddtags` string, 
+CREATE EXTERNAL TABLE `application-logs`(
   `hostname` string, 
   `message` string, 
   `source_type` string, 
-  `status` string, 
   `timestamp` string)
 PARTITIONED BY ( 
-  `env` string, 
+  `environment_name` string, 
+  `component_type` string, 
   `service_name` string, 
-  `component_name` string, 
   `time` string)
-STORED AS PARQUET
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
 LOCATION
   's3://your-bucket-name/logs'
 TBLPROPERTIES (
   'compressionType'='gzip', 
   'parquet.ignore.statistics'='true', 
+  'projection.component_type.type'='injected', 
   'projection.enabled'='true', 
-  'projection.env.type'='injected', 
+  'projection.environment_name.type'='injected', 
   'projection.service_name.type'='injected', 
-  'projection.component_name.type'='injected', 
   'projection.time.format'='\'year=\'yyyy\'/month=\'MM\'/day=\'dd\'/hour=\'HH\'/minute=\'mm', 
   'projection.time.interval'='1', 
   'projection.time.interval.unit'='MINUTES', 
   'projection.time.range'='NOW-1YEARS,NOW', 
   'projection.time.type'='date', 
-  'storage.location.template'='s3://your-bucket-name/logs/env=${env}/service_name=${service_name}/component_name=${component_name}/${time}')
+  'storage.location.template'='s3://your-bucket-name/logs/environment_name=${environment_name}/component_type=${component_type}/service_name=${service_name}/${time}')
 ```
 
 ::: warning Important
-The table schema includes partition keys (`env`, `service_name`, `component_name`, `time`) which are essential for efficient querying in Athena. Ensure your log data is organized in S3 with these partitions in the path structure.
+The table schema includes partition keys (`environment_name`, `component_type`, `service_name`, `time`) which are essential for efficient querying in Athena. Ensure your log data is organized in S3 with these partitions in the path structure.
 
 **Before running the query**, replace `s3://your-bucket-name/logs` with your actual S3 URI from step 2 in both the `LOCATION` clause and the `storage.location.template` property.
 :::

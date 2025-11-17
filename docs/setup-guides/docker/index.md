@@ -59,13 +59,6 @@ cd deploy
 ./setup.sh
 ```
 
-Or using Make:
-
-```bash
-cd deploy
-make setup
-```
-
 This single command will:
 - ✅ Install prerequisites (Docker, Make, AWS CLI, etc.) if needed
 - ✅ Create `.env` file from template (`.env.example`)
@@ -76,62 +69,6 @@ This single command will:
 
 **That's it!** Your LogWise stack will be up and running.
 
-### Manual Setup (Advanced)
-
-If you prefer to set up manually or need to customize the configuration:
-
-#### 1. Install Prerequisites
-
-```bash
-# Run the bootstrap script to install prerequisites
-./start.sh
-
-# Or use Make
-make bootstrap
-```
-
-#### 2. Configure Environment
-
-Copy the example environment file and fill in your AWS credentials:
-
-```bash
-cp .env.example .env
-# Edit .env with your AWS credentials, S3 bucket, Athena settings, etc.
-```
-
-See [Configuration Details](#-configuration-details) below for all available options.
-
-#### 3. Start Services
-
-```bash
-make up
-```
-
-This will:
-- Build custom Spark 3.1.2 Docker image
-- Start all services (Vector, Kafka, Spark, Grafana, Orchestrator, MySQL)
-- Wait for health checks to pass
-
-#### 4. Create Kafka Topic
-
-```bash
-make topics
-```
-
-### 5. Verify Services
-
-```bash
-# Check service status
-make ps
-
-# View logs
-make logs
-
-# Check specific service logs
-docker compose logs spark-master
-docker compose logs spark-worker
-docker compose logs kafka
-```
 
 ## 📊 Accessing Services
 
@@ -141,7 +78,7 @@ docker compose logs kafka
 | **Spark Master UI** | `http://localhost:18080` | - |
 | **Spark Worker UI** | `http://localhost:8081` | - |
 | **Orchestrator** | `http://localhost:8080` | - |
-| **Orchestrator Health** | `http://localhost:8080/actuator/health` | - |
+| **Orchestrator Health** | `http://localhost:8080/healthcheck` | - |
 
 ## ⚙️ Configuration Details
 
@@ -210,77 +147,6 @@ TENANT_VALUE=D11-Prod-AWS                  # Tenant identifier
 
 For a complete list of all environment variables, see `.env.example` in the deploy directory.
 
-## 🔧 Running Spark Jobs
-
-### Option 1: Auto-Submit (Default)
-
-The `spark-client` container automatically submits the Spark job on startup via REST API. Check logs:
-
-```bash
-docker compose logs spark-client
-```
-
-### Option 2: Manual Submit via REST API
-
-```bash
-make spark-rest-submit
-```
-
-### Option 3: Direct Spark Submit
-
-```bash
-make spark-submit
-```
-
-### Building and Running Custom JAR
-
-```bash
-# Build the Spark application JAR
-make spark-build
-
-# Submit custom JAR
-make spark-run-jar MAIN_CLASS=com.dream11.MainApplication APP_JAR=your-app.jar
-```
-
-## 🧪 Testing the Pipeline
-
-### 1. Test Vector → Kafka
-
-Create a sample log file:
-
-```bash
-echo '{"level":"INFO","message":"test log","app":"demo","ts":"2025-01-01T00:00:00Z"}' >> vector/demo/test.log
-```
-
-Verify Kafka received the message:
-
-```bash
-docker compose exec kafka kafka-console-consumer.sh \
-  --bootstrap-server kafka:9092 \
-  --topic logs \
-  --from-beginning \
-  --timeout-ms 2000
-```
-
-### 2. Test Spark → S3
-
-After submitting a Spark job, verify Parquet files in S3:
-
-```bash
-aws s3 ls s3://${S3_BUCKET}/${S3_PREFIX}/
-```
-
-### 3. Test Athena → Grafana
-
-1. Ensure Athena table exists pointing to S3 path
-2. Open Grafana → Explore → Select Athena datasource
-3. Run query: `SELECT * FROM your_table LIMIT 10`
-
-### 4. Test Orchestrator
-
-```bash
-curl http://localhost:8080/actuator/health
-```
 
 ## 🛠️ Common Commands
 
@@ -296,18 +162,6 @@ make logs
 
 # Check service status
 make ps
-
-# Create Kafka topic
-make topics
-
-# Submit Spark job
-make spark-submit
-
-# Submit Spark job via REST API
-make spark-rest-submit
-
-# Build Spark JAR
-make spark-build
 
 # Stop and remove volumes
 make teardown
@@ -422,24 +276,22 @@ docker image prune -a
 ## 📁 Project Structure
 
 ```
-log-wise-deploy/
-├── docker-compose.yml          # Main orchestration file
-├── Makefile                    # Convenience commands
-├── .env                        # Environment variables (create this)
-├── spark/
-│   ├── Dockerfile              # Custom Spark 3.1.2 image
-│   ├── rest-submit.sh          # REST API submission script
-│   └── submit.sh               # Direct submission script
+logwise/
+├── deploy/
+│   ├── docker-compose.yml       # Main orchestration file
+│   ├── Makefile                 # Convenience commands
+│   ├── setup.sh                 # One-click setup script
+│   ├── grafana/provisioning/    # Grafana dashboards & datasources
+│   └── healthcheck-dummy/
+│       └── Dockerfile           # Healthcheck test service
 ├── vector/
-│   ├── vector.yaml             # Vector configuration
-│   └── logcentral_logs.desc    # Protobuf schema
-├── d11-log-management-spark/   # Spark application source
-│   └── src/main/java/          # Java source code
-├── log-central-orchestrator/   # Spring Boot orchestrator
-├── grafana/
-│   └── provisioning/           # Grafana datasource config
-└── db/
-    └── init/                   # Database initialization scripts
+│   ├── vector.yaml              # Vector configuration
+│   └── logwise-vector.desc      # Protobuf descriptor
+├── spark/
+│   └── docker/Dockerfile        # Spark container image
+└── orchestrator/
+    ├── docker/Dockerfile        # Orchestrator container image
+    └── db/init/                 # Database initialization scripts
 ```
 
 ## 🔐 Security Notes
@@ -449,28 +301,5 @@ log-wise-deploy/
 - Enable **TLS/SSL** for production deployments
 - Restrict **network access** to services in production
 
-## 📚 Additional Resources
-
-- [Architecture Documentation](../../architecture-overview)
-- [Component Guides](../../components/vector)
-- [Setup Guides](../self-host/kafka-setup)
-- [Spark Application README](https://github.com/ds-horizon/logwise/blob/main/spark/README.md)
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](https://github.com/ds-horizon/logwise/blob/main/CONTRIBUTING.md) for guidelines.
-
-## 📝 License
-
-This project is licensed under the MIT License. See [LICENSE](https://github.com/ds-horizon/logwise/blob/main/LICENSE) for details.
-
-## 💬 Support
-
-For issues or questions:
-- Open an issue on GitHub
-- Check existing issues for solutions
-- Review logs: `make logs` or `docker compose logs <service>`
-
----
 
 **Happy Logging! 🚀**
