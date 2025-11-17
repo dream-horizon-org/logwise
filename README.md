@@ -1,23 +1,65 @@
-# logwise
+# LogWise
 
-Open-source end-to-end logging system for high-volume log processing. Includes architecture, setup scripts, dashboards, and guides for production environments.
+Open-source end-to-end logging system for high-volume log processing. Streams logs from Vector → Kafka → Spark → S3/Athena, with Grafana dashboards and automated orchestration.
 
-## Features
+## 🚀 Quick Start
 
-- 🚀 High-throughput log processing
-- 📊 Real-time dashboards and monitoring
-- 🔧 Production-ready architecture
-- 📈 Best practices and guides
-- 🐳 Docker and Kubernetes support
+### Docker Setup (Recommended)
 
-## Contributing
+1. **Complete S3 & Athena Setup** (required first step):
+   - Follow the [S3 & Athena Setup Guide](https://symmetrical-adventure-qmz2eje.pages.github.io/setup-guides/self-host/s3-athena-setup)
+
+2. **Run the setup script**:
+   ```bash
+   cd deploy
+   ./setup.sh
+   ```
+
+3. **Access services**:
+   - Grafana: `http://localhost:3000` (admin/admin)
+   - Spark Master UI: `http://localhost:18080`
+   - Orchestrator: `http://localhost:8080`
+
+For detailed instructions, see the [Docker Setup Guide](https://symmetrical-adventure-qmz2eje.pages.github.io/setup-guides/docker/).
+
+## 📚 Documentation
+
+Full documentation is available at: **[https://symmetrical-adventure-qmz2eje.pages.github.io/](https://symmetrical-adventure-qmz2eje.pages.github.io/)**
+
+### Quick Links
+- **[Docker Setup](https://symmetrical-adventure-qmz2eje.pages.github.io/setup-guides/docker/)** - One-click Docker deployment
+- **[Architecture Overview](https://symmetrical-adventure-qmz2eje.pages.github.io/architecture-overview)** - System design and flow
+- **[Component Guides](https://symmetrical-adventure-qmz2eje.pages.github.io/components/vector)** - Detailed component documentation
+- **[Self-Host Setup](https://symmetrical-adventure-qmz2eje.pages.github.io/setup-guides/self-host/)** - Manual component setup
+
+## 📁 Project Structure
+
+```
+logwise/
+├── deploy/              # Docker deployment configuration
+├── vector/              # Vector log collection config
+├── spark/               # Spark streaming application
+├── orchestrator/        # Spring Boot orchestrator service
+└── docs/                # Documentation
+```
+
+## ✨ Features
+
+- **High-throughput** log processing with Kafka streaming
+- **Real-time dashboards** with Grafana integration
+- **Scalable architecture** with Spark stream processing
+- **Cost-efficient storage** using S3 and Athena
+- **Production-ready** with automated orchestration
+- **Docker support** for easy deployment
+
+## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## License
+## 📄 License
 
 This project is licensed under the GNU Lesser General Public License v3.0. See the [LICENSE](LICENSE) file for details.
 
-## Contact
+## 📧 Contact
 
-For questions or support, please open an issue or email the maintainers at: support@logwise.dev
+For questions or support, please open an issue or contact the maintainers.

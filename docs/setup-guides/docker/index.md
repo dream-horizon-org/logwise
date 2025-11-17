@@ -48,6 +48,31 @@ A complete end-to-end logging system that streams logs from Vector → Kafka →
 - **Maven 3.2+** (if building Spark JAR locally)
 - **Java 11+** (if building Spark JAR locally)
 
+## ⚠️ Mandatory: S3 & Athena Setup (Must Complete First)
+
+**Before proceeding with the Docker setup, you MUST complete the S3 & Athena configuration.** This is a required prerequisite as the LogWise stack depends on AWS S3 for log storage and Athena for querying.
+
+### Steps to Complete:
+
+1. **Follow the [S3 & Athena Setup Guide](../self-host/s3-athena-setup.md)** to:
+   - Create an S3 bucket with `logs` and `athena-output` folders
+   - Create an AWS Glue database
+   - Create an Athena workgroup
+   - Create the `application-logs` table
+
+2. **Note down the following information** (you'll need it for the `.env` file):
+   - S3 bucket name
+   - S3 URI for logs (e.g., `s3://your-bucket-name/logs/`)
+   - S3 URI for Athena output (e.g., `s3://your-bucket-name/athena-output/`)
+   - Athena workgroup name
+   - Athena database name (typically `logs`)
+
+3. **Return to this page** after completing the S3 & Athena setup to continue with the Docker deployment.
+
+::: warning Critical
+**Do not proceed with the Docker setup until you have completed the S3 & Athena configuration.** The setup will fail without proper AWS resources configured.
+:::
+
 ## 🚀 Quick Start
 
 ### One-Command Setup
