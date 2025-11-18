@@ -1,7 +1,5 @@
 FROM aptible/supercronic:latest
 
-COPY Crontab /crontab
+COPY crontab /app/cron/crontab
 
-CMD ["/crontab"]
-
-
+CMD ["/app/cron/crontab"]

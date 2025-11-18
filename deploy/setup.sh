@@ -288,6 +288,19 @@ main() {
   
   print_separator
   
+  # Step 3.75: Ensure required scripts are executable
+  print_step "Step 3.75: Preparing Scripts"
+  print_substep "Ensuring required scripts are executable..."
+  
+  if [ -f "./cron/entrypoint.sh" ]; then
+    chmod +x ./cron/entrypoint.sh || true
+    print_success "entrypoint.sh is executable"
+  else
+    print_warn "entrypoint.sh not found (this is OK if not using scheduler service)"
+  fi
+  
+  print_separator
+  
   # Step 4: Start all services
   print_step "Step 4: Starting Services"
   print_substep "Building Docker images and starting containers..."
