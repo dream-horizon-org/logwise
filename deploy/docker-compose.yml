@@ -395,14 +395,11 @@ services:
     environment:
       TZ: Asia/Kolkata
     volumes:
-      - ./cron/crontab:/crontab:ro
+      - ./cron:/app/cron:ro
+      - ./cron/entrypoint.sh:/entrypoint.sh:ro
     networks:
       - lc_net
-    entrypoint: [ "/bin/sh","-lc" ]
-    command: >
-      'apk add --no-cache curl tzdata &&
-       crontab /crontab &&
-       crond -f -l 8'
+    entrypoint: ["/entrypoint.sh"]
     restart: unless-stopped
     mem_limit: 128m
     cpus: "0.25"
@@ -411,4 +408,3 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-  
