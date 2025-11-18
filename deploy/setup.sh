@@ -249,6 +249,9 @@ main() {
   
   GRAFANA_PORT=${GRAFANA_PORT:-3000}
   ORCH_PORT=${ORCH_PORT:-8080}
+  VECTOR_API_PORT=${VECTOR_API_PORT:-8686}
+  VECTOR_OTLP_GRPC_PORT=${VECTOR_OTLP_GRPC_PORT:-4317}
+  VECTOR_OTLP_HTTP_PORT=${VECTOR_OTLP_HTTP_PORT:-4318}
   
   PORT_CONFLICTS=()
   
@@ -268,6 +271,30 @@ main() {
     print_success "Port $ORCH_PORT is available (Orchestrator)"
   fi
   
+  if ! check_port_available "$VECTOR_OTLP_HTTP_PORT" "Vector OTLP HTTP"; then
+    PORT_CONFLICTS+=("Vector OTLP HTTP:${VECTOR_OTLP_HTTP_PORT}")
+    print_error "Port $VECTOR_OTLP_HTTP_PORT is already in use (required for Vector OTLP HTTP)"
+    print_info "You can set VECTOR_OTLP_HTTP_PORT in .env to use a different port"
+  else
+    print_success "Port $VECTOR_OTLP_HTTP_PORT is available (Vector OTLP HTTP)"
+  fi
+  
+  if ! check_port_available "$VECTOR_OTLP_GRPC_PORT" "Vector OTLP gRPC"; then
+    PORT_CONFLICTS+=("Vector OTLP gRPC:${VECTOR_OTLP_GRPC_PORT}")
+    print_error "Port $VECTOR_OTLP_GRPC_PORT is already in use (required for Vector OTLP gRPC)"
+    print_info "You can set VECTOR_OTLP_GRPC_PORT in .env to use a different port"
+  else
+    print_success "Port $VECTOR_OTLP_GRPC_PORT is available (Vector OTLP gRPC)"
+  fi
+  
+  if ! check_port_available "$VECTOR_API_PORT" "Vector API"; then
+    PORT_CONFLICTS+=("Vector API:${VECTOR_API_PORT}")
+    print_error "Port $VECTOR_API_PORT is already in use (required for Vector API)"
+    print_info "You can set VECTOR_API_PORT in .env to use a different port"
+  else
+    print_success "Port $VECTOR_API_PORT is available (Vector API)"
+  fi
+  
   if [ ${#PORT_CONFLICTS[@]} -gt 0 ]; then
     echo ""
     print_error "Port conflicts detected. Please resolve them before continuing."
@@ -278,10 +305,15 @@ main() {
     printf "  ${dim}2.${reset} Set different ports in .env:\n"
     printf "     ${dim}GRAFANA_PORT=3001${reset}\n"
     printf "     ${dim}ORCH_PORT=8081${reset}\n"
+    printf "     ${dim}VECTOR_OTLP_HTTP_PORT=4319${reset}\n"
+    printf "     ${dim}VECTOR_OTLP_GRPC_PORT=4319${reset}\n"
+    printf "     ${dim}VECTOR_API_PORT=8687${reset}\n"
     echo ""
     print_info "To find what's using a port:"
     printf "  ${dim}lsof -i :$GRAFANA_PORT${reset}  (for Grafana)\n"
     printf "  ${dim}lsof -i :$ORCH_PORT${reset}  (for Orchestrator)\n"
+    printf "  ${dim}lsof -i :$VECTOR_OTLP_HTTP_PORT${reset}  (for Vector OTLP HTTP)\n"
+    printf "  ${dim}lsof -i :$VECTOR_OTLP_GRPC_PORT${reset}  (for Vector OTLP gRPC)\n"
     echo ""
     exit 1
   fi
@@ -556,10 +588,14 @@ main() {
   printf "     ${dim}http://localhost:${ORCH_PORT:-8080}${reset}\n"
   printf "     ${dim}Health: http://localhost:${ORCH_PORT:-8080}/healthcheck${reset}\n"
   echo ""
-  printf "  ${green}📡${reset} ${bold}Vector API${reset}\n"
-  printf "     ${dim}API: http://localhost:8686${reset}\n"
-  printf "     ${dim}OTLP gRPC: localhost:4317${reset}\n"
-  printf "     ${dim}OTLP HTTP: http://localhost:4318${reset}\n"
+  VECTOR_API_PORT=${VECTOR_API_PORT:-8686}
+  VECTOR_OTLP_GRPC_PORT=${VECTOR_OTLP_GRPC_PORT:-4317}
+  VECTOR_OTLP_HTTP_PORT=${VECTOR_OTLP_HTTP_PORT:-4318}
+  printf "  ${green}📡${reset} ${bold}Vector Log Ingestion${reset}\n"
+  printf "     ${dim}API: http://localhost:${VECTOR_API_PORT}${reset}\n"
+  printf "     ${dim}OTLP gRPC: localhost:${VECTOR_OTLP_GRPC_PORT}${reset}\n"
+  printf "     ${dim}OTLP HTTP: http://localhost:${VECTOR_OTLP_HTTP_PORT}${reset}\n"
+  printf "     ${dim}Use OTLP HTTP endpoint for sending logs from external services${reset}\n"
   echo ""
   
   printf "${bold}${cyan}Useful Commands:${reset}\n"
