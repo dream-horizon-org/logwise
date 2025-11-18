@@ -52,9 +52,9 @@ public class ApplicationTestConfig {
         new ApplicationConfig.DelayMetricsConfig();
     ApplicationConfig.ApplicationDelayMetricsConfig appDelayMetricsConfig =
         new ApplicationConfig.ApplicationDelayMetricsConfig();
-    appDelayMetricsConfig.setSampleEnv("prod");
+    appDelayMetricsConfig.setSampleEnv("local");
+    appDelayMetricsConfig.setSampleComponentType("application");
     appDelayMetricsConfig.setSampleServiceName("test-service");
-    appDelayMetricsConfig.setSampleComponentName("test-component");
     delayMetricsConfig.setApp(appDelayMetricsConfig);
     tenantConfig.setDelayMetrics(delayMetricsConfig);
 
