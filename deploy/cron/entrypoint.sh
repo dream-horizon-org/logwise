@@ -39,4 +39,3 @@ fi
 
 # Start crond
 exec crond -f -l 8
-
