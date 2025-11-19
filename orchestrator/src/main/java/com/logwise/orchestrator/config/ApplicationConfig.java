@@ -96,7 +96,7 @@ public class ApplicationConfig {
   public static class ApplicationDelayMetricsConfig {
     @NonFinal @NotNull String sampleEnv;
     @NonFinal @NotNull String sampleServiceName;
-    @NonFinal @NotNull String sampleComponentName;
+    @NonFinal @NotNull String sampleComponentType;
   }
 
   @Data
