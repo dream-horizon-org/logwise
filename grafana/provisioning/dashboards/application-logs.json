@@ -169,6 +169,27 @@
     "list": [
       {
         "current": {
+          "selected": true,
+          "text": "logwise",
+          "value": "logwise"
+        },
+        "description": "Athena database name",
+        "hide": 2,
+        "label": "ATHENA_DATABASE",
+        "name": "ATHENA_DATABASE",
+        "options": [
+          {
+            "selected": true,
+            "text": "logwise",
+            "value": "logwise"
+          }
+        ],
+        "query": "logwise",
+        "skipUrlSync": false,
+        "type": "constant"
+      },
+      {
+        "current": {
           "selected": false,
           "text": "prod",
           "value": "prod"
