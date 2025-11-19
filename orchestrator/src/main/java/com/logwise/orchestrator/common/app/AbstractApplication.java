@@ -39,8 +39,7 @@ public abstract class AbstractApplication {
   // processes
   public static final Integer NUM_OF_CORES = CpuCoreSensor.availableProcessors();
 
-  @Getter
-  protected Vertx vertx;
+  @Getter protected Vertx vertx;
   private Watch<KeyValue> restartWatch;
   private final Thread shutdownThread = new Thread(this::gracefulShutdown);
 
@@ -117,9 +116,10 @@ public abstract class AbstractApplication {
     return Completable.complete()
         .doOnComplete(() -> MaintenanceUtils.setMaintenance(vertx))
         .doOnComplete(
-            () -> log.info(
-                "Waiting for {} seconds so ELB stops sending new traffic",
-                healthCheckWaitPeriod))
+            () ->
+                log.info(
+                    "Waiting for {} seconds so ELB stops sending new traffic",
+                    healthCheckWaitPeriod))
         .delay(healthCheckWaitPeriod, TimeUnit.SECONDS)
         .andThen(vertx.rxClose())
         .doOnComplete(this::closeWatch) // stop current watch
@@ -132,9 +132,10 @@ public abstract class AbstractApplication {
     int restartDelay = new Random().nextInt(maxDelaySeconds);
     return Completable.complete()
         .doOnComplete(
-            () -> log.info(
-                "Waiting for {} seconds (generated randomly) so not all nodes restart at same time",
-                restartDelay))
+            () ->
+                log.info(
+                    "Waiting for {} seconds (generated randomly) so not all nodes restart at same time",
+                    restartDelay))
         .delay(restartDelay, TimeUnit.SECONDS)
         .andThen(rxStopApplication(healthCheckWaitPeriod))
         .doOnComplete(() -> Runtime.getRuntime().removeShutdownHook(shutdownThread))
@@ -150,8 +151,7 @@ public abstract class AbstractApplication {
   }
 
   /**
-   * Return Array of Google Guice Module's. Ref:
-   * https://github.com/google/guice/wiki/GettingStarted
+   * Return Array of Google Guice Module's. Ref: https://github.com/google/guice/wiki/GettingStarted
    *
    * @param vertx io.vertx.reactivex.core.Vertx
    * @return com.google.inject.Module[]
@@ -221,31 +221,34 @@ public abstract class AbstractApplication {
 
   public void registerRestartApplicationWatch(Long timeoutSeconds) {
     final int DEFAULT_MAX_RESTART_DELAY = 2 * 60; // seconds
-    this.restartWatch = WatchUtils.setConsulKeyWatch(
-        this.vertx.getDelegate(),
-        getConsulKey(),
-        timeoutSeconds,
-        watchResult -> {
-          if (watchResult.succeeded()) {
-            if (watchResult.prevResult() != null) { // this is null when application is started
-              if (watchResult.nextResult().isPresent()) {
-                log.info("Signal to restart application detected from consul");
-                JsonObject config = new JsonObject(watchResult.nextResult().getValue());
-                Integer maxDelaySeconds = config.containsKey("maxDelaySeconds")
-                    ? config.getInteger("maxDelaySeconds")
-                    : DEFAULT_MAX_RESTART_DELAY;
-                Integer healthCheckWaitPeriod = config.containsKey("healthCheckWaitPeriod")
-                    ? config.getInteger("healthCheckWaitPeriod")
-                    : getHealthCheckWaitPeriod();
-                rxRestartApplication(healthCheckWaitPeriod, maxDelaySeconds).subscribe();
+    this.restartWatch =
+        WatchUtils.setConsulKeyWatch(
+            this.vertx.getDelegate(),
+            getConsulKey(),
+            timeoutSeconds,
+            watchResult -> {
+              if (watchResult.succeeded()) {
+                if (watchResult.prevResult() != null) { // this is null when application is started
+                  if (watchResult.nextResult().isPresent()) {
+                    log.info("Signal to restart application detected from consul");
+                    JsonObject config = new JsonObject(watchResult.nextResult().getValue());
+                    Integer maxDelaySeconds =
+                        config.containsKey("maxDelaySeconds")
+                            ? config.getInteger("maxDelaySeconds")
+                            : DEFAULT_MAX_RESTART_DELAY;
+                    Integer healthCheckWaitPeriod =
+                        config.containsKey("healthCheckWaitPeriod")
+                            ? config.getInteger("healthCheckWaitPeriod")
+                            : getHealthCheckWaitPeriod();
+                    rxRestartApplication(healthCheckWaitPeriod, maxDelaySeconds).subscribe();
+                  } else {
+                    log.info("Next result is not present");
+                  }
+                }
               } else {
-                log.info("Next result is not present");
+                log.error("Unable to retrieve keys from consul", watchResult.cause());
               }
-            }
-          } else {
-            log.error("Unable to retrieve keys from consul", watchResult.cause());
-          }
-        });
+            });
   }
 
   public void registerRestartApplicationWatch() {
