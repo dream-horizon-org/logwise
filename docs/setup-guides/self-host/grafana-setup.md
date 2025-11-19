@@ -42,7 +42,7 @@ Alternative installs: refer to Grafana docs for Linux packages or Kubernetes Hel
 ## 3) Configure Orchestrator URL
 
 1. Update the Orchestrator backend service URL used by the dashboard:
-   - Option A: Edit the JSON file [application-logs-dashboard.json](../../grafana/application-logs-dashboard.json) before importing to set your service URL
+   - Option A: Edit the JSON file [application-logs.json](../../grafana/provisioning/dashboards/application-logs.json) before importing to set your service URL
    - Option B: After import, update dashboard links/variables that reference the Orchestrator backend
 2. Ensure the `athena` datasource will be used for panels/variables
 

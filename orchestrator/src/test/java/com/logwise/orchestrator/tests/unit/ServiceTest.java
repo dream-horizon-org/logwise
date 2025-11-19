@@ -129,9 +129,9 @@ public class ServiceTest extends BaseTest {
     mockAppDelayMetricsConfig = mock(ApplicationConfig.ApplicationDelayMetricsConfig.class);
     when(mockTenantConfig.getDelayMetrics()).thenReturn(mockDelayMetricsConfig);
     when(mockDelayMetricsConfig.getApp()).thenReturn(mockAppDelayMetricsConfig);
-    when(mockAppDelayMetricsConfig.getSampleEnv()).thenReturn("prod");
+    when(mockAppDelayMetricsConfig.getSampleEnv()).thenReturn("local");
+    when(mockAppDelayMetricsConfig.getSampleComponentType()).thenReturn("application");
     when(mockAppDelayMetricsConfig.getSampleServiceName()).thenReturn("test-service");
-    when(mockAppDelayMetricsConfig.getSampleComponentName()).thenReturn("test-component");
   }
 
   @AfterClass

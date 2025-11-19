@@ -35,7 +35,7 @@ We provide a ready-to-use dashboard JSON that already includes tag-based filters
 
 1. **Configure Orchestrator backend URL** - Update dashboard links or variables that reference the Orchestrator backend service URL to point to your deployment
 2. **Add Athena datasource** - In Grafana, add an Athena datasource and name it exactly `athena`. Configure it with your AWS credentials and region
-3. **Import dashboard JSON** - Use the JSON at `application-logs-dashboard.json` from this repo and import it into Grafana (Dashboards → Import → Upload JSON)
+3. **Import dashboard JSON** - Use the JSON at `grafana/provisioning/dashboards/application-logs.json` from this repo and import it into Grafana (Dashboards → Import → Upload JSON)
 4. **Start querying** - The imported dashboard comes with dropdowns powered by the Orchestrator metadata. With the `athena` datasource configured and the Orchestrator URL set, you can start filtering and querying logs immediately
 
 ## Notes

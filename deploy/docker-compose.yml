@@ -78,10 +78,10 @@ services:
     volumes:
       - ../vector/vector.yaml:/etc/vector/vector.yaml:ro
       - ../vector/logwise-vector.desc:/etc/vector/logwise-vector.desc:ro
-    expose:
-      - "8686" # internal-only Vector API
-      - "4317" # OTLP gRPC
-      - "4318" # OTLP HTTP
+    ports:
+      - "${VECTOR_API_PORT:-8686}:8686" # Vector API (health checks and monitoring)
+      - "${VECTOR_OTLP_GRPC_PORT:-4317}:4317" # OTLP gRPC endpoint for log ingestion
+      - "${VECTOR_OTLP_HTTP_PORT:-4318}:4318" # OTLP HTTP endpoint for log ingestion
     networks:
       - lc_net
     depends_on:
@@ -395,14 +395,11 @@ services:
     environment:
       TZ: Asia/Kolkata
     volumes:
-      - ./cron/crontab:/crontab:ro
+      - ./cron:/app/cron:ro
+      - ./cron/entrypoint.sh:/entrypoint.sh:ro
     networks:
       - lc_net
-    entrypoint: [ "/bin/sh","-lc" ]
-    command: >
-      'apk add --no-cache curl tzdata &&
-       crontab /crontab &&
-       crond -f -l 8'
+    entrypoint: ["/entrypoint.sh"]
     restart: unless-stopped
     mem_limit: 128m
     cpus: "0.25"
@@ -411,4 +408,3 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-  
