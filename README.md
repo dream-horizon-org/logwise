@@ -7,7 +7,7 @@ Open-source end-to-end logging system for high-volume log processing. Streams lo
 ### Docker Setup (Recommended)
 
 1. **Complete S3 & Athena Setup** (required first step):
-   - Follow the [S3 & Athena Setup Guide](https://symmetrical-adventure-qmz2eje.pages.github.io/setup-guides/self-host/s3-athena-setup)
+   - Follow the [S3 & Athena Setup Guide](https://ds-horizon.github.io/logwise/setup-guides/self-host/s3-athena-setup)
 
 2. **Run the setup script**:
    ```bash
@@ -20,17 +20,17 @@ Open-source end-to-end logging system for high-volume log processing. Streams lo
    - Spark Master UI: `http://localhost:18080`
    - Orchestrator: `http://localhost:8080`
 
-For detailed instructions, see the [Docker Setup Guide](https://symmetrical-adventure-qmz2eje.pages.github.io/setup-guides/docker/).
+For detailed instructions, see the [Docker Setup Guide](https://ds-horizon.github.io/logwise/setup-guides/docker/).
 
 ## 📚 Documentation
 
-Full documentation is available at: **[https://symmetrical-adventure-qmz2eje.pages.github.io/](https://symmetrical-adventure-qmz2eje.pages.github.io/)**
+Full documentation is available at: **[https://ds-horizon.github.io/logwise/](https://ds-horizon.github.io/logwise/)**
 
 ### Quick Links
-- **[Docker Setup](https://symmetrical-adventure-qmz2eje.pages.github.io/setup-guides/docker/)** - One-click Docker deployment
-- **[Architecture Overview](https://symmetrical-adventure-qmz2eje.pages.github.io/architecture-overview)** - System design and flow
-- **[Component Guides](https://symmetrical-adventure-qmz2eje.pages.github.io/components/vector)** - Detailed component documentation
-- **[Self-Host Setup](https://symmetrical-adventure-qmz2eje.pages.github.io/setup-guides/self-host/)** - Manual component setup
+- **[Docker Setup](https://ds-horizon.github.io/logwise/setup-guides/docker/)** - One-click Docker deployment
+- **[Architecture Overview](https://ds-horizon.github.io/logwise/architecture-overview)** - System design and flow
+- **[Component Guides](https://ds-horizon.github.io/logwise/components/vector)** - Detailed component documentation
+- **[Self-Host Setup](https://ds-horizon.github.io/logwise/setup-guides/self-host/)** - Manual component setup
 
 ## 📁 Project Structure
 
