@@ -568,6 +568,36 @@ main() {
   
   print_separator
   
+  # Cleanup init containers
+  print_step "Cleaning up initialization containers"
+  print_substep "Removing exited init containers..."
+  
+  INIT_CONTAINERS=("logwise_grafana_db_init" "logwise_grafana_dashboard_init")
+  REMOVED_COUNT=0
+  
+  for container in "${INIT_CONTAINERS[@]}"; do
+    if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+      if docker ps -a --filter "name=${container}" --filter "status=exited" --format '{{.Names}}' | grep -q "^${container}$"; then
+        if docker rm -f "${container}" > /dev/null 2>&1; then
+          REMOVED_COUNT=$((REMOVED_COUNT + 1))
+          print_success "Removed ${container}"
+        else
+          print_warn "Failed to remove ${container} (may already be removed)"
+        fi
+      else
+        print_info "${container} is still running or not found"
+      fi
+    fi
+  done
+  
+  if [ $REMOVED_COUNT -gt 0 ]; then
+    print_success "Cleaned up ${REMOVED_COUNT} init container(s)"
+  else
+    print_info "No init containers to clean up"
+  fi
+  
+  print_separator
+  
   # Final success message
   print_footer
   
