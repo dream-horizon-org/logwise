@@ -343,6 +343,31 @@ services:
     mem_limit: 256m
     cpus: "0.25"
 
+  grafana-dashboard-init:
+    image: alpine:3.20
+    container_name: logwise_grafana_dashboard_init
+    networks:
+      - lc_net
+    env_file:
+      - .env
+    environment:
+      - ATHENA_DATABASE=${ATHENA_DATABASE}
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning
+    entrypoint: ["sh", "-c"]
+    command: >
+      "if [ -n \"$$ATHENA_DATABASE\" ]; then
+        sed -i \"s/\\\"value\\\": \\\"logwise\\\"/\\\"value\\\": \\\"$$ATHENA_DATABASE\\\"/g\" /etc/grafana/provisioning/dashboards/application-logs.json;
+        sed -i \"s/\\\"text\\\": \\\"logwise\\\"/\\\"text\\\": \\\"$$ATHENA_DATABASE\\\"/g\" /etc/grafana/provisioning/dashboards/application-logs.json;
+        sed -i \"s/\\\"query\\\": \\\"logwise\\\"/\\\"query\\\": \\\"$$ATHENA_DATABASE\\\"/g\" /etc/grafana/provisioning/dashboards/application-logs.json;
+        echo \"Dashboard ATHENA_DATABASE variable set to: $$ATHENA_DATABASE\";
+      else
+        echo \"WARNING: ATHENA_DATABASE not set, using default 'logwise'\";
+      fi"
+    restart: "no"
+    mem_limit: 128m
+    cpus: "0.25"
+
   grafana:
     image: grafana/grafana:10.2.0
     container_name: logwise_grafana
@@ -378,6 +403,8 @@ services:
       mysql:
         condition: service_healthy
       grafana-db-init:
+        condition: service_completed_successfully
+      grafana-dashboard-init:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
