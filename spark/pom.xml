@@ -421,20 +421,7 @@
                 <version>${maven.jacoco.plugin.version}</version>
                 <configuration>
                     <excludes>
-                        <!-- To exclude constants classes from coverage report-->
-                        <exclude>com/logwise/constants/**</exclude>
-                        <!-- To exclude feign exceptions classes from coverage report-->
-                        <exclude>com/logwise/feign/exceptions/**</exclude>
-                        <!-- To exclude feign logger classes from coverage report-->
-                        <exclude>com/logwise/feign/logger/**</exclude>
-                        <!-- To exclude guice classes from coverage report-->
-                        <exclude>com/logwise/guice/**</exclude>
-                        <!-- To exclude schema classes from coverage report-->
-                        <exclude>com/logwise/schema/**</exclude>
-                        <!-- To exclude MainApplication class from coverage report-->
-                        <exclude>com/logwise/spark/MainApplication*</exclude>
-                        <!-- To exclude protobuf generated classes from coverage report-->
-                        <exclude>com/logwise/spark/protobuf/**</exclude>
+                        <exclude>**/com/logwise/spark/protobuf/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
