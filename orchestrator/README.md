@@ -1,30 +1,52 @@
 # log-central-orchestrator
 
-## Running Application
+## Prerequisites
 
-### Run migrations
-* Bootstrap migrations: `mvn migrations:bootstrap`
-* Run migrations: `mvn migrations:up`
+- Java 11 or higher
+- Maven 3.6+
+- MySQL 8.0+
 
-### Start application
-* Point project in IntelliJ to use Java 11 from project settings
-* Create Intellij Run Configuration of type `Application`
-* Add following VM options: `-Dapp.environment=local`
-* Add following environment variables:
-  ```shell
-  ```
+## Quick Start
 
-### Running Tests
+### 1. Setup Database
 
-* Add following environment variable: `ENV_NAME=test`
+```sql
+CREATE DATABASE IF NOT EXISTS log_central CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'logcentral'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON log_central.* TO 'logcentral'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### 2. Build Application
+
+```bash
+mvn clean package
+```
+
+The fat JAR will be created at `target/log-central-orchestrator-<version>-all.jar`
+
+### 3. Configure Environment
+
+Set required environment variables:
+
+```bash
+export DB_MASTER_HOST=localhost
+export DB_USERNAME=logcentral
+export DB_PASSWORD=your_password
+```
+
+### 4. Run Application
+
+```bash
+java -Dapp.environment=local -jar target/log-central-orchestrator-<version>-all.jar
+```
+
+Health check: `curl http://localhost:8080/healthcheck`
+
+## Running Tests
 * Run `mvn clean verify`
 
 ## Code formatting
 
 * Run `mvn com.spotify.fmt:fmt-maven-plugin:2.20:format` to auto format the code
 
-
-## To Encrypt Pem File
-
-* Set ENCRYPTION_IV and ENCRYPTION_KEY in environment variables
-* Run `mvn compile exec:java -Dexec.mainClass="util.com.logwise.orchestrator.Encryption" -Dexec.args="<pem-file-path>"` from project root directory
