@@ -112,27 +112,6 @@ Fix memory leak in log aggregation module
 Update documentation for deployment guide
 ```
 
-### Commit Message Format (Conventional Commits)
-
-```
-type(scope): subject
-
-body (optional)
-
-footer (optional)
-```
-
-Types:
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, etc.)
-- `refactor`: Code refactoring
-- `test`: Adding or updating tests
-- `chore`: Maintenance tasks
-
-All commits should be GPG-signed. Configure Git to sign commits and add your public key to your GitHub account.
-
 ## Roles and Responsibilities
 
 - **Triager**: Reviews and labels new issues, requests missing details, deduplicates, and assigns initial priority.
