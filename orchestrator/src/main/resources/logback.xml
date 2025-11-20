@@ -1,0 +1,47 @@
+<configuration>
+  <!-- Properties -->
+  <property name="LOG_DIR" value="${LOG_DIR:-./logs}"/>
+  <property name="LOG_FILE" value="${LOG_FILE:-orchestrator.log}"/>
+
+  <!-- Console Appender -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- File Appender with Daily Rotation -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_DIR}/${LOG_FILE}</file>
+    <append>true</append>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_DIR}/${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+      <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <maxFileSize>100MB</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+      <maxHistory>7</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+  </appender>
+
+  <!-- Application Loggers -->
+  <logger name="com.logwise" level="INFO"/>
+  
+  <!-- Third-party Loggers -->
+  <logger name="io.netty" level="INFO"/>
+  <logger name="org.jboss.resteasy" level="INFO"/>
+  <logger name="software.amazon.awssdk" level="WARN"/>
+  <logger name="io.grpc.netty" level="WARN"/>
+  <logger name="org.apache.kafka" level="WARN"/>
+  <logger name="io.vertx" level="INFO"/>
+
+  <!-- Root Logger -->
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+  </root>
+</configuration>
+

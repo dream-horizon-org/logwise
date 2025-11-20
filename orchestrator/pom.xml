@@ -69,6 +69,9 @@
     <swagger.configurationFilePath>${project.basedir}/src/main/resources/config/swagger/swagger-info.json</swagger.configurationFilePath>
     <swagger.outputPath>${project.basedir}/target/classes/webroot/swagger</swagger.outputPath>
     <swagger.resourcePackage>com.logwise.orchestrator.rest</swagger.resourcePackage>
+
+    <slf4j.version>2.0.9</slf4j.version>
+    <logback.version>1.4.11</logback.version>
   </properties>
 
   <!-- ==========================================================
@@ -340,12 +343,17 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.7.36</version>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <version>${logback.version}</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.4.14</version>
+      <version>${logback.version}</version>
     </dependency>
 
     <!-- ======================== Tests ======================== -->
