@@ -163,7 +163,7 @@ jobs:
 
       - name: Commit snapshot version bump to main
         run: |
-          git config --local user.email "action@github.com"
+          git config --local user.email "release-bot"
           git config --local user.name "GitHub Action"
           git add orchestrator/pom.xml spark/pom.xml docs/VERSION docs/package.json
           git commit -m "chore: bump version to next snapshot after release ${{ steps.extract_version.outputs.version }}" || echo "No changes to commit"
