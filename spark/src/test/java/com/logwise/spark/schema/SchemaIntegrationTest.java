@@ -49,15 +49,8 @@ public class SchemaIntegrationTest {
     Row row =
         RowFactory.create(
             "Test log message",
-            "{\"env\":\"prod\"}",
             "2021-01-01T00:00:00Z",
-            "production",
-            "api-service",
-            "api-container",
-            "host-123",
-            "vector",
-            "application",
-            "info");
+            "api-service");
 
     // Act
     Dataset<Row> df = spark.createDataFrame(java.util.Arrays.asList(row), schema);
@@ -75,15 +68,8 @@ public class SchemaIntegrationTest {
     Row row =
         RowFactory.create(
             "Message",
-            "DDtags",
-            "Timestamp",
-            "Env",
-            "ServiceName",
-            "ComponentName",
-            "Hostname",
-            "Ddsource",
-            "SourceType",
-            "Status");
+            "2021-01-01T00:00:00Z",
+            "ServiceName");
 
     // Act
     Dataset<Row> df = spark.createDataFrame(java.util.Arrays.asList(row), schema);
@@ -91,34 +77,31 @@ public class SchemaIntegrationTest {
     // Assert
     assertEquals(df.count(), 1L);
     StructField[] fields = df.schema().fields();
-    assertEquals(fields.length, 10);
+    assertEquals(fields.length, 3);
     assertEquals(fields[0].name(), Constants.APPLICATION_LOG_COLUMN_MESSAGE);
-    assertEquals(fields[3].name(), Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME);
-    assertEquals(fields[4].name(), Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME);
+    assertEquals(fields[1].name(), Constants.APPLICATION_LOG_COLUMN_TIMESTAMP);
+    assertEquals(fields[2].name(), Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME);
   }
 
   @Test(expectedExceptions = ArrayIndexOutOfBoundsException.class)
   public void testCreateDataFrame_WithMissingFields_ThrowsExceptionOnAccess() {
     // Arrange
     StructType schema = Schema.getVectorApplicationLogsSchema();
-    // Create row with only 5 fields instead of 10
-    Row incompleteRow = RowFactory.create("Message", "DDtags", "Timestamp", "Env", "ServiceName");
+    // Create row with only 2 fields instead of 3
+    Row incompleteRow = RowFactory.create("Message", "2021-01-01T00:00:00Z");
 
-    // Act - Spark creates DataFrame but Row only has 5 fields
+    // Act - Spark creates DataFrame but Row only has 2 fields
     Dataset<Row> df = spark.createDataFrame(java.util.Arrays.asList(incompleteRow), schema);
 
     // Assert - DataFrame is created but accessing missing fields throws exception
     assertNotNull(df);
     assertEquals(df.count(), 1L);
     Row result = df.first();
-    // First 5 fields should have values
+    // First 2 fields should have values
     assertEquals(result.getString(0), "Message");
-    assertEquals(result.getString(1), "DDtags");
-    assertEquals(result.getString(2), "Timestamp");
-    assertEquals(result.getString(3), "Env");
-    assertEquals(result.getString(4), "ServiceName");
+    assertEquals(result.getString(1), "2021-01-01T00:00:00Z");
     // Accessing field beyond Row size should throw ArrayIndexOutOfBoundsException
-    result.getString(5); // ComponentName - should throw
+    result.getString(2); // ServiceName - should throw
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
@@ -129,15 +112,8 @@ public class SchemaIntegrationTest {
     Row wrongTypeRow =
         RowFactory.create(
             12345, // Wrong type - should be String
-            "DDtags",
-            "Timestamp",
-            "Env",
-            "ServiceName",
-            "ComponentName",
-            "Hostname",
-            "Ddsource",
-            "SourceType",
-            "Status");
+            "2021-01-01T00:00:00Z",
+            "ServiceName");
 
     // Act - should throw IllegalArgumentException
     spark.createDataFrame(java.util.Arrays.asList(wrongTypeRow), schema);
@@ -150,27 +126,13 @@ public class SchemaIntegrationTest {
     Row row1 =
         RowFactory.create(
             "Error occurred",
-            "{}",
             "2021-01-01T00:00:00Z",
-            "prod",
-            "api-service",
-            "api-container",
-            "host-1",
-            "vector",
-            "application",
-            "error");
+            "api-service");
     Row row2 =
         RowFactory.create(
             "Info message",
-            "{}",
             "2021-01-01T00:01:00Z",
-            "prod",
-            "api-service",
-            "api-container",
-            "host-1",
-            "vector",
-            "application",
-            "info");
+            "api-service");
 
     Dataset<Row> df = spark.createDataFrame(java.util.Arrays.asList(row1, row2), schema);
 
@@ -190,27 +152,13 @@ public class SchemaIntegrationTest {
     Row row1 =
         RowFactory.create(
             "Error occurred",
-            "{}",
             "2021-01-01T00:00:00Z",
-            "prod",
-            "api-service",
-            "api-container",
-            "host-1",
-            "vector",
-            "application",
-            "error");
+            "api-service");
     Row row2 =
         RowFactory.create(
             "Info message",
-            "{}",
             "2021-01-01T00:01:00Z",
-            "prod",
-            "api-service",
-            "api-container",
-            "host-1",
-            "vector",
-            "application",
-            "info");
+            "api-service");
 
     Dataset<Row> df = spark.createDataFrame(java.util.Arrays.asList(row1, row2), schema);
 
@@ -237,15 +185,8 @@ public class SchemaIntegrationTest {
     Row row =
         RowFactory.create(
             "Test message",
-            "{}",
             "2021-01-01T00:00:00Z",
-            "prod",
-            "api-service",
-            "api-container",
-            "host-1",
-            "vector",
-            "application",
-            "info");
+            "api-service");
 
     Dataset<Row> df = spark.createDataFrame(java.util.Arrays.asList(row), schema);
 
@@ -253,7 +194,7 @@ public class SchemaIntegrationTest {
     Dataset<Row> selected =
         df.select(
             Constants.APPLICATION_LOG_COLUMN_MESSAGE,
-            Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME,
+            Constants.APPLICATION_LOG_COLUMN_TIMESTAMP,
             Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME);
 
     // Assert
@@ -261,7 +202,7 @@ public class SchemaIntegrationTest {
     StructField[] fields = selected.schema().fields();
     assertEquals(fields.length, 3);
     assertEquals(fields[0].name(), Constants.APPLICATION_LOG_COLUMN_MESSAGE);
-    assertEquals(fields[1].name(), Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME);
+    assertEquals(fields[1].name(), Constants.APPLICATION_LOG_COLUMN_TIMESTAMP);
     assertEquals(fields[2].name(), Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME);
   }
 
@@ -272,15 +213,8 @@ public class SchemaIntegrationTest {
 
     // Act & Assert - Verify all fields that correspond to Protobuf fields exist
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_MESSAGE));
-    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_DDTAGS));
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_TIMESTAMP));
-    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME));
     assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME));
-    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE));
-    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_HOSTNAME));
-    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_DDSOURCE));
-    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_SOURCE_TYPE));
-    assertNotNull(schema.fieldIndex(Constants.APPLICATION_LOG_COLUMN_STATUS));
 
     // Verify all fields are StringType (as expected for Protobuf string fields)
     for (StructField field : schema.fields()) {
@@ -295,15 +229,8 @@ public class SchemaIntegrationTest {
     Row row =
         RowFactory.create(
             "Test message",
-            "{}",
             "2021-01-01T00:00:00Z",
-            "prod",
-            "api-service",
-            "api-container",
-            "host-1",
-            "vector",
-            "application",
-            "info");
+            "api-service");
 
     Dataset<Row> df = spark.createDataFrame(java.util.Arrays.asList(row), schema);
 
@@ -326,15 +253,8 @@ public class SchemaIntegrationTest {
     Row originalRow =
         RowFactory.create(
             "Test message",
-            "{}",
             "2021-01-01T00:00:00Z",
-            "prod",
-            "api-service",
-            "api-container",
-            "host-1",
-            "vector",
-            "application",
-            "info");
+            "api-service");
 
     // Act - Create DataFrame with original schema
     Dataset<Row> df = spark.createDataFrame(java.util.Arrays.asList(originalRow), originalSchema);
@@ -345,8 +265,8 @@ public class SchemaIntegrationTest {
             "new_field", org.apache.spark.sql.functions.lit(null).cast(DataTypes.StringType));
 
     // Assert
-    assertEquals(extended.schema().fields().length, 11);
-    assertEquals(extended.schema().fields()[10].name(), "new_field");
-    assertTrue(extended.schema().fields()[10].nullable());
+    assertEquals(extended.schema().fields().length, 4);
+    assertEquals(extended.schema().fields()[3].name(), "new_field");
+    assertTrue(extended.schema().fields()[3].nullable());
   }
 }

@@ -5,11 +5,11 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class Query {
   public final String GET_SERVICES =
-      "SELECT environmentName, serviceName, componentType, retentionDays, tenant FROM service_details WHERE tenant = ?;";
+      "SELECT serviceName, retentionDays, tenant FROM service_details WHERE tenant = ?;";
   public final String INSERT_SERVICE_DETAILS =
-      "INSERT INTO service_details (environmentName, componentType, serviceName, retentionDays, tenant) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE lastCheckedAt = NOW()";
+      "INSERT INTO service_details (serviceName, retentionDays, tenant) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE lastCheckedAt = NOW()";
   public final String DELETE_SERVICE_DETAILS =
-      "DELETE FROM service_details WHERE environmentName = ? AND serviceName = ? AND tenant = ?;";
+      "DELETE FROM service_details WHERE serviceName = ? AND tenant = ?;";
   public final String DELETE_SERVICE_DETAILS_BEFORE_INTERVAL =
       "DELETE FROM service_details WHERE tenant = ? AND lastCheckedAt <= ?;";
   public final String GET_PENDING_OFFSET_BY_TIMESTAMP_SPARK_JOB =
