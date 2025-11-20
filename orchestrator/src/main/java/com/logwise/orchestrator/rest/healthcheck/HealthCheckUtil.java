@@ -31,7 +31,7 @@ public class HealthCheckUtil {
     return finalHealthChecks.map(
         response -> {
           if (response.getStatus().equals(HealthCheckResponse.Status.DOWN)) {
-            // Given the limitation of out current d11-rest implementation, a hacky way to make it
+            // Given the limitation of out current rest implementation, a hacky way to make it
             // throw 500 error with given body
             throw new HealthCheckException(String.valueOf(response.toJson()));
           } else {

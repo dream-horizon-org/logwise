@@ -205,7 +205,7 @@ MYSQL_ROOT_PASSWORD=root_pass              # MySQL root password
 
 ```bash
 ORCH_PORT=8080                             # Orchestrator service port
-TENANT_VALUE=D11-Prod-AWS                  # Tenant identifier
+TENANT_VALUE=ABC                 # Tenant identifier
 ```
 
 For a complete list of all environment variables, see `.env.example` in the deploy directory.
@@ -432,10 +432,10 @@ log-wise-deploy/
 │   └── submit.sh               # Direct submission script
 ├── vector/
 │   ├── vector.yaml             # Vector configuration
-│   └── logcentral_logs.desc    # Protobuf schema
-├── d11-log-management-spark/   # Spark application source
+│   └── logwise-vector.desc    # Protobuf schema
+├── spark/   # Spark application source
 │   └── src/main/java/          # Java source code
-├── log-central-orchestrator/   # Spring Boot orchestrator
+├── orchestrator/   # Spring Boot orchestrator
 ├── grafana/
 │   └── provisioning/           # Grafana datasource config
 └── db/

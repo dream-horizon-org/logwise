@@ -47,7 +47,7 @@ public class ApplicationConfigUtilTest {
   @Test
   public void testGetTenantConfig_WithInvalidTenant_ReturnsNull() {
     ApplicationConfig.TenantConfig tenantConfig = mock(ApplicationConfig.TenantConfig.class);
-    when(tenantConfig.getName()).thenReturn("D11-Prod-AWS");
+    when(tenantConfig.getName()).thenReturn("ABCD");
 
     List<ApplicationConfig.TenantConfig> tenants = new ArrayList<>();
     tenants.add(tenantConfig);

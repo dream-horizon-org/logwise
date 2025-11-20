@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logwise.orchestrator.common.app.AppContext;
 import com.logwise.orchestrator.rest.TypeValidationError;
 import com.logwise.orchestrator.rest.exception.RestException;
-import com.logwise.orchestrator.rest.provider.D11JsonProvider;
+import com.logwise.orchestrator.rest.provider.JsonProvider;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -16,10 +16,10 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/** Unit tests for D11JsonProvider. */
-public class D11JsonProviderTest {
+/** Unit tests for JsonProvider. */
+public class JsonProviderTest {
 
-  private D11JsonProvider provider;
+  private JsonProvider provider;
   private ObjectMapper mockObjectMapper;
 
   @BeforeMethod
@@ -29,7 +29,7 @@ public class D11JsonProviderTest {
       mockedAppContext
           .when(() -> AppContext.getInstance(ObjectMapper.class))
           .thenReturn(mockObjectMapper);
-      provider = new D11JsonProvider();
+      provider = new JsonProvider();
     }
   }
 

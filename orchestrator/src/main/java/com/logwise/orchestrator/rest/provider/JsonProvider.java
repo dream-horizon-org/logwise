@@ -22,9 +22,9 @@ import org.jboss.resteasy.plugins.providers.jackson.ResteasyJackson2Provider;
 @Provider
 @Consumes({"application/json", "application/*+json", "text/json"})
 @Produces({"application/json", "application/*+json", "text/json"})
-public class D11JsonProvider extends ResteasyJackson2Provider {
+public class JsonProvider extends ResteasyJackson2Provider {
 
-  public D11JsonProvider() {
+  public JsonProvider() {
     this.setMapper(AppContext.getInstance(ObjectMapper.class));
   }
 

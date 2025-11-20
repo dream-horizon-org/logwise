@@ -32,8 +32,8 @@ public class MysqlConfig {
   static final TimeUnit DEFAULT_CONNECTION_TIMEOUT_TIME_UNIT = TimeUnit.SECONDS;
   static final Integer DEFAULT_MAX_WAIT_QUEUE_SIZE = -1;
   static final String DEFAULT_CONSUL_KEY =
-      "d11/"
-          + Constants.NAMESPACE
+
+           Constants.NAMESPACE
           + "/"
           + Constants.SERVICE_NAME
           + "/"

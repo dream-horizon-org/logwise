@@ -12,10 +12,10 @@ import io.vertx.core.json.JsonObject;
 import java.io.Reader;
 import java.io.StringReader;
 
-public class D11HoconProcessor implements ConfigProcessor {
+public class HoconProcessor implements ConfigProcessor {
   @Override
   public String name() {
-    return "d11hocon";
+    return "hocon";
   }
 
   @Override
