@@ -56,7 +56,7 @@ mvn clean package
 
 The fat JAR will be created at `target/log-central-orchestrator-<version>-all.jar`.
 
-For example: `target/log-central-orchestrator-1.4.2-SNAPSHOT-all.jar`
+For example: `target/log-central-orchestrator-0.0.1-SNAPSHOT-all.jar`
 
 Verify the JAR exists:
 
@@ -123,7 +123,7 @@ java -jar target/log-central-orchestrator-<version>-all.jar
 For example:
 
 ```bash
-java -jar target/log-central-orchestrator-1.4.2-SNAPSHOT-all.jar
+java -jar target/log-central-orchestrator-0.0.1-SNAPSHOT-all.jar
 ```
 
 To specify the application environment explicitly:
