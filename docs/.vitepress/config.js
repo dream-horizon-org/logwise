@@ -1,4 +1,32 @@
 import { defineConfig } from 'vitepress'
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+// Get current directory in ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+// Read version from VERSION file
+function getVersion() {
+    try {
+        // VitePress config is in docs/.vitepress/, VERSION file is in docs/
+        const versionFile = join(__dirname, '..', 'VERSION')
+        return readFileSync(versionFile, 'utf-8').trim()
+    } catch (error) {
+        // Fallback to package.json if VERSION file doesn't exist
+        try {
+            const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'))
+            return packageJson.version || '0.0.1'
+        } catch {
+            return '0.0.1'
+        }
+    }
+}
+
+const version = getVersion()
+const isSnapshot = version.includes('-SNAPSHOT')
+const releaseVersion = version.replace('-SNAPSHOT', '')
 
 export default defineConfig({
     title: 'Logwise',
@@ -12,6 +40,15 @@ export default defineConfig({
             { text: 'Home', link: '/' },
             { text: 'Overview', link: '/what-is-logwise' },
             { text: 'Setup', link: '/setup-guides/docker' },
+            {
+                text: `v${version}`, items: isSnapshot ? [
+                    { text: 'Latest Release', link: 'https://github.com/ds-horizon/logwise/releases/latest' },
+                    { text: 'All Releases', link: 'https://github.com/ds-horizon/logwise/releases' }
+                ] : [
+                    { text: 'Release Notes', link: `https://github.com/ds-horizon/logwise/releases/tag/v${releaseVersion}` },
+                    { text: 'All Releases', link: 'https://github.com/ds-horizon/logwise/releases' }
+                ]
+            },
             { text: 'GitHub', link: 'https://github.com/ds-horizon/logwise' }
         ],
 
@@ -76,7 +113,7 @@ export default defineConfig({
         ],
 
         footer: {
-            message: 'Released under the MIT License.',
+            message: `Released under the MIT License. Version ${version}`,
             copyright: 'Copyright © 2025 Logwise'
         },
 

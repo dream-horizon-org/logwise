@@ -145,25 +145,28 @@ public class ServiceTest extends BaseTest {
           throws Exception {
 
     Tenant tenant = TestConstants.VALID_TENANT;
-    List<String> envPrefixes = Arrays.asList("logs/env=prod/", "logs/env=staging/");
-    List<String> servicePrefixes1 = Arrays.asList("logs/env=prod/service_name=service1/");
-    List<String> servicePrefixes2 = Arrays.asList("logs/env=staging/service_name=service2/");
+    List<String> envPrefixes =
+        Arrays.asList("logs/environment_name=prod/", "logs/environment_name=staging/");
     List<String> componentPrefixes =
         Arrays.asList(
-            "logs/env=prod/service_name=service1/component_name=component1/",
-            "logs/env=staging/service_name=service2/component_name=component2/");
+            "logs/environment_name=prod/component_type=component1/",
+            "logs/environment_name=staging/component_type=component2/");
+    List<String> servicePrefixes =
+        Arrays.asList(
+            "logs/environment_name=prod/component_type=component1/service_name=service1/",
+            "logs/environment_name=staging/component_type=component2/service_name=service2/");
 
     ServiceDetails service1 =
         ServiceDetails.builder()
             .environmentName("prod")
             .serviceName("service1")
-            .componentType("application")
+            .componentType("component1")
             .build();
     ServiceDetails service2 =
         ServiceDetails.builder()
             .environmentName("staging")
             .serviceName("service2")
-            .componentType("application")
+            .componentType("component2")
             .build();
 
     try (MockedStatic<ObjectStoreFactory> mockedFactory =
@@ -180,30 +183,34 @@ public class ServiceTest extends BaseTest {
           .thenReturn(mockTenantConfig);
 
       lenient()
-          .when(mockObjectStoreClient.listCommonPrefix("logs/env=", "/"))
+          .when(mockObjectStoreClient.listCommonPrefix("logs/environment_name=", "/"))
           .thenReturn(Single.just(envPrefixes));
-      lenient()
-          .when(mockObjectStoreClient.listCommonPrefix("logs/env=prod/service_name=", "/"))
-          .thenReturn(Single.just(servicePrefixes1));
-      lenient()
-          .when(mockObjectStoreClient.listCommonPrefix("logs/env=staging/service_name=", "/"))
-          .thenReturn(Single.just(servicePrefixes2));
       lenient()
           .when(
               mockObjectStoreClient.listCommonPrefix(
-                  "logs/env=prod/service_name=service1/component_name=", "/"))
+                  "logs/environment_name=prod/component_type=", "/"))
           .thenReturn(Single.just(Collections.singletonList(componentPrefixes.get(0))));
       lenient()
           .when(
               mockObjectStoreClient.listCommonPrefix(
-                  "logs/env=staging/service_name=service2/component_name=", "/"))
+                  "logs/environment_name=staging/component_type=", "/"))
           .thenReturn(Single.just(Collections.singletonList(componentPrefixes.get(1))));
+      lenient()
+          .when(
+              mockObjectStoreClient.listCommonPrefix(
+                  "logs/environment_name=prod/component_type=component1/service_name=", "/"))
+          .thenReturn(Single.just(Collections.singletonList(servicePrefixes.get(0))));
+      lenient()
+          .when(
+              mockObjectStoreClient.listCommonPrefix(
+                  "logs/environment_name=staging/component_type=component2/service_name=", "/"))
+          .thenReturn(Single.just(Collections.singletonList(servicePrefixes.get(1))));
 
       mockedUtils
-          .when(() -> ApplicationUtils.getServiceFromObjectKey(componentPrefixes.get(0)))
+          .when(() -> ApplicationUtils.getServiceFromObjectKey(servicePrefixes.get(0)))
           .thenReturn(service1);
       mockedUtils
-          .when(() -> ApplicationUtils.getServiceFromObjectKey(componentPrefixes.get(1)))
+          .when(() -> ApplicationUtils.getServiceFromObjectKey(servicePrefixes.get(1)))
           .thenReturn(service2);
 
       ApplicationConfig.EnvLogsRetentionDaysConfig retentionConfig =
@@ -245,7 +252,7 @@ public class ServiceTest extends BaseTest {
           .thenReturn(mockTenantConfig);
 
       lenient()
-          .when(mockObjectStoreClient.listCommonPrefix("logs/env=", "/"))
+          .when(mockObjectStoreClient.listCommonPrefix("logs/environment_name=", "/"))
           .thenReturn(Single.just(Collections.emptyList()));
 
       Single<List<ServiceDetails>> result = objectStoreService.getAllDistinctServicesInAws(tenant);
@@ -275,7 +282,7 @@ public class ServiceTest extends BaseTest {
           .thenReturn(mockTenantConfig);
 
       lenient()
-          .when(mockObjectStoreClient.listCommonPrefix("logs/env=", "/"))
+          .when(mockObjectStoreClient.listCommonPrefix("logs/environment_name=", "/"))
           .thenReturn(Single.error(error));
 
       Single<List<ServiceDetails>> result = objectStoreService.getAllDistinctServicesInAws(tenant);

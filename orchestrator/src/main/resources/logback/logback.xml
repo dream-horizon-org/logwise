@@ -43,7 +43,7 @@
     <neverBlock>true</neverBlock>
   </appender>
 
-  <logger name="com.dream11" level="info"/>
+  <logger name="com.logwise" level="info"/>
   <logger name="io.netty" level="info"/>
   <logger name="org.jboss.resteasy" level="info"/>
   <logger name="software.amazon.awssdk" level="warn"/>

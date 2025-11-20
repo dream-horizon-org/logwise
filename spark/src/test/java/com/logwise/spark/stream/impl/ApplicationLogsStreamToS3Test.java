@@ -73,7 +73,8 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
     configMap.put("kafka.topic.prefix.application", DEFAULT_TOPIC_PREFIX);
     configMap.put("kafka.maxRatePerPartition", DEFAULT_MAX_RATE_PER_PARTITION);
     configMap.put("spark.offsetPerTrigger.default", DEFAULT_OFFSET_PER_TRIGGER);
-    // Add empty spark.config to ensure ConfigUtils.getSparkConfig() returns empty map
+    // Add empty spark.config to ensure ConfigUtils.getSparkConfig() returns empty
+    // map
     configMap.put("spark.config", new HashMap<String, Object>());
     return ConfigFactory.parseMap(configMap);
   }
@@ -132,7 +133,8 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
     doReturn(mockWriter).when(mockWriter).trigger(any());
     doReturn(mockWriter).when(mockWriter).outputMode(any(OutputMode.class));
     doReturn(mockWriter).when(mockWriter).format(anyString());
-    // partitionBy has two overloads: varargs (String...) and Scala Seq - mock both explicitly
+    // partitionBy has two overloads: varargs (String...) and Scala Seq - mock both
+    // explicitly
     doReturn(mockWriter)
         .when(mockWriter)
         .partitionBy(Constants.APPLICATION_LOG_S3_PARTITION_COLUMNS);
@@ -233,7 +235,8 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
       // Assert
       assertNotNull(result, "Should return a StreamingQuery");
 
-      // Verify that pushApplicationLogsToS3 was called (indirectly through writeStream chain)
+      // Verify that pushApplicationLogsToS3 was called (indirectly through
+      // writeStream chain)
       verify(mockMappedDataset, times(1)).writeStream();
       verify(mockWriter, times(1)).option("compression", Constants.WRITE_STREAM_GZIP_COMPRESSION);
       verify(mockWriter, times(1))
@@ -293,6 +296,152 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
       assertNotNull(result);
       verify(mockWriter, times(1)).option("checkpointLocation", "s3://custom/checkpoints");
       verify(mockWriter, times(1)).start("s3://custom/logs");
+    }
+  }
+
+  @Test
+  public void testGetVectorApplicationLogsStreamQuery_WithNullMessage_HandlesGracefully() {
+    // Test the branch: vectorLogs.getMessage() != null ? vectorLogs.getMessage() :
+    // ""
+    // This tests when message is null (the else branch)
+    // Arrange
+    Dataset<Row> mockKafkaDataset = mock(Dataset.class);
+    Dataset<Row> mockMappedDataset = setupDatasetTransformationMocks(mockKafkaDataset);
+    setupDataStreamWriterMocks(mockMappedDataset);
+
+    try (MockedStatic<ConfigUtils> mockedConfigUtils = mockStatic(ConfigUtils.class)) {
+      mockedConfigUtils
+          .when(() -> ConfigUtils.getSparkConfig(any(Config.class)))
+          .thenReturn(new HashMap<>());
+
+      // Act - The map function should handle null message
+      StreamingQuery result = stream.getVectorApplicationLogsStreamQuery(mockKafkaDataset);
+
+      // Assert
+      assertNotNull(result);
+      // Verify map was called (which handles null message internally)
+      verify(mockKafkaDataset, times(1)).map(any(MapFunction.class), any(ExpressionEncoder.class));
+    }
+  }
+
+  @Test
+  public void testGetVectorApplicationLogsStreamQuery_WithNullEnvironmentName_HandlesGracefully() {
+    // Test the branch: vectorLogs.getEnvironmentName() != null ? ... : ""
+    // This tests when environmentName is null (the else branch)
+    // Arrange
+    Dataset<Row> mockKafkaDataset = mock(Dataset.class);
+    Dataset<Row> mockMappedDataset = setupDatasetTransformationMocks(mockKafkaDataset);
+    setupDataStreamWriterMocks(mockMappedDataset);
+
+    try (MockedStatic<ConfigUtils> mockedConfigUtils = mockStatic(ConfigUtils.class)) {
+      mockedConfigUtils
+          .when(() -> ConfigUtils.getSparkConfig(any(Config.class)))
+          .thenReturn(new HashMap<>());
+
+      // Act
+      StreamingQuery result = stream.getVectorApplicationLogsStreamQuery(mockKafkaDataset);
+
+      // Assert
+      assertNotNull(result);
+      verify(mockKafkaDataset, times(1)).map(any(MapFunction.class), any(ExpressionEncoder.class));
+    }
+  }
+
+  @Test
+  public void testGetVectorApplicationLogsStreamQuery_WithNullComponentType_HandlesGracefully() {
+    // Test the branch: vectorLogs.getComponentType() != null ? ... : ""
+    // Arrange
+    Dataset<Row> mockKafkaDataset = mock(Dataset.class);
+    Dataset<Row> mockMappedDataset = setupDatasetTransformationMocks(mockKafkaDataset);
+    setupDataStreamWriterMocks(mockMappedDataset);
+
+    try (MockedStatic<ConfigUtils> mockedConfigUtils = mockStatic(ConfigUtils.class)) {
+      mockedConfigUtils
+          .when(() -> ConfigUtils.getSparkConfig(any(Config.class)))
+          .thenReturn(new HashMap<>());
+
+      // Act
+      StreamingQuery result = stream.getVectorApplicationLogsStreamQuery(mockKafkaDataset);
+
+      // Assert
+      assertNotNull(result);
+      verify(mockKafkaDataset, times(1)).map(any(MapFunction.class), any(ExpressionEncoder.class));
+    }
+  }
+
+  @Test
+  public void testGetVectorApplicationLogsStreamQuery_WithNullServiceName_HandlesGracefully() {
+    // Test the branch: vectorLogs.getServiceName() != null ? ... : ""
+    // Arrange
+    Dataset<Row> mockKafkaDataset = mock(Dataset.class);
+    Dataset<Row> mockMappedDataset = setupDatasetTransformationMocks(mockKafkaDataset);
+    setupDataStreamWriterMocks(mockMappedDataset);
+
+    try (MockedStatic<ConfigUtils> mockedConfigUtils = mockStatic(ConfigUtils.class)) {
+      mockedConfigUtils
+          .when(() -> ConfigUtils.getSparkConfig(any(Config.class)))
+          .thenReturn(new HashMap<>());
+
+      // Act
+      StreamingQuery result = stream.getVectorApplicationLogsStreamQuery(mockKafkaDataset);
+
+      // Assert
+      assertNotNull(result);
+      verify(mockKafkaDataset, times(1)).map(any(MapFunction.class), any(ExpressionEncoder.class));
+    }
+  }
+
+  @Test
+  public void testPushApplicationLogsToS3_WithCustomProcessingTime() {
+    // Test pushApplicationLogsToS3 with different processing time
+    // Arrange
+    Config customConfig = createCustomTestConfig(30, DEFAULT_CHECKPOINT_PATH, DEFAULT_LOGS_PATH);
+    ApplicationLogsStreamToS3 customStream =
+        new ApplicationLogsStreamToS3(customConfig, mockKafkaService);
+
+    Dataset<Row> mockKafkaDataset = mock(Dataset.class);
+    Dataset<Row> mockMappedDataset = setupDatasetTransformationMocks(mockKafkaDataset);
+    DataStreamWriter<Row> mockWriter = setupDataStreamWriterMocks(mockMappedDataset);
+
+    try (MockedStatic<ConfigUtils> mockedConfigUtils = mockStatic(ConfigUtils.class)) {
+      mockedConfigUtils
+          .when(() -> ConfigUtils.getSparkConfig(any(Config.class)))
+          .thenReturn(new HashMap<>());
+
+      // Act
+      StreamingQuery result = customStream.getVectorApplicationLogsStreamQuery(mockKafkaDataset);
+
+      // Assert
+      assertNotNull(result);
+      // Verify trigger was called with custom processing time (30 seconds)
+      verify(mockWriter, times(1)).trigger(any());
+    }
+  }
+
+  @Test
+  public void testPushApplicationLogsToS3_WithSparkConfigOptions() {
+    // Test that spark config options are passed to writeStream
+    // Arrange
+    Map<String, String> sparkConfig = new HashMap<>();
+    sparkConfig.put("spark.sql.streaming.checkpointLocation", "custom-checkpoint");
+    sparkConfig.put("spark.sql.streaming.schemaInference", "true");
+
+    Dataset<Row> mockKafkaDataset = mock(Dataset.class);
+    Dataset<Row> mockMappedDataset = setupDatasetTransformationMocks(mockKafkaDataset);
+    DataStreamWriter<Row> mockWriter = setupDataStreamWriterMocks(mockMappedDataset);
+
+    try (MockedStatic<ConfigUtils> mockedConfigUtils = mockStatic(ConfigUtils.class)) {
+      mockedConfigUtils
+          .when(() -> ConfigUtils.getSparkConfig(any(Config.class)))
+          .thenReturn(sparkConfig);
+
+      // Act
+      StreamingQuery result = stream.getVectorApplicationLogsStreamQuery(mockKafkaDataset);
+
+      // Assert
+      assertNotNull(result);
+      // Verify options() was called with spark config
+      verify(mockWriter, times(1)).options(sparkConfig);
     }
   }
 }

@@ -1,0 +1,220 @@
+name: Spark CI
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - 'spark/**'
+      - '.github/workflows/spark-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  spark-checks:
+    name: Spark Checks (Format, Test, SonarCloud)
+    runs-on: ubuntu-latest
+    steps:
+      # ============================================================================
+      # Setup Steps
+      # ============================================================================
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones disabled for better SonarCloud analysis
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('spark/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      # ============================================================================
+      # 1. Code Formatting Check
+      # ============================================================================
+      - name: Verify code formatting
+        working-directory: spark
+        run: mvn -B fmt:check
+
+      # ============================================================================
+      # 2. Build, Test, and Coverage Check
+      # ============================================================================
+      - name: Build, run tests, and check coverage
+        working-directory: spark
+        run: mvn clean verify -B
+        # This single command:
+        # - Compiles the project
+        # - Runs unit tests (with JaCoCo coverage)
+        # - Runs integration tests (with JaCoCo coverage)
+        # - Generates coverage reports
+        # - Checks coverage thresholds (fails if not met):
+        #   * Line coverage: 80%
+        #   * Branch coverage: 75%
+        #   * Method coverage: 80%
+
+      - name: Print coverage summary
+        working-directory: spark
+        if: always()
+        run: |
+          echo "## 📊 Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "target/site/jacoco/jacoco.csv" ]; then
+            # Parse jacoco.csv to extract coverage metrics
+            # Format: GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,METHOD_MISSED,METHOD_COVERED
+            awk -F',' '
+              NR==1 { next }  # Skip header
+              {
+                # Sum up all metrics
+                inst_missed += $4; inst_covered += $5;
+                branch_missed += $6; branch_covered += $7;
+                line_missed += $8; line_covered += $9;
+                method_missed += $10; method_covered += $11;
+              }
+              END {
+                # Calculate percentages
+                inst_total = inst_missed + inst_covered;
+                branch_total = branch_missed + branch_covered;
+                line_total = line_missed + line_covered;
+                method_total = method_missed + method_covered;
+                
+                if (inst_total > 0) inst_pct = (inst_covered / inst_total) * 100;
+                if (branch_total > 0) branch_pct = (branch_covered / branch_total) * 100;
+                if (line_total > 0) line_pct = (line_covered / line_total) * 100;
+                if (method_total > 0) method_pct = (method_covered / method_total) * 100;
+                
+                # Print formatted output
+                printf "| Metric | Covered | Missed | Total | Coverage |\n";
+                printf "|--------|---------|--------|-------|----------|\n";
+                printf "| **Instructions** | %d | %d | %d | %.2f%% |\n", inst_covered, inst_missed, inst_total, inst_pct;
+                printf "| **Branches** | %d | %d | %d | %.2f%% |\n", branch_covered, branch_missed, branch_total, branch_pct;
+                printf "| **Lines** | %d | %d | %d | %.2f%% |\n", line_covered, line_missed, line_total, line_pct;
+                printf "| **Methods** | %d | %d | %d | %.2f%% |\n", method_covered, method_missed, method_total, method_pct;
+              }
+            ' target/site/jacoco/jacoco.csv >> $GITHUB_STEP_SUMMARY
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Coverage Details" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📁 Full coverage report: \`target/site/jacoco/index.html\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Also print to console
+            echo "=========================================="
+            echo "📊 Test Coverage Summary"
+            echo "=========================================="
+            awk -F',' '
+              NR==1 { next }
+              {
+                inst_missed += $4; inst_covered += $5;
+                branch_missed += $6; branch_covered += $7;
+                line_missed += $8; line_covered += $9;
+                method_missed += $10; method_covered += $11;
+              }
+              END {
+                inst_total = inst_missed + inst_covered;
+                branch_total = branch_missed + branch_covered;
+                line_total = line_missed + line_covered;
+                method_total = method_missed + method_covered;
+                
+                if (inst_total > 0) inst_pct = (inst_covered / inst_total) * 100;
+                if (branch_total > 0) branch_pct = (branch_covered / branch_total) * 100;
+                if (line_total > 0) line_pct = (line_covered / line_total) * 100;
+                if (method_total > 0) method_pct = (method_covered / method_total) * 100;
+                
+                printf "Instructions: %d/%d (%.2f%%)\n", inst_covered, inst_total, inst_pct;
+                printf "Branches:     %d/%d (%.2f%%)\n", branch_covered, branch_total, branch_pct;
+                printf "Lines:        %d/%d (%.2f%%)\n", line_covered, line_total, line_pct;
+                printf "Methods:      %d/%d (%.2f%%)\n", method_covered, method_total, method_pct;
+              }
+            ' target/site/jacoco/jacoco.csv
+            echo "=========================================="
+          else
+            echo "⚠️ Coverage report not found at target/site/jacoco/jacoco.csv" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Coverage report not found. Tests may have failed before coverage generation."
+          fi
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: spark/target/site/jacoco/
+          retention-days: 7
+
+      # ============================================================================
+      # 3. SonarCloud/SonarQube Analysis
+      # ============================================================================
+      # IMPORTANT: Coverage Report Flow
+      # 1. The previous step (mvn clean verify) runs JaCoCo plugin which:
+      #    - Instruments code during test execution
+      #    - Generates coverage data in target/site/jacoco/jacoco.xml
+      # 2. Sonar scanner (mvn sonar:sonar) automatically reads this file from:
+      #    - Default location: target/site/jacoco/jacoco.xml
+      #    - Configured via: sonar.java.coveragePlugin=jacoco (in sonar-project.properties)
+      # 3. Sonar uploads coverage data along with code analysis to SonarCloud/SonarQube
+      # 4. Coverage metrics appear in Sonar dashboard
+      # - name: SonarCloud Scan
+      #   working-directory: spark
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Automatically provided by GitHub Actions
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # Must be set in repository secrets
+      #     SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}  # Optional: Set if SonarCloud doesn't auto-detect
+      #     # Sonar server endpoint configuration
+      #     # REQUIRED: Set SONAR_HOST_URL secret in GitHub: Settings → Secrets → Actions
+      #     # For SonarCloud: https://sonarcloud.io
+      #     # For self-hosted SonarQube: http://your-sonarqube-server:9000 (or https://your-domain.com)
+      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      #   run: |
+      #     # Check if required secrets are configured
+      #     if [ -z "$SONAR_HOST_URL" ] || [ -z "$SONAR_TOKEN" ]; then
+      #       echo "❌ Required Sonar secrets are not configured!"
+      #       echo ""
+      #       echo "Please configure the following secrets in GitHub:"
+      #       echo "1. Go to: Settings → Secrets and variables → Actions"
+      #       echo "2. Click 'New repository secret' for each missing secret:"
+      #       echo ""
+      #       if [ -z "$SONAR_HOST_URL" ]; then
+      #         echo "   Secret Name: SONAR_HOST_URL"
+      #         echo "   Secret Value:"
+      #         echo "     - For SonarCloud: https://sonarcloud.io"
+      #         echo "     - For self-hosted SonarQube: http://your-sonarqube-server:9000"
+      #         echo ""
+      #       fi
+      #       if [ -z "$SONAR_TOKEN" ]; then
+      #         echo "   Secret Name: SONAR_TOKEN"
+      #         echo "   Secret Value: Generate token in SonarCloud/SonarQube:"
+      #         echo "     - Go to: My Account → Security → Generate Token"
+      #         echo "     - Copy the generated token"
+      #         echo ""
+      #       fi
+      #       exit 1
+      #     fi
+          
+      #     # Run Sonar analysis
+      #     # Note: SONAR_TOKEN is automatically used from environment variable by Sonar Maven plugin
+      #     # No need to pass it explicitly - the plugin reads SONAR_TOKEN env var automatically
+      #     mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL
+        # Note: SonarCloud quality gate status is automatically reported via PR checks
+        # Configure quality gate in SonarCloud dashboard to fail PRs if not met
+        # See: docs/setup-guides/sonarcloud-quality-gate-guide.md
+        #
+        # Required Secrets:
+        # 1. SONAR_HOST_URL - Sonar server endpoint (REQUIRED)
+        #    - For SonarCloud: https://sonarcloud.io
+        #    - For self-hosted SonarQube: http://your-sonarqube-server:9000
+        #    - Passed via: -Dsonar.host.url=$SONAR_HOST_URL
+        # 2. SONAR_TOKEN - Authentication token (REQUIRED)
+        #    - Generate in SonarCloud/SonarQube: My Account → Security → Generate Token
+        #    - Automatically used from environment variable (no need to pass explicitly)
+        #    - Sonar Maven plugin reads SONAR_TOKEN env var automatically for authentication
+        # 3. SONAR_ORGANIZATION - SonarCloud organization key (optional, auto-detected if not set)
+

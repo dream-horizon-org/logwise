@@ -14,7 +14,7 @@
     <neverBlock>true</neverBlock>
   </appender>
 
-  <logger name="com.dream11" level="trace"/>
+  <logger name="com.logwise" level="trace"/>
 
   <root level="debug">
     <appender-ref ref="ASYNC_STDOUT"/>

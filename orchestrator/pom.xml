@@ -6,7 +6,7 @@
 
   <groupId>com.logwise</groupId>
   <artifactId>orchestrator</artifactId>
-  <version>1.4.2-SNAPSHOT</version>
+  <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>logwise-orchestrator</name>
 
@@ -691,24 +691,35 @@
             </goals>
           </execution>
           <execution>
-            <id>jacoco-check</id>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <rule>
-                  <element>BUNDLE</element>
-                  <limits>
-                    <limit>
-                      <counter>LINE</counter>
-                      <value>COVEREDRATIO</value>
-                      <minimum>0.10</minimum>
-                    </limit>
-                  </limits>
-                </rule>
-              </rules>
-            </configuration>
+              <id>jacoco-check</id>
+              <phase>verify</phase>
+              <goals>
+                  <goal>check</goal>
+              </goals>
+              <configuration>
+                  <rules>
+                      <rule>
+                          <element>BUNDLE</element>
+                          <limits>
+                              <limit>
+                                  <counter>LINE</counter>
+                                  <value>COVEREDRATIO</value>
+                                  <minimum>0.40</minimum>
+                              </limit>
+                              <limit>
+                                  <counter>BRANCH</counter>
+                                  <value>COVEREDRATIO</value>
+                                  <minimum>0.30</minimum>
+                              </limit>
+                              <limit>
+                                  <counter>METHOD</counter>
+                                  <value>COVEREDRATIO</value>
+                                  <minimum>0.40</minimum>
+                              </limit>
+                          </limits>
+                      </rule>
+                  </rules>
+              </configuration>
           </execution>
         </executions>
       </plugin>
@@ -724,6 +735,13 @@
         <groupId>com.spotify.fmt</groupId>
         <artifactId>fmt-maven-plugin</artifactId>
         <version>2.21.1</version>
+      </plugin>
+
+      <!-- Versions Maven Plugin - Standard tool for version management -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <version>2.16.2</version>
       </plugin>
     </plugins>
   </build>

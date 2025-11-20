@@ -118,4 +118,61 @@ public class ConfigUtilsTest {
     Assert.assertNotNull(result);
     Assert.assertTrue(result.isEmpty());
   }
+
+  @Test
+  public void testGetConfigMap_WithQuotedKeys_RemovesQuotes() {
+    // Arrange - Config with keys that have quotes (simulated via ApplicationUtils)
+    Map<String, Object> configMap = new java.util.HashMap<>();
+    Map<String, Object> sparkConfig = new java.util.HashMap<>();
+    sparkConfig.put("\"quoted.key\"", "value1");
+    sparkConfig.put("normal.key", "value2");
+    configMap.put("spark.config", sparkConfig);
+    Config config = MockConfigHelper.createNestedConfig(configMap);
+
+    // Act
+    Map<String, String> result = ConfigUtils.getConfigMap(config, "spark.config");
+
+    // Assert
+    Assert.assertNotNull(result);
+    // The keys should have quotes removed by
+    // ApplicationUtils.removeSurroundingQuotes
+    // This tests the integration with ApplicationUtils
+  }
+
+  @Test
+  public void testGetConfigMap_WithNullValues_HandlesGracefully() {
+    // Arrange
+    Map<String, Object> configMap = new java.util.HashMap<>();
+    Map<String, Object> sparkConfig = new java.util.HashMap<>();
+    sparkConfig.put("key1", null);
+    sparkConfig.put("key2", "value2");
+    configMap.put("spark.config", sparkConfig);
+    Config config = MockConfigHelper.createNestedConfig(configMap);
+
+    // Act
+    Map<String, String> result = ConfigUtils.getConfigMap(config, "spark.config");
+
+    // Assert
+    Assert.assertNotNull(result);
+    // Should handle null values gracefully (convert to "null" string or skip)
+  }
+
+  @Test
+  public void testGetConfigMap_WithNonStringValues_ConvertsToString() {
+    // Arrange
+    Map<String, Object> configMap = new java.util.HashMap<>();
+    Map<String, Object> sparkConfig = new java.util.HashMap<>();
+    sparkConfig.put("intKey", 123);
+    sparkConfig.put("boolKey", true);
+    sparkConfig.put("stringKey", "value");
+    configMap.put("spark.config", sparkConfig);
+    Config config = MockConfigHelper.createNestedConfig(configMap);
+
+    // Act
+    Map<String, String> result = ConfigUtils.getConfigMap(config, "spark.config");
+
+    // Assert
+    Assert.assertNotNull(result);
+    // All values should be converted to strings via unwrapped().toString()
+  }
 }

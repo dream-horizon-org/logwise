@@ -1,4 +1,4 @@
-@ModuleGen(groupPackage = "com.dream11.logcentralorchestrator", name = "log-central-orchestrator")
+@ModuleGen(groupPackage = "com.logwise.orchestrator", name = "orchestrator")
 package com.logwise.orchestrator;
 
 import io.vertx.codegen.annotations.ModuleGen;

@@ -171,9 +171,11 @@ public class SparkUtilsTest {
 
   @Test
   public void testGetSparkListeners_StaticMethod_ReturnsListenerList() {
-    // Note: Static method uses default constructor which requires ApplicationInjector
+    // Note: Static method uses default constructor which requires
+    // ApplicationInjector
     // Instead, test the instance method which we can control
-    // The static method just delegates to instance method, so testing instance is sufficient
+    // The static method just delegates to instance method, so testing instance is
+    // sufficient
 
     // Act - Test instance method (static method delegates to this)
     List<SparkListenerInterface> listeners = sparkUtils.getSparkListenersInstance();
@@ -215,5 +217,119 @@ public class SparkUtilsTest {
     // Assert
     Assert.assertNotNull(result);
     Assert.assertEquals(result, mockDataset);
+  }
+
+  @Test
+  public void testGetKafkaReadStream_WithEmptyOptions_FiltersNulls() {
+    // Arrange
+    SparkSession mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
+    Dataset<Row> mockDataset = mock(Dataset.class);
+    Function<SparkSession, Dataset<Row>> mockStreamReaderFunction = mock(Function.class);
+    when(mockStreamReaderFunction.apply(mockSparkSession)).thenReturn(mockDataset);
+
+    KafkaReadStreamOptions options =
+        KafkaReadStreamOptions.builder()
+            .kafkaBootstrapServers("localhost:9092")
+            .maxOffsetsPerTrigger("1000")
+            .startingOffsets("latest")
+            .failOnDataLoss("false")
+            .maxRatePerPartition("100")
+            .groupIdPrefix("test-group")
+            .subscribePattern(null)
+            .assign(null)
+            .startingOffsetsByTimestamp(null)
+            .minPartitions(null)
+            .build();
+
+    // Act
+    Dataset<Row> result =
+        sparkUtils.getKafkaReadStream(mockSparkSession, options, mockStreamReaderFunction);
+
+    // Assert
+    Assert.assertNotNull(result);
+    verify(mockStreamReaderFunction, times(1)).apply(mockSparkSession);
+  }
+
+  @Test
+  public void testGetKafkaReadStream_WithMixedNullAndNonNullOptions_FiltersCorrectly() {
+    // Arrange
+    SparkSession mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
+    Dataset<Row> mockDataset = mock(Dataset.class);
+    Function<SparkSession, Dataset<Row>> mockStreamReaderFunction = mock(Function.class);
+    when(mockStreamReaderFunction.apply(mockSparkSession)).thenReturn(mockDataset);
+
+    KafkaReadStreamOptions options =
+        KafkaReadStreamOptions.builder()
+            .kafkaBootstrapServers("localhost:9092")
+            .maxOffsetsPerTrigger("1000")
+            .startingOffsets("latest")
+            .failOnDataLoss("false")
+            .maxRatePerPartition("100")
+            .groupIdPrefix("test-group")
+            .subscribePattern("logs.*")
+            .assign(null)
+            .startingOffsetsByTimestamp("{\"topic\":{\"0\":1000}}")
+            .minPartitions(null)
+            .build();
+
+    // Act
+    Dataset<Row> result =
+        sparkUtils.getKafkaReadStream(mockSparkSession, options, mockStreamReaderFunction);
+
+    // Assert
+    Assert.assertNotNull(result);
+    verify(mockStreamReaderFunction, times(1)).apply(mockSparkSession);
+  }
+
+  @Test
+  public void testGetSparkListenersInstance_MultipleCalls_ReturnsNewListenerEachTime() {
+    // Act
+    List<SparkListenerInterface> listeners1 = sparkUtils.getSparkListenersInstance();
+    List<SparkListenerInterface> listeners2 = sparkUtils.getSparkListenersInstance();
+
+    // Assert
+    Assert.assertNotNull(listeners1);
+    Assert.assertNotNull(listeners2);
+    Assert.assertEquals(listeners1.size(), 1);
+    Assert.assertEquals(listeners2.size(), 1);
+    // Each call should invoke the supplier, which may return different instances
+    verify(mockListenerSupplier, times(2)).get();
+  }
+
+  @Test
+  public void testGetKafkaReadStreamInstance_WithAllOptionalFieldsSet_IncludesAll() {
+    // Arrange
+    SparkSession mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
+    Dataset<Row> mockDataset = mock(Dataset.class);
+
+    org.apache.spark.sql.streaming.DataStreamReader mockDataStreamReader =
+        mock(org.apache.spark.sql.streaming.DataStreamReader.class);
+
+    when(mockSparkSession.readStream()).thenReturn(mockDataStreamReader);
+    when(mockDataStreamReader.format(anyString())).thenReturn(mockDataStreamReader);
+    when(mockDataStreamReader.options(anyMap())).thenReturn(mockDataStreamReader);
+    when(mockDataStreamReader.load()).thenReturn(mockDataset);
+
+    KafkaReadStreamOptions options =
+        KafkaReadStreamOptions.builder()
+            .kafkaBootstrapServers("localhost:9092")
+            .maxOffsetsPerTrigger("1000")
+            .startingOffsets("latest")
+            .failOnDataLoss("false")
+            .maxRatePerPartition("100")
+            .groupIdPrefix("test-group")
+            .subscribePattern("logs.*")
+            .assign("{\"topics\":[\"test-topic\"]}")
+            .startingOffsetsByTimestamp("{\"topic\":{\"0\":1000}}")
+            .minPartitions("5")
+            .build();
+
+    // Act
+    Dataset<Row> result = sparkUtils.getKafkaReadStreamInstance(mockSparkSession, options);
+
+    // Assert
+    Assert.assertNotNull(result);
+    Assert.assertEquals(result, mockDataset);
+    verify(mockDataStreamReader, times(1)).options(anyMap());
   }
 }
