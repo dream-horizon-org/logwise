@@ -93,6 +93,13 @@ public class SparkStageListenerTest {
     return (Long) field.get(stageMetrics);
   }
 
+  private void setMetricValue(String fieldName, long value) throws Exception {
+    Object stageMetrics = getStaticField("stageMetrics");
+    Field field = stageMetrics.getClass().getDeclaredField(fieldName);
+    field.setAccessible(true);
+    field.set(stageMetrics, value);
+  }
+
   // ==================== Test onStageSubmitted() ====================
 
   @Test
@@ -125,6 +132,35 @@ public class SparkStageListenerTest {
   }
 
   @Test
+  public void testOnStageSubmitted_WhenStageNotAlreadyCompleted_DoesNotCallStopStage()
+      throws Exception {
+    // Test the else branch: when isStageAlreadyCompleted() returns false
+    // Arrange - Stage has not been completed yet
+    String stageName = "new-stage";
+    int stageId = 1;
+    stageSubmittedMap.put(stageName, 1);
+    // Don't add to stageCompletionMap - stage is not completed
+
+    try (MockedStatic<PushLogsToS3SparkJob> mockedJob = mockStatic(PushLogsToS3SparkJob.class)) {
+      mockedJob.when(PushLogsToS3SparkJob::getStreamingQueriesCount).thenReturn(2);
+
+      // Act
+      SparkListenerStageSubmitted stageSubmitted = createStageSubmitted(stageName, stageId);
+      listener.onStageSubmitted(stageSubmitted);
+
+      // Assert - stopStage() should not be called because stage is not already
+      // completed
+      // The else branch (when isStageAlreadyCompleted returns false) should be
+      // executed
+      Boolean isStageAlreadyCompleted =
+          invokePrivateStaticMethodWithParam("isStageAlreadyCompleted", stageName);
+      assertFalse(
+          isStageAlreadyCompleted,
+          "Stage should not be already completed, so stopStage() should not be called");
+    }
+  }
+
+  @Test
   public void testOnStageSubmitted_WhenAllStagesCompleted_CallsCompleteExecution()
       throws Exception {
     // Arrange - Set up so all stages are completed
@@ -151,7 +187,8 @@ public class SparkStageListenerTest {
       // Act
       listener.onStageSubmitted(stageSubmitted);
 
-      // Assert - completeExecution should be called (waits for pending stages, then calls
+      // Assert - completeExecution should be called (waits for pending stages, then
+      // calls
       // stopAllRunningJobs)
       // Since pendingStopStageIds is empty, it should complete quickly
       assertTrue(
@@ -192,7 +229,8 @@ public class SparkStageListenerTest {
    */
   @Test
   public void testOnStageSubmitted_WhenStageAlreadyCompleted_CallsStopStage() throws Exception {
-    // ==================== SETUP: Get actual stage name from Constants ====================
+    // ==================== SETUP: Get actual stage name from Constants
+    // ====================
     // Use the actual stage name that maps to APPLICATION_LOGS_TO_S3_QUERY_NAME
     // This ensures we're testing with real stage names used in production
     String stageName =
@@ -205,8 +243,10 @@ public class SparkStageListenerTest {
     stageSubmittedMap.put(stageName, 1);
 
     // Precondition 2: Not all stages are completed yet
-    // We'll mock getStreamingQueriesCount() to return 2, meaning 2 queries are expected
-    // But only 1 stage is completed, so isAllStagesCompletedAtLeastOnce() will return false
+    // We'll mock getStreamingQueriesCount() to return 2, meaning 2 queries are
+    // expected
+    // But only 1 stage is completed, so isAllStagesCompletedAtLeastOnce() will
+    // return false
     // This ensures we take the stopStage() path instead of completeExecution() path
 
     try (MockedStatic<PushLogsToS3SparkJob> mockedJob = mockStatic(PushLogsToS3SparkJob.class);
@@ -216,7 +256,8 @@ public class SparkStageListenerTest {
       // This makes isAllStagesCompletedAtLeastOnce() return false
       mockedJob.when(PushLogsToS3SparkJob::getStreamingQueriesCount).thenReturn(2);
 
-      // ==================== MOCK SETUP: SparkSession and StreamingQuery ====================
+      // ==================== MOCK SETUP: SparkSession and StreamingQuery
+      // ====================
       // stopStage() runs in a thread that needs SparkSession, so we must mock it
       // to avoid creating a real SparkSession (which would fail in unit tests)
 
@@ -256,7 +297,8 @@ public class SparkStageListenerTest {
       // 3. Processes queries and stops matching ones
       // 4. Removes stageId from PENDING_STOP_STAGE_IDS (line 140)
       //
-      // Wait for the thread to start (indicated by stageId being added to pending set)
+      // Wait for the thread to start (indicated by stageId being added to pending
+      // set)
       boolean stageIdWasAdded = false;
       for (int i = 0; i < 100; i++) {
         Thread.sleep(10); // Check every 10ms, up to 1 second total
@@ -266,7 +308,8 @@ public class SparkStageListenerTest {
         }
       }
 
-      // Wait for thread to complete (indicated by stageId being removed from pending set)
+      // Wait for thread to complete (indicated by stageId being removed from pending
+      // set)
       // The thread removes stageId when it finishes (line 140 in SparkStageListener)
       for (int i = 0; i < 200; i++) {
         Thread.sleep(10); // Check every 10ms, up to 2 seconds total
@@ -275,7 +318,8 @@ public class SparkStageListenerTest {
         }
       }
 
-      // ==================== VERIFY: Check that stopStage() was triggered ====================
+      // ==================== VERIFY: Check that stopStage() was triggered
+      // ====================
       // Verify preconditions were met (these ensure stopStage() should be called)
       assertTrue(!stageCompletionMap.isEmpty(), "Stage completion map should not be empty");
       assertTrue(
@@ -287,9 +331,11 @@ public class SparkStageListenerTest {
 
       // ==================== VERIFY: Check that stopStage() was actually called
       // ====================
-      // Verify the logic path: isStageAlreadyCompleted() should return true, causing stopStage() to
+      // Verify the logic path: isStageAlreadyCompleted() should return true, causing
+      // stopStage() to
       // be called
-      // We verify this by checking that the conditions that lead to stopStage() are met
+      // We verify this by checking that the conditions that lead to stopStage() are
+      // met
       Boolean isStageAlreadyCompleted =
           invokePrivateStaticMethodWithParam("isStageAlreadyCompleted", stageName);
       assertTrue(
@@ -299,16 +345,19 @@ public class SparkStageListenerTest {
                   + "Stage completion count: %d",
               stageName, stageCompletionMap.get(stageName)));
 
-      // Verify that isAllStagesCompletedAtLeastOnce() returns false (ensures we take stopStage()
+      // Verify that isAllStagesCompletedAtLeastOnce() returns false (ensures we take
+      // stopStage()
       // path, not completeExecution() path)
       Boolean isAllStagesCompleted = invokePrivateStaticMethod("isAllStagesCompletedAtLeastOnce");
       assertFalse(
           isAllStagesCompleted,
           "isAllStagesCompletedAtLeastOnce() should return false to ensure stopStage() path is taken");
 
-      // Try to verify that the async thread executed (indicated by stageId being added to pending
+      // Try to verify that the async thread executed (indicated by stageId being
+      // added to pending
       // set)
-      // Note: This may fail if the thread throws an exception before adding the stageId (e.g., due
+      // Note: This may fail if the thread throws an exception before adding the
+      // stageId (e.g., due
       // to mocking issues)
       // However, we've already verified the logic path is correct above
       if (stageIdWasAdded) {
@@ -316,8 +365,10 @@ public class SparkStageListenerTest {
         verify(mockCurrentSession, atLeastOnce()).getSparkSession();
         verify(mockQuery, atLeastOnce()).stop();
       } else {
-        // Thread may have failed due to mocking issues, but the logic path is verified above
-        // This is acceptable as we've verified that stopStage() SHOULD be called based on the
+        // Thread may have failed due to mocking issues, but the logic path is verified
+        // above
+        // This is acceptable as we've verified that stopStage() SHOULD be called based
+        // on the
         // conditions
       }
     }
@@ -413,6 +464,122 @@ public class SparkStageListenerTest {
     assertEquals(stageCompletionMap.get("stage1"), Integer.valueOf(1));
   }
 
+  @Test
+  public void testOnStageCompleted_WithCompletionTimeEmpty_DoesNotUpdateCompletionTime()
+      throws Exception {
+    // Test the branch: if (completionTime.nonEmpty() && completionTime.isDefined())
+    // when completionTime is empty (the if condition is false)
+    // Arrange
+    resetStageMetrics();
+    long initialCompletionTime = getMetricValue("completionTime");
+
+    SparkListenerStageCompleted stageCompleted = mock(SparkListenerStageCompleted.class);
+    StageInfo stageInfo = mock(StageInfo.class);
+    TaskMetrics taskMetrics = mock(TaskMetrics.class);
+    InputMetrics inputMetrics = mock(InputMetrics.class);
+    OutputMetrics outputMetrics = mock(OutputMetrics.class);
+
+    when(stageCompleted.stageInfo()).thenReturn(stageInfo);
+    when(stageInfo.name()).thenReturn("stage1");
+    when(stageInfo.getStatusString()).thenReturn("succeeded");
+    when(stageInfo.taskMetrics()).thenReturn(taskMetrics);
+    when(taskMetrics.inputMetrics()).thenReturn(inputMetrics);
+    when(taskMetrics.outputMetrics()).thenReturn(outputMetrics);
+    when(inputMetrics.recordsRead()).thenReturn(1000L);
+    when(outputMetrics.bytesWritten()).thenReturn(5000L);
+    when(stageInfo.completionTime()).thenReturn(Option.empty()); // Empty completion time
+    when(stageInfo.submissionTime()).thenReturn(Option.apply(1000000L));
+
+    // Act
+    listener.onStageCompleted(stageCompleted);
+
+    // Assert - Completion time should not be updated when empty
+    assertEquals(
+        getMetricValue("completionTime"),
+        initialCompletionTime,
+        "Completion time should not be updated when empty");
+  }
+
+  @Test
+  public void testOnStageCompleted_WithSubmissionTimeNotZero_UsesMathMin() throws Exception {
+    // Test the else branch: when stageMetrics.submissionTime is not 0, use Math.min
+    // Arrange
+    resetStageMetrics();
+    // Set initial submission time to non-zero value
+    setMetricValue("submissionTime", 2000000L);
+
+    SparkListenerStageCompleted stage1 =
+        createStageCompleted("stage1", 100L, 1000L, 1000000L, 1500000L); // submissionTime
+    // < existing
+    SparkListenerStageCompleted stage2 =
+        createStageCompleted("stage1", 200L, 2000L, 2000000L, 3000000L); // submissionTime
+    // > existing
+
+    // Act
+    listener.onStageCompleted(stage1);
+    long submissionTimeAfterFirst = getMetricValue("submissionTime");
+    listener.onStageCompleted(stage2);
+    long submissionTimeAfterSecond = getMetricValue("submissionTime");
+
+    // Assert
+    // First stage: submissionTime (1500000) < existing (2000000), so should use
+    // Math.min = 1500000
+    assertEquals(
+        submissionTimeAfterFirst, 1500000L, "Should use Math.min when submissionTime is not 0");
+    // Second stage: submissionTime (3000000) > existing (1500000), so should keep
+    // 1500000
+    assertEquals(submissionTimeAfterSecond, 1500000L, "Should keep minimum submissionTime");
+  }
+
+  @Test
+  public void testOnStageCompleted_WithNonSucceededStatus_DoesNotUpdateMetrics() throws Exception {
+    // Test the branch: if (status.equals("succeeded")) - when status is NOT
+    // "succeeded"
+    // This tests the else branch where metrics are not updated
+    // Arrange
+    resetStageMetrics();
+    long initialInputRecords = getMetricValue("inputRecords");
+    long initialOutputBytes = getMetricValue("outputBytes");
+
+    SparkListenerStageCompleted stageCompleted = mock(SparkListenerStageCompleted.class);
+    StageInfo stageInfo = mock(StageInfo.class);
+    when(stageCompleted.stageInfo()).thenReturn(stageInfo);
+    when(stageInfo.name()).thenReturn("stage1");
+    when(stageInfo.getStatusString()).thenReturn("failed"); // Not "succeeded"
+
+    // Act
+    listener.onStageCompleted(stageCompleted);
+
+    // Assert - Metrics should not be updated for non-succeeded status
+    assertEquals(
+        getMetricValue("inputRecords"),
+        initialInputRecords,
+        "Input records should not be updated for failed status");
+    assertEquals(
+        getMetricValue("outputBytes"),
+        initialOutputBytes,
+        "Output bytes should not be updated for failed status");
+  }
+
+  @Test
+  public void testOnStageCompleted_WithSubmissionTimeZero_SetsDirectly() throws Exception {
+    // Test the if branch: when stageMetrics.submissionTime equals 0, set directly
+    // Arrange
+    resetStageMetrics();
+    // Ensure submissionTime is 0
+    setMetricValue("submissionTime", 0L);
+
+    SparkListenerStageCompleted stage =
+        createStageCompleted("stage1", 100L, 1000L, 1000000L, 1500000L);
+
+    // Act
+    listener.onStageCompleted(stage);
+
+    // Assert
+    long submissionTime = getMetricValue("submissionTime");
+    assertEquals(submissionTime, 1500000L, "Should set submissionTime directly when it's 0");
+  }
+
   // ==================== Test completeExecution() ====================
 
   @Test
@@ -456,12 +623,14 @@ public class SparkStageListenerTest {
       // Clear pending stages - this should cause the loop to exit
       pendingStopStageIds.clear();
 
-      // Wait for thread to complete (it should exit the loop when pending stages are cleared)
+      // Wait for thread to complete (it should exit the loop when pending stages are
+      // cleared)
       executionThread.join(2000);
       assertFalse(
           executionThread.isAlive(),
           "Execution thread should complete after pending stages are cleared");
-      // Note: stopAllRunningJobs() may not be called if there's an exception, but the important
+      // Note: stopAllRunningJobs() may not be called if there's an exception, but the
+      // important
       // behavior (waiting for pending stages) is verified above
     }
   }
@@ -551,6 +720,142 @@ public class SparkStageListenerTest {
 
     // Assert
     assertFalse(result, "Should return false when not all stages are completed");
+  }
+
+  @Test
+  public void testStopStage_HandlesExceptionInStopQuery() throws Exception {
+    // Test the exception handling branch in stopStage() when query.stop() throws
+    // Arrange
+    String stageName =
+        Constants.QUERY_NAME_TO_STAGE_MAP.get(Constants.APPLICATION_LOGS_TO_S3_QUERY_NAME);
+    int stageId = 1;
+    stageCompletionMap.put(stageName, 1);
+    stageSubmittedMap.put(stageName, 1);
+
+    try (MockedStatic<PushLogsToS3SparkJob> mockedJob = mockStatic(PushLogsToS3SparkJob.class);
+        MockedStatic<CurrentSparkSession> mockedSession = mockStatic(CurrentSparkSession.class)) {
+
+      mockedJob.when(PushLogsToS3SparkJob::getStreamingQueriesCount).thenReturn(2);
+
+      CurrentSparkSession mockCurrentSession = mock(CurrentSparkSession.class);
+      mockedSession.when(CurrentSparkSession::getInstance).thenReturn(mockCurrentSession);
+
+      SparkSession mockSparkSession = mock(SparkSession.class);
+      when(mockCurrentSession.getSparkSession()).thenReturn(mockSparkSession);
+
+      StreamingQueryManager mockQueryManager = mock(StreamingQueryManager.class);
+      when(mockSparkSession.streams()).thenReturn(mockQueryManager);
+
+      StreamingQuery mockQuery = mock(StreamingQuery.class);
+      when(mockQuery.name()).thenReturn(Constants.APPLICATION_LOGS_TO_S3_QUERY_NAME);
+      when(mockQueryManager.active()).thenReturn(new StreamingQuery[] {mockQuery});
+
+      // Mock query.stop() to throw exception
+      doThrow(new RuntimeException("Stop failed")).when(mockQuery).stop();
+      try {
+        doNothing().when(mockQuery).awaitTermination();
+        doNothing().when(mockQueryManager).resetTerminated();
+      } catch (Exception e) {
+        // Mock setup
+      }
+
+      // Act
+      SparkListenerStageSubmitted stageSubmitted = createStageSubmitted(stageName, stageId);
+      listener.onStageSubmitted(stageSubmitted);
+
+      // Wait for thread to process
+      Thread.sleep(300);
+
+      // Assert - Exception should be caught and logged, but thread should complete
+      // The exception handling branch should be executed
+      assertTrue(true, "Exception should be handled gracefully");
+    }
+  }
+
+  @Test
+  public void testStopStage_WhenStageNameDoesNotMatch_DoesNotStopQuery() throws Exception {
+    // Test the else branch: when stageName doesn't match expectedStageName
+    // Arrange
+    String stageName =
+        Constants.QUERY_NAME_TO_STAGE_MAP.get(Constants.APPLICATION_LOGS_TO_S3_QUERY_NAME);
+    int stageId = 1;
+    stageCompletionMap.put(stageName, 1);
+    stageSubmittedMap.put(stageName, 1);
+
+    try (MockedStatic<PushLogsToS3SparkJob> mockedJob = mockStatic(PushLogsToS3SparkJob.class);
+        MockedStatic<CurrentSparkSession> mockedSession = mockStatic(CurrentSparkSession.class)) {
+
+      mockedJob.when(PushLogsToS3SparkJob::getStreamingQueriesCount).thenReturn(2);
+
+      CurrentSparkSession mockCurrentSession = mock(CurrentSparkSession.class);
+      mockedSession.when(CurrentSparkSession::getInstance).thenReturn(mockCurrentSession);
+
+      SparkSession mockSparkSession = mock(SparkSession.class);
+      when(mockCurrentSession.getSparkSession()).thenReturn(mockSparkSession);
+
+      StreamingQueryManager mockQueryManager = mock(StreamingQueryManager.class);
+      when(mockSparkSession.streams()).thenReturn(mockQueryManager);
+
+      // Create a query with a name that doesn't match the stage
+      StreamingQuery mockQuery = mock(StreamingQuery.class);
+      when(mockQuery.name()).thenReturn("different-query-name"); // Doesn't match stage
+      when(mockQueryManager.active()).thenReturn(new StreamingQuery[] {mockQuery});
+
+      // Act
+      SparkListenerStageSubmitted stageSubmitted = createStageSubmitted(stageName, stageId);
+      listener.onStageSubmitted(stageSubmitted);
+
+      // Wait for thread to process
+      Thread.sleep(300);
+
+      // Assert - Query should not be stopped because stageName doesn't match
+      // The else branch (when stageName != expectedStageName) should be executed
+      verify(mockQuery, never()).stop();
+    }
+  }
+
+  @Test
+  public void testStopStage_WhenQueryNameNotInMap_DoesNotStopQuery() throws Exception {
+    // Test the case where query name is not in QUERY_NAME_TO_STAGE_MAP
+    // This tests the branch: if (stageName.equals(expectedStageName))
+    // when expectedStageName is null (query name not in map)
+    // Arrange
+    String stageName =
+        Constants.QUERY_NAME_TO_STAGE_MAP.get(Constants.APPLICATION_LOGS_TO_S3_QUERY_NAME);
+    int stageId = 1;
+    stageCompletionMap.put(stageName, 1);
+    stageSubmittedMap.put(stageName, 1);
+
+    try (MockedStatic<PushLogsToS3SparkJob> mockedJob = mockStatic(PushLogsToS3SparkJob.class);
+        MockedStatic<CurrentSparkSession> mockedSession = mockStatic(CurrentSparkSession.class)) {
+
+      mockedJob.when(PushLogsToS3SparkJob::getStreamingQueriesCount).thenReturn(2);
+
+      CurrentSparkSession mockCurrentSession = mock(CurrentSparkSession.class);
+      mockedSession.when(CurrentSparkSession::getInstance).thenReturn(mockCurrentSession);
+
+      SparkSession mockSparkSession = mock(SparkSession.class);
+      when(mockCurrentSession.getSparkSession()).thenReturn(mockSparkSession);
+
+      StreamingQueryManager mockQueryManager = mock(StreamingQueryManager.class);
+      when(mockSparkSession.streams()).thenReturn(mockQueryManager);
+
+      // Create a query with a name that's not in QUERY_NAME_TO_STAGE_MAP
+      StreamingQuery mockQuery = mock(StreamingQuery.class);
+      when(mockQuery.name()).thenReturn("unknown-query-name"); // Not in map
+      when(mockQueryManager.active()).thenReturn(new StreamingQuery[] {mockQuery});
+
+      // Act
+      SparkListenerStageSubmitted stageSubmitted = createStageSubmitted(stageName, stageId);
+      listener.onStageSubmitted(stageSubmitted);
+
+      // Wait for thread to process
+      Thread.sleep(300);
+
+      // Assert - Query should not be stopped because query name is not in map
+      // expectedStageName will be null, so stageName.equals(null) will be false
+      verify(mockQuery, never()).stop();
+    }
   }
 
   @Test

@@ -105,7 +105,8 @@ public class StreamFactoryTest {
     assertTrue(stream1 instanceof ApplicationLogsStreamToS3, "First stream should be correct type");
     assertTrue(
         stream2 instanceof ApplicationLogsStreamToS3, "Second stream should be correct type");
-    // Note: Whether they are the same instance or not depends on Guice configuration
+    // Note: Whether they are the same instance or not depends on Guice
+    // configuration
     // (singleton vs prototype scope). We just verify they are created successfully.
   }
 
@@ -128,4 +129,12 @@ public class StreamFactoryTest {
       // Test passes
     }
   }
+
+  // Note: We cannot directly test the default case in StreamFactory.getStream()
+  // because all enum values are valid. The default case is defensive code
+  // that would only be hit if a new enum value is added without updating the
+  // switch.
+  // This is acceptable - the branch exists for safety but cannot be tested
+  // without
+  // modifying the enum, which would break the code.
 }

@@ -151,7 +151,7 @@ SPARK_MASTER_UI_PORT=18080                  # Spark Master UI port
 SPARK_VERSION_MATCH=3.1.2                   # Spark version
 HADOOP_AWS_VERSION=3.2.0                    # Hadoop AWS library version
 AWS_SDK_VERSION=1.11.375                   # AWS SDK version
-MAIN_CLASS=com.dream11.MainApplication      # Spark application main class
+MAIN_CLASS=com.logwise.spark.MainApplication      # Spark application main class
 ```
 
 ### Database Configuration

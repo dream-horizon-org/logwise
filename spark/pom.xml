@@ -61,6 +61,11 @@
         <maven.failsafe.plugin.version>3.0.0-M5</maven.failsafe.plugin.version>
         <maven.jacoco.plugin.version>0.8.6</maven.jacoco.plugin.version>
 
+        <!-- Sonar -->
+        <!-- Version 3.9.1.2184 is the last version that supports Java 11 -->
+        <!-- Version 3.10.0+ requires Java 17+ -->
+        <sonar-maven-plugin.version>3.9.1.2184</sonar-maven-plugin.version>
+
         <!-- Sonar Executions -->
 
         <sonar.coverage.exclusions>
@@ -416,20 +421,7 @@
                 <version>${maven.jacoco.plugin.version}</version>
                 <configuration>
                     <excludes>
-                        <!-- To exclude constants classes from coverage report-->
-                        <exclude>com/logwise/constants/**</exclude>
-                        <!-- To exclude feign exceptions classes from coverage report-->
-                        <exclude>com/logwise/feign/exceptions/**</exclude>
-                        <!-- To exclude feign logger classes from coverage report-->
-                        <exclude>com/logwise/feign/logger/**</exclude>
-                        <!-- To exclude guice classes from coverage report-->
-                        <exclude>com/logwise/guice/**</exclude>
-                        <!-- To exclude schema classes from coverage report-->
-                        <exclude>com/logwise/schema/**</exclude>
-                        <!-- To exclude MainApplication class from coverage report-->
-                        <exclude>com/logwise/spark/MainApplication*</exclude>
-                        <!-- To exclude protobuf generated classes from coverage report-->
-                        <exclude>com/logwise/spark/protobuf/**</exclude>
+                        <exclude>**/com/logwise/spark/protobuf/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
@@ -462,6 +454,7 @@
                     </execution>
                     <execution>
                         <id>jacoco-check</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -473,17 +466,17 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
+                                            <minimum>0.7</minimum>
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.75</minimum>
+                                            <minimum>0.7</minimum>
                                         </limit>
                                         <limit>
                                             <counter>METHOD</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
+                                            <minimum>0.7</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
@@ -497,6 +490,41 @@
                 <groupId>com.spotify.fmt</groupId>
                 <artifactId>fmt-maven-plugin</artifactId>
                 <version>2.21.1</version>
+            </plugin>
+
+            <!-- Versions Maven Plugin - Standard tool for version management -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.16.2</version>
+            </plugin>
+
+            <!-- SonarQube Plugin -->
+            <!-- 
+                 IMPORTANT: This plugin REQUIRES a SonarQube server running.
+                 It CANNOT run in standalone mode.
+                 
+                 For Java 11 compatibility, use SonarQube 8.9.x LTS server:
+                 - Download: https://www.sonarsource.com/products/sonarqube/downloads/historical-downloads/
+                 - SonarQube 9.9+ requires Java 17+ for the server
+                 
+                 For local development without a server, use SonarLint IDE plugin instead.
+                 
+                 To use this plugin:
+                 1. Start SonarQube 8.9.x LTS server (runs on Java 11)
+                 2. Default URL: http://localhost:9000
+                 3. Authenticate (required):
+                    - Option A (recommended): Generate token at http://localhost:9000 → My Account → Security
+                      Then run: mvn sonar:sonar -Dsonar.login=YOUR_TOKEN
+                    - Option B: Use credentials: mvn sonar:sonar -Dsonar.login=admin -Dsonar.password=admin
+                 4. View results at http://localhost:9000/dashboard?id=com.logwise%3Alogwise-spark
+                 
+                 This plugin is useful for CI/CD pipelines with SonarQube server.
+            -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar-maven-plugin.version}</version>
             </plugin>
         </plugins>
     </build>

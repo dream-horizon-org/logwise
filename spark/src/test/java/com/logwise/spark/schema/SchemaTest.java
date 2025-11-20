@@ -31,15 +31,10 @@ public class SchemaTest {
 
     // Assert
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_MESSAGE));
-    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_DDTAGS));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_TIMESTAMP));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE));
-    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_HOSTNAME));
-    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_DDSOURCE));
-    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_SOURCE_TYPE));
-    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_STATUS));
   }
 
   @Test
@@ -48,7 +43,7 @@ public class SchemaTest {
     StructType schema = Schema.getVectorApplicationLogsSchema();
 
     // Assert
-    assertEquals(schema.fields().length, 10, "Schema should contain exactly 10 fields");
+    assertEquals(schema.fields().length, 5, "Schema should contain exactly 5 fields");
   }
 
   @Test
@@ -80,21 +75,6 @@ public class SchemaTest {
         "First field should be message");
     assertEquals(
         messageField.dataType(), DataTypes.StringType, "Message field should be StringType");
-  }
-
-  @Test
-  public void testGetVectorApplicationLogsSchema_DdtagsFieldExists() {
-    // Act
-    StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField ddtagsField = schema.apply(Constants.APPLICATION_LOG_COLUMN_DDTAGS);
-
-    // Assert
-    assertNotNull(ddtagsField, "DDtags field should exist");
-    assertEquals(
-        ddtagsField.name(),
-        Constants.APPLICATION_LOG_COLUMN_DDTAGS,
-        "Field name should match constant");
-    assertEquals(ddtagsField.dataType(), DataTypes.StringType, "DDtags field should be StringType");
   }
 
   @Test
@@ -152,62 +132,6 @@ public class SchemaTest {
     assertEquals(
         componentNameField.name(),
         Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE,
-        "Field name should match constant");
-  }
-
-  @Test
-  public void testGetVectorApplicationLogsSchema_HostnameFieldExists() {
-    // Act
-    StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField hostnameField = schema.apply(Constants.APPLICATION_LOG_COLUMN_HOSTNAME);
-
-    // Assert
-    assertNotNull(hostnameField, "Hostname field should exist");
-    assertEquals(
-        hostnameField.name(),
-        Constants.APPLICATION_LOG_COLUMN_HOSTNAME,
-        "Field name should match constant");
-  }
-
-  @Test
-  public void testGetVectorApplicationLogsSchema_DdsourceFieldExists() {
-    // Act
-    StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField ddsourceField = schema.apply(Constants.APPLICATION_LOG_COLUMN_DDSOURCE);
-
-    // Assert
-    assertNotNull(ddsourceField, "DDsource field should exist");
-    assertEquals(
-        ddsourceField.name(),
-        Constants.APPLICATION_LOG_COLUMN_DDSOURCE,
-        "Field name should match constant");
-  }
-
-  @Test
-  public void testGetVectorApplicationLogsSchema_SourceTypeFieldExists() {
-    // Act
-    StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField sourceTypeField = schema.apply(Constants.APPLICATION_LOG_COLUMN_SOURCE_TYPE);
-
-    // Assert
-    assertNotNull(sourceTypeField, "Source type field should exist");
-    assertEquals(
-        sourceTypeField.name(),
-        Constants.APPLICATION_LOG_COLUMN_SOURCE_TYPE,
-        "Field name should match constant");
-  }
-
-  @Test
-  public void testGetVectorApplicationLogsSchema_StatusFieldExists() {
-    // Act
-    StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField statusField = schema.apply(Constants.APPLICATION_LOG_COLUMN_STATUS);
-
-    // Assert
-    assertNotNull(statusField, "Status field should exist");
-    assertEquals(
-        statusField.name(),
-        Constants.APPLICATION_LOG_COLUMN_STATUS,
         "Field name should match constant");
   }
 

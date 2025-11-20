@@ -43,9 +43,32 @@ public class ApplicationTestConfig {
     ApplicationConfig.TenantConfig tenantConfig = new ApplicationConfig.TenantConfig();
     tenantConfig.setName(tenantName);
     tenantConfig.setObjectStore(createMockObjectStoreConfig());
+    tenantConfig.setDefaultLogsRetentionDays(7);
 
+    // Create KafkaConfig with required fields
+    ApplicationConfig.KafkaConfig kafkaConfig = new ApplicationConfig.KafkaConfig();
+    kafkaConfig.setKafkaBrokersHost("localhost:9092");
+    tenantConfig.setKafka(kafkaConfig);
+
+    // Create SparkConfig with all required fields
     ApplicationConfig.SparkConfig sparkConfig = new ApplicationConfig.SparkConfig();
     sparkConfig.setLogsDir("logs");
+    sparkConfig.setCheckPointDir("checkpoints");
+    sparkConfig.setSparkMasterHost("localhost");
+    sparkConfig.setKafkaMaxRatePerPartition("1000");
+    sparkConfig.setKafkaStartingOffsets("latest");
+    sparkConfig.setSubscribePattern("test-topic");
+    sparkConfig.setSparkJarPath("s3://bucket/spark.jar");
+    sparkConfig.setClientSparkVersion("3.0.0");
+    sparkConfig.setMainClass("com.example.Main");
+    sparkConfig.setAppName("test-app");
+    sparkConfig.setDriverCoresMax("10");
+    sparkConfig.setDriverCores("2");
+    sparkConfig.setDriverMemory("4G");
+    sparkConfig.setDriverMaxResultSize("2G");
+    sparkConfig.setLog4jPropertiesFilePath("log4j.properties");
+    sparkConfig.setExecutorCores("2");
+    sparkConfig.setExecutorMemory("4G");
     tenantConfig.setSpark(sparkConfig);
 
     ApplicationConfig.DelayMetricsConfig delayMetricsConfig =

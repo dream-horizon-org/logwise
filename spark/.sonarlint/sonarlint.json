@@ -1,0 +1,7 @@
+{
+  "sonarLint": {
+    "connectedMode": {
+      "projectKey": "logwise-spark"
+    }
+  }
+}

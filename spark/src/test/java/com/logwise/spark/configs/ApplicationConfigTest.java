@@ -42,7 +42,8 @@ public class ApplicationConfigTest {
 
     // Assert
     assertNotNull(config);
-    // First argument takes precedence (withFallback means earlier configs override later ones)
+    // First argument takes precedence (withFallback means earlier configs override
+    // later ones)
     assertEquals(config.getString("app.job.name"), "JOB1");
   }
 
@@ -56,7 +57,8 @@ public class ApplicationConfigTest {
     ApplicationConfig appConfig = null;
 
     try {
-      // Act - use reflection to call private init() method to get initialized ApplicationConfig
+      // Act - use reflection to call private init() method to get initialized
+      // ApplicationConfig
       Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
       initMethod.setAccessible(true);
       appConfig = (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
@@ -87,7 +89,8 @@ public class ApplicationConfigTest {
     ApplicationConfig appConfig = null;
 
     try {
-      // Act - use reflection to call private init() method to get initialized ApplicationConfig
+      // Act - use reflection to call private init() method to get initialized
+      // ApplicationConfig
       Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
       initMethod.setAccessible(true);
       appConfig = (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
@@ -96,7 +99,8 @@ public class ApplicationConfigTest {
       assertNotNull(appConfig, "ApplicationConfig instance creation failed");
       Config envConfig = appConfig.getSystemEnvironment();
       assertNotNull(envConfig);
-      // Verify environment config is not empty (should contain at least PATH or similar)
+      // Verify environment config is not empty (should contain at least PATH or
+      // similar)
       assertTrue(
           envConfig.entrySet().size() > 0,
           "Environment config should contain environment variables");
@@ -142,7 +146,8 @@ public class ApplicationConfigTest {
     Config config1 = ApplicationConfig.getConfig(configString1);
     Config config2 = ApplicationConfig.getConfig(configString2);
 
-    // Assert - ConfigFactory.invalidateCaches() is called, so each call should use new config
+    // Assert - ConfigFactory.invalidateCaches() is called, so each call should use
+    // new config
     assertNotNull(config1);
     assertNotNull(config2);
     // Verify cache invalidation works - each config should have different values
@@ -222,5 +227,86 @@ public class ApplicationConfigTest {
       // Cleanup
       System.clearProperty(customPropertyKey);
     }
+  }
+
+  @Test
+  public void testGetConfigProperties_ReturnsPropertiesConfig() throws Exception {
+    // Arrange
+    String configArg = "test.key=test.value\ntenant.name=test-tenant\ns3.bucket=test-bucket";
+    Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
+    initMethod.setAccessible(true);
+    ApplicationConfig appConfig =
+        (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
+
+    // Act
+    Config propertiesConfig = appConfig.getConfigProperties();
+
+    // Assert
+    assertNotNull(propertiesConfig);
+    assertTrue(propertiesConfig.hasPath("test.key"));
+    assertEquals(propertiesConfig.getString("test.key"), "test.value");
+  }
+
+  @Test
+  public void testGetConfig_WithEmptyArgs_ReturnsConfig() {
+    // Arrange - No arguments, but need s3.bucket for config resolution
+    // application.conf has substitutions like ${s3.bucket} that need to be resolved
+    String requiredProperty = "s3.bucket=test-bucket";
+
+    // Act
+    Config config = ApplicationConfig.getConfig(requiredProperty);
+
+    // Assert
+    assertNotNull(config);
+    // Should still load application.conf and resolve substitutions
+    assertTrue(config.hasPath("app.job.name"));
+  }
+
+  @Test
+  public void testGetConfig_WithEmptyStringArg_HandlesGracefully() {
+    // Arrange
+    String emptyArg = "";
+    // Empty string is parsed as empty config, but we need s3.bucket for resolution
+    String requiredProperty = "s3.bucket=test-bucket";
+
+    // Act - Empty string is parsed as empty config, which is valid
+    Config config = ApplicationConfig.getConfig(emptyArg, requiredProperty);
+
+    // Assert
+    assertNotNull(config);
+    // Should not throw exception and should resolve config
+    assertTrue(config.hasPath("s3.bucket"));
+  }
+
+  @Test
+  public void testGetConfig_WithMultipleEmptyArgs_HandlesGracefully() {
+    // Arrange
+    String emptyArg1 = "";
+    String emptyArg2 = "";
+    String validArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
+
+    // Act
+    Config config = ApplicationConfig.getConfig(emptyArg1, emptyArg2, validArg);
+
+    // Assert
+    assertNotNull(config);
+    assertEquals(config.getString("tenant.name"), "test-tenant");
+  }
+
+  @Test
+  public void testGetConfig_WithWhitespaceOnlyArgs_HandlesGracefully() {
+    // Arrange
+    // Whitespace-only strings are parsed as empty config, but we need s3.bucket for
+    // resolution
+    String whitespaceArg = "   \n\t  ";
+    String requiredProperty = "s3.bucket=test-bucket";
+
+    // Act - Whitespace is parsed as empty config, which is valid
+    Config config = ApplicationConfig.getConfig(whitespaceArg, requiredProperty);
+
+    // Assert
+    assertNotNull(config);
+    // Should not throw exception and should resolve config
+    assertTrue(config.hasPath("s3.bucket"));
   }
 }

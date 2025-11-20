@@ -34,7 +34,8 @@ import lombok.val;
 @Slf4j
 public abstract class AbstractApplication {
 
-  // TODO: Keep the event loop size less than #cores to allow for acceptor thread, logback and other
+  // TODO: Keep the event loop size less than #cores to allow for acceptor thread,
+  // logback and other
   // processes
   public static final Integer NUM_OF_CORES = CpuCoreSensor.availableProcessors();
 
@@ -158,7 +159,7 @@ public abstract class AbstractApplication {
   protected abstract Module[] getGoogleGuiceModules(final Vertx vertx);
 
   /**
-   * Return Array of Deployable. Ref: @see com.dream11.app.Deployable.
+   * Return Array of Deployable.
    *
    * @param vertx io.vertx.reactivex.core.Vertx
    * @return Deployable[]

@@ -1,0 +1,170 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on tags like v0.0.1, v1.2.3, etc.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 0.0.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write  # Required for creating releases and commits
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "release"
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # Extract version from tag (v0.0.1 -> 0.0.1)
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Update versions to release (remove SNAPSHOT)
+        run: |
+          chmod +x scripts/update-versions.sh
+          ./scripts/update-versions.sh ${{ steps.extract_version.outputs.version }}
+
+      - name: Verify version updates
+        run: |
+          echo "Verifying version updates..."
+          echo "Orchestrator version:"
+          grep -A 2 "<artifactId>orchestrator</artifactId>" orchestrator/pom.xml | grep "<version>"
+          echo "Spark version:"
+          grep -A 2 "<artifactId>logwise-spark</artifactId>" spark/pom.xml | grep "<version>"
+          echo "Docs version:"
+          cat docs/VERSION
+
+      - name: Check if tag already exists and has version changes
+        id: check_tag
+        run: |
+          # Check if we're on a tag (not a branch)
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # Tag already exists - we'll update versions but can't commit to tag
+            # Instead, we'll create a release branch or just proceed
+            echo "Tag exists, will update versions in working directory only"
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit version changes (if not a tag)
+        if: steps.check_tag.outputs.tag_exists != 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add orchestrator/pom.xml spark/pom.xml docs/VERSION docs/package.json
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No version changes to commit"
+          else
+            git commit -m "chore: update versions to ${{ steps.extract_version.outputs.version }} for release"
+            git push origin HEAD:${{ github.ref }}
+          fi
+
+      - name: Build and publish docs
+        working-directory: docs
+        run: |
+          # Cache Node modules
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f yarn.lock ]; then
+            yarn install --frozen-lockfile
+          else
+            npm install
+          fi
+          npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload docs artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Checkout main branch for snapshot bump
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Java for snapshot bump
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Cache Maven dependencies for snapshot bump
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Bump to next snapshot version
+        run: |
+          chmod +x scripts/bump-snapshot.sh
+          ./scripts/bump-snapshot.sh ${{ steps.extract_version.outputs.version }}
+
+      - name: Verify snapshot version bump
+        run: |
+          echo "Verifying snapshot version bump..."
+          echo "Orchestrator version:"
+          grep -A 2 "<artifactId>orchestrator</artifactId>" orchestrator/pom.xml | grep "<version>"
+          echo "Spark version:"
+          grep -A 2 "<artifactId>logwise-spark</artifactId>" spark/pom.xml | grep "<version>"
+          echo "Docs version:"
+          cat docs/VERSION
+
+      - name: Commit snapshot version bump to main
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add orchestrator/pom.xml spark/pom.xml docs/VERSION docs/package.json
+          git commit -m "chore: bump version to next snapshot after release ${{ steps.extract_version.outputs.version }}" || echo "No changes to commit"
+          git push origin main || echo "Nothing to push"
