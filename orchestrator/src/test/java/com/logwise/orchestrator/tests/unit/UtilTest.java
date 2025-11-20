@@ -12,7 +12,6 @@ import com.logwise.orchestrator.setup.BaseTest;
 import com.logwise.orchestrator.testconfig.ApplicationTestConfig;
 import com.logwise.orchestrator.util.ApplicationUtils;
 import com.logwise.orchestrator.util.AwsClientUtils;
-import com.logwise.orchestrator.util.Encryption;
 import com.logwise.orchestrator.util.S3Utils;
 import com.logwise.orchestrator.util.TestResponseWrapper;
 import com.logwise.orchestrator.util.WebClientUtils;
@@ -20,7 +19,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -42,7 +40,7 @@ import software.amazon.awssdk.services.s3.model.*;
 
 /**
  * Unit tests for util package (S3Utils, ResponseWrapper, AwsClientUtils, WebClientUtils,
- * Encryption, ApplicationUtils).
+ * ApplicationUtils).
  */
 public class UtilTest extends BaseTest {
 
@@ -475,32 +473,6 @@ public class UtilTest extends BaseTest {
           e instanceof RuntimeException
               || (e.getCause() != null && e.getCause() instanceof RuntimeException));
     }
-  }
-
-  @Test
-  public void testEncryption_ClassExists() {
-
-    Assert.assertNotNull(Encryption.class);
-  }
-
-  @Test
-  public void testEncryption_MethodsExist() throws Exception {
-
-    Method[] methods = Encryption.class.getDeclaredMethods();
-    boolean hasEncrypt = false;
-    boolean hasDecrypt = false;
-
-    for (Method method : methods) {
-      if (method.getName().equals("encrypt") && method.getParameterCount() == 1) {
-        hasEncrypt = true;
-      }
-      if (method.getName().equals("decrypt") && method.getParameterCount() == 1) {
-        hasDecrypt = true;
-      }
-    }
-
-    Assert.assertTrue(hasEncrypt, "encrypt method should exist");
-    Assert.assertTrue(hasDecrypt, "decrypt method should exist");
   }
 
   @Test

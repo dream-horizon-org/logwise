@@ -18,6 +18,7 @@ import io.reactivex.Completable;
 import io.reactivex.Single;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.mockito.MockedStatic;
@@ -350,5 +351,144 @@ public class SparkServiceTest extends BaseTest {
     Assert.assertNotNull(endpointObj);
     String endpoint = String.valueOf(endpointObj);
     Assert.assertEquals(endpoint, "s3.amazonaws.com");
+  }
+
+  @Test
+  public void testCleanSparkState_WithFiles_DeletesFiles() {
+    Tenant tenant = Tenant.ABC;
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
+            Mockito.mockStatic(ApplicationConfigUtil.class);
+        MockedStatic<com.logwise.orchestrator.factory.ObjectStoreFactory> mockedFactory =
+            Mockito.mockStatic(com.logwise.orchestrator.factory.ObjectStoreFactory.class)) {
+      ApplicationConfig.TenantConfig tenantConfig =
+          ApplicationTestConfig.createMockTenantConfig("ABC");
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(tenantConfig);
+
+      com.logwise.orchestrator.client.ObjectStoreClient mockObjectStoreClient =
+          mock(com.logwise.orchestrator.client.ObjectStoreClient.class);
+      when(mockObjectStoreClient.listObjects(anyString()))
+          .thenReturn(Single.just(Arrays.asList("checkpoint1", "checkpoint2")));
+      when(mockObjectStoreClient.deleteFile(anyString())).thenReturn(Completable.complete());
+      mockedFactory
+          .when(() -> com.logwise.orchestrator.factory.ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
+
+      Completable result = sparkService.cleanSparkState(tenant);
+      result.blockingAwait();
+
+      verify(mockObjectStoreClient, atLeastOnce()).deleteFile(anyString());
+    }
+  }
+
+  @Test
+  public void testCleanSparkState_WithNoFiles_CompletesSuccessfully() {
+    Tenant tenant = Tenant.ABC;
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
+            Mockito.mockStatic(ApplicationConfigUtil.class);
+        MockedStatic<com.logwise.orchestrator.factory.ObjectStoreFactory> mockedFactory =
+            Mockito.mockStatic(com.logwise.orchestrator.factory.ObjectStoreFactory.class)) {
+      ApplicationConfig.TenantConfig tenantConfig =
+          ApplicationTestConfig.createMockTenantConfig("ABC");
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(tenantConfig);
+
+      com.logwise.orchestrator.client.ObjectStoreClient mockObjectStoreClient =
+          mock(com.logwise.orchestrator.client.ObjectStoreClient.class);
+      when(mockObjectStoreClient.listObjects(anyString()))
+          .thenReturn(Single.just(Collections.emptyList()));
+      mockedFactory
+          .when(() -> com.logwise.orchestrator.factory.ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
+
+      Completable result = sparkService.cleanSparkState(tenant);
+      result.blockingAwait();
+
+      // Should complete without errors
+      Assert.assertNotNull(result);
+    }
+  }
+
+  @Test
+  public void testSubmitSparkJob_WithValidConfig_SubmitsJob() {
+    ApplicationConfig.TenantConfig tenantConfig =
+        ApplicationTestConfig.createMockTenantConfig("ABC");
+
+    io.vertx.reactivex.ext.web.client.WebClient reactiveWebClient = mockWebClient.getWebClient();
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
+        mockHttpResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockHttpResponse.statusCode()).thenReturn(200);
+    when(mockHttpResponse.bodyAsString()).thenReturn("{\"submissionId\":\"test-id\"}");
+    when(reactiveWebClient.postAbs(anyString())).thenReturn(mockHttpRequest);
+    when(mockHttpRequest.rxSendJson(any())).thenReturn(Single.just(mockHttpResponse));
+
+    Completable result = sparkService.submitSparkJob(tenantConfig, null, null);
+
+    Assert.assertNotNull(result);
+    result.blockingAwait();
+  }
+
+  @Test
+  public void testMonitorSparkJob_WithNoRunningDriver_SubmitsJob() {
+    Tenant tenant = Tenant.ABC;
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
+            Mockito.mockStatic(ApplicationConfigUtil.class);
+        MockedStatic<com.logwise.orchestrator.factory.ObjectStoreFactory> mockedFactory =
+            Mockito.mockStatic(com.logwise.orchestrator.factory.ObjectStoreFactory.class)) {
+      ApplicationConfig.TenantConfig tenantConfig =
+          ApplicationTestConfig.createMockTenantConfig("ABC");
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(tenantConfig);
+
+      // Mock ObjectStoreClient for cleanSparkState
+      com.logwise.orchestrator.client.ObjectStoreClient mockObjectStoreClient =
+          mock(com.logwise.orchestrator.client.ObjectStoreClient.class);
+      when(mockObjectStoreClient.listObjects(anyString()))
+          .thenReturn(Single.just(Collections.emptyList()));
+      mockedFactory
+          .when(() -> com.logwise.orchestrator.factory.ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
+
+      // Mock web client for getSparkMasterJsonResponse and submitSparkJob
+      io.vertx.reactivex.ext.web.client.WebClient reactiveWebClient = mockWebClient.getWebClient();
+      io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+          mockGetRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+      io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+          mockPostRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+      io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
+          mockGetResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+      io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
+          mockPostResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+
+      SparkMasterJsonResponse sparkResponse = new SparkMasterJsonResponse();
+      sparkResponse.setActivedrivers(Collections.emptyList());
+
+      when(mockGetResponse.bodyAsString()).thenReturn("{\"activedrivers\":[]}");
+      when(mockPostResponse.statusCode()).thenReturn(200);
+      when(mockPostResponse.bodyAsString()).thenReturn("{\"submissionId\":\"test\"}");
+      when(reactiveWebClient.getAbs(anyString())).thenReturn(mockGetRequest);
+      when(reactiveWebClient.postAbs(anyString())).thenReturn(mockPostRequest);
+      when(mockGetRequest.rxSend()).thenReturn(Single.just(mockGetResponse));
+      when(mockPostRequest.rxSendJson(any())).thenReturn(Single.just(mockPostResponse));
+      try {
+        when(mockObjectMapper.readValue(anyString(), eq(SparkMasterJsonResponse.class)))
+            .thenReturn(sparkResponse);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      Completable result = sparkService.monitorSparkJob(tenant, null, null);
+
+      Assert.assertNotNull(result);
+      // This is a long-running operation, just verify it doesn't throw immediately
+    }
   }
 }

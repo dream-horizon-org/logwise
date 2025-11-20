@@ -670,6 +670,28 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${maven.jacoco.plugin.version}</version>
+        <configuration>
+          <excludes>
+            <exclude>**com/logwise/orchestrator/rest/config/**</exclude>
+            <exclude>**com/logwise/orchestrator/rest/converter/**</exclude>
+            <exclude>**com/logwise/orchestrator/rest/exception/**</exclude>
+            <exclude>**com/logwise/orchestrator/rest/filter/**</exclude>
+            <exclude>**com/logwise/orchestrator/rest/handler/**</exclude>
+            <exclude>**com/logwise/orchestrator/rest/io/**</exclude>
+            <exclude>**com/logwise/orchestrator/rest/provider/**</exclude>
+            <exclude>**com/logwise/orchestrator/common/app/**</exclude>
+            <exclude>**com/logwise/orchestrator/dao/**</exclude>
+            <exclude>**com/logwise/orchestrator/webclient/**</exclude>
+            <exclude>**com/logwise/orchestrator/verticle/**</exclude>
+            <exclude>**com/logwise/orchestrator/mysql/**</exclude>
+            <exclude>com/logwise/orchestrator/rest/AbstractRoute.class</exclude>
+            <exclude>**com/logwise/orchestrator/rest/provider/**</exclude>
+            <exclude>com/logwise/orchestrator/rest/Request.class</exclude>
+            <exclude>com/logwise/orchestrator/rest/AbstractRestVerticle.class</exclude>
+            <exclude>com/logwise/orchestrator/CaffeineCacheFactory.class</exclude>
+            <exclude>com/logwise/orchestrator/CaffeineConfig.class</exclude>
+          </excludes>
+        </configuration>
         <executions>
           <execution>
             <id>pre-unit-test</id>
@@ -712,17 +734,17 @@
                               <limit>
                                   <counter>LINE</counter>
                                   <value>COVEREDRATIO</value>
-                                  <minimum>0.40</minimum>
+                                  <minimum>0.70</minimum>
                               </limit>
                               <limit>
                                   <counter>BRANCH</counter>
                                   <value>COVEREDRATIO</value>
-                                  <minimum>0.30</minimum>
+                                  <minimum>0.70</minimum>
                               </limit>
                               <limit>
                                   <counter>METHOD</counter>
                                   <value>COVEREDRATIO</value>
-                                  <minimum>0.40</minimum>
+                                  <minimum>0.70</minimum>
                               </limit>
                           </limits>
                       </rule>

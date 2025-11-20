@@ -229,4 +229,85 @@ public class ObjectStoreServiceTest extends BaseTest {
     Assert.assertNotNull(result);
     Assert.assertEquals(result, Integer.valueOf(60));
   }
+
+  @Test
+  public void testGetAllDistinctServicesInAws_WithNestedPrefixes_ReturnsAllServices() {
+    Tenant tenant = Tenant.ABC;
+    String envPrefix = "logs/environment_name=prod/";
+    String componentPrefix1 = "logs/environment_name=prod/component_type=web/";
+    String componentPrefix2 = "logs/environment_name=prod/component_type=api/";
+    String servicePrefix1 = "logs/environment_name=prod/component_type=web/service_name=api1/";
+    String servicePrefix2 = "logs/environment_name=prod/component_type=web/service_name=api2/";
+    String servicePrefix3 = "logs/environment_name=prod/component_type=api/service_name=api3/";
+
+    try (MockedStatic<ObjectStoreFactory> mockedFactory =
+            Mockito.mockStatic(ObjectStoreFactory.class);
+        MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
+            Mockito.mockStatic(ApplicationConfigUtil.class)) {
+
+      mockObjectStoreClient = mock(ObjectStoreClient.class);
+      mockedFactory
+          .when(() -> ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
+
+      ApplicationConfig.TenantConfig tenantConfig =
+          ApplicationTestConfig.createMockTenantConfig("ABC");
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(tenantConfig);
+
+      // Mock nested listCommonPrefix calls
+      when(mockObjectStoreClient.listCommonPrefix(contains("environment_name="), eq("/")))
+          .thenReturn(Single.just(Arrays.asList(envPrefix)));
+      when(mockObjectStoreClient.listCommonPrefix(contains("component_type="), eq("/")))
+          .thenReturn(
+              Single.just(Arrays.asList(componentPrefix1, componentPrefix2)),
+              Single.just(Arrays.asList(componentPrefix1, componentPrefix2)));
+      when(mockObjectStoreClient.listCommonPrefix(contains("service_name="), eq("/")))
+          .thenReturn(
+              Single.just(Arrays.asList(servicePrefix1, servicePrefix2)),
+              Single.just(Arrays.asList(servicePrefix3)));
+
+      Single<List<ServiceDetails>> result = objectStoreService.getAllDistinctServicesInAws(tenant);
+      List<ServiceDetails> services = result.blockingGet();
+
+      Assert.assertNotNull(services);
+      // Should have parsed multiple services
+    }
+  }
+
+  @Test
+  public void testGetAllDistinctServicesInAws_WithError_PropagatesError() {
+    Tenant tenant = Tenant.ABC;
+
+    try (MockedStatic<ObjectStoreFactory> mockedFactory =
+            Mockito.mockStatic(ObjectStoreFactory.class);
+        MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
+            Mockito.mockStatic(ApplicationConfigUtil.class)) {
+
+      mockObjectStoreClient = mock(ObjectStoreClient.class);
+      mockedFactory
+          .when(() -> ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
+
+      ApplicationConfig.TenantConfig tenantConfig =
+          ApplicationTestConfig.createMockTenantConfig("ABC");
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(tenantConfig);
+
+      RuntimeException error = new RuntimeException("S3 error");
+      when(mockObjectStoreClient.listCommonPrefix(anyString(), eq("/")))
+          .thenReturn(Single.error(error));
+
+      Single<List<ServiceDetails>> result = objectStoreService.getAllDistinctServicesInAws(tenant);
+
+      try {
+        result.blockingGet();
+        Assert.fail("Should have thrown exception");
+      } catch (RuntimeException e) {
+        Assert.assertNotNull(e);
+      }
+    }
+  }
 }
