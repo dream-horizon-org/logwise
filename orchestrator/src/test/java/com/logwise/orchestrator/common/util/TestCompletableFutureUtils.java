@@ -26,3 +26,4 @@ public class TestCompletableFutureUtils {
     return VertxCompletableFuture.from(testVertx.getOrCreateContext(), future);
   }
 }
+

@@ -225,3 +225,4 @@ public class MapUtilsTest extends BaseTest {
     Assert.assertEquals(result.get(keys.get(2)), Integer.valueOf(3));
   }
 }
+

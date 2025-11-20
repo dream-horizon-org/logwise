@@ -193,3 +193,4 @@ public class MetricsServiceTest extends BaseTest {
     Assert.assertNotEquals(result1, result2);
   }
 }
+

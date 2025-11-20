@@ -92,3 +92,4 @@ public class StreamUtilsTest extends BaseTest {
     Assert.assertEquals(keys.get(3), Character.valueOf('c'));
   }
 }
+
