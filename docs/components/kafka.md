@@ -32,8 +32,8 @@ Kafka enables:
 Vector dynamically creates Kafka topics using tags: `type`, `env`, and `service_name`. Topics follow the naming convention: `{type}_{env}_{service_name}`.
 
 **Format:**
-- `type` - Type of data (e.g., `application`, `kafka`, `mysql`, `nginx`)
-- `env` - Environment identifier (e.g., `prod`, `staging`, `dev`, `test`)
+- `environment_name` - Environment identifier (e.g., `prod`, `staging`, `dev`, `test`)
+- `component_type` - Type of data (e.g., `application`, `kafka`, `mysql`, `nginx`)
 - `service_name` - Service or application name generating the logs
 
 **Examples:**
