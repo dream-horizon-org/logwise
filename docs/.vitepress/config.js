@@ -39,6 +39,7 @@ export default defineConfig({
         nav: [
             { text: 'Home', link: '/' },
             { text: 'Overview', link: '/what-is-logwise' },
+            { text: 'Roadmap', link: '/roadmap' },
             { text: 'Setup', link: '/setup-guides/docker' },
             {
                 text: `v${version}`, items: isSnapshot ? [
@@ -59,6 +60,7 @@ export default defineConfig({
                     items: [
                         { text: 'Introduction', link: '/' },
                         { text: 'What is Logwise?', link: '/what-is-logwise' },
+                        { text: 'Roadmap', link: '/roadmap' },
                         {
                             text: 'Architecture Overview',
                             link: '/architecture-overview',

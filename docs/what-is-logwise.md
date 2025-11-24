@@ -6,9 +6,11 @@
 
 Managing logs effectively is a common struggle for development teams:
 
-- Developers spend too much time dealing with unstructured logs
-- Existing tools are often complex, heavy, or closed-source
+- Logs are scattered across environments, making unified visibility difficult
 - Small teams and organizations need a simple, transparent, and extensible solution they can afford
+- Developers spend too much time dealing with unstructured logs
+- Raw logs lack actionable insights, making it hard to derive metrics and alerts
+- Existing tools are often complex, heavy, or closed-source
 
 ## How Logwise Solves This
 
@@ -22,25 +24,11 @@ Logwise (also known as **Log-Central**) is a centralized and scalable system tha
 
 ## Key Features
 
-### 🚀 High Performance
-- High-throughput processing capabilities
-- Real-time ingestion and processing
-- Optimized data pipeline with minimal latency
-
-### 📊 Log Search & Viewing
-- Interactive dashboards with Grafana integration
-- Live viewing and exploration capabilities
-- Custom filters and metadata-based search
-
-### 🔧 Production Ready
-- Self-healing orchestration service
-- Production-tested architecture with setup guides
-- Reliable and fault-tolerant design
-
-### 🐳 Flexible Deployment
-- Docker and Kubernetes support
-- Self-hosted deployment options
-- Cloud-native architecture compatible with AWS S3
+- S3-based storage with configurable retention policies and no per-GB ingestion charges
+- Interactive dashboards with Grafana integration and custom filters
+- High-throughput processing with real-time ingestion and minimal latency
+- Self-healing orchestration service with production-tested architecture
+- Docker support with self-hosted deployment options and AWS S3 compatibility
 
 
 ## Use Cases
@@ -49,7 +37,6 @@ Logwise is ideal for:
 
 - **Large-scale applications** generating millions of log events per second
 - **Microservices architectures** requiring centralized log aggregation
-- **Multi-tenant systems** needing isolated log processing per environment
 - **Compliance and audit** requirements with configurable retention policies
 - **Real-time analytics** and exploration for troubleshooting
 
