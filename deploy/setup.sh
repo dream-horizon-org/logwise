@@ -204,7 +204,7 @@ main() {
     printf "${dim}  Required variables:${reset}\n"
     printf "${dim}    • AWS_ACCESS_KEY_ID${reset}\n"
     printf "${dim}    • AWS_SECRET_ACCESS_KEY${reset}\n"
-    printf "${dim}    • S3_BUCKET${reset}\n"
+    printf "${dim}    • S3_BUCKET_NAME${reset}\n"
     printf "${dim}    • S3_ATHENA_OUTPUT${reset}\n"
     printf "${dim}    • ATHENA_WORKGROUP${reset}\n"
     printf "${dim}    • ATHENA_DATABASE${reset}\n"

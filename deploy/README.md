@@ -159,7 +159,7 @@ AWS_SESSION_TOKEN=                      # Optional: for temporary credentials
 ### S3 Configuration (Required)
 
 ```bash
-S3_BUCKET=your-bucket-name              # S3 bucket for storing processed logs
+S3_BUCKET_NAME=your-bucket-name              # S3 bucket for storing processed logs
 S3_PREFIX=logs/                         # Prefix/path within the bucket
 ```
 
@@ -267,7 +267,7 @@ docker compose exec kafka kafka-console-consumer.sh \
 After submitting a Spark job, verify Parquet files in S3:
 
 ```bash
-aws s3 ls s3://${S3_BUCKET}/${S3_PREFIX}/
+aws s3 ls s3://${S3_BUCKET_NAME}/${S3_PREFIX}/
 ```
 
 ### 3. Test Athena → Grafana

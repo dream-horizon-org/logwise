@@ -121,7 +121,7 @@ AWS_SESSION_TOKEN=                      # Optional: for temporary credentials
 ### S3 Configuration (Required)
 
 ```bash
-S3_BUCKET=your-bucket-name              # S3 bucket for storing processed logs
+S3_BUCKET_NAME=your-bucket-name              # S3 bucket for storing processed logs
 S3_PREFIX=logs/                         # Prefix/path within the bucket
 ```
 
