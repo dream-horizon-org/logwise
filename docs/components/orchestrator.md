@@ -44,9 +44,9 @@ The Orchestrator Service enables:
 
 The Orchestrator automatically discovers services by scanning object storage partitions. Services are identified by their path structure:
 
-**Format**: `logs/env={env}/service_name={service}/component_name={component}/`
+**Format**: `logs/environment_name={env}/component_type={service}/service_name={service}/`
 
-**Example**: `logs/env=prod/service_name=api-service/component_name=api-container/`
+**Example**: `logs/environment_name=prod/component_type=application/service_name=api-service/`
 
 **Process**:
 1. Scans S3 prefixes to discover all unique service combinations

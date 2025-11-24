@@ -1,18 +1,0 @@
-
-ÿ
-google/protobuf/timestamp.protogoogle.protobuf";
-	Timestamp
-seconds (Rseconds
-nanos (RnanosB…
-com.google.protobufBTimestampProtoPZ2google.golang.org/protobuf/types/known/timestamppbø¢GPBªGoogle.Protobuf.WellKnownTypesbproto3
-é
-logwise-vector.protologwise.vector.logsgoogle/protobuf/timestamp.proto"ò
-
-VectorLogs!
-service_name (	RserviceName)
-environment_name (	RenvironmentName
-message (	Rmessage
-	log_level (	RlogLevel8
-	timestamp (2.google.protobuf.TimestampR	timestamp%
-component_type (	RcomponentTypeB
-com.logwise.spark.protobufPbproto3

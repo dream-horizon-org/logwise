@@ -204,9 +204,7 @@ public class SparkService {
     TenantConfig tenantConfig = ApplicationConfigUtil.getTenantConfig(tenant);
 
     if (isDriverNotRunning(response)) {
-      return cleanSparkState(tenant)
-          .andThen(submitSparkJob(tenantConfig, driverCores, driverMemoryInGb))
-          .toSingleDefault(true);
+      return submitSparkJob(tenantConfig, driverCores, driverMemoryInGb).toSingleDefault(true);
     }
 
     return Single.just(false);

@@ -27,8 +27,8 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
 
 - Provides a **high-throughput**, **fault-tolerant**, and **scalable** log ingestion layer.  
 - Vector dynamically creates **Kafka topics** using tags:
-  - `type`
-  - `env`
+  - `environment_name`
+  - `component_type`
   - `service_name`
 - Enables decoupled, delayed, or batched log processing to support downstream consumers like Spark.
 

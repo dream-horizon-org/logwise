@@ -4,19 +4,19 @@ import com.logwise.orchestrator.rest.converter.DoubleParamConverter;
 import com.logwise.orchestrator.rest.converter.FloatParamConverter;
 import com.logwise.orchestrator.rest.converter.IntegerParamConverter;
 import com.logwise.orchestrator.rest.converter.LongParamConverter;
-import com.logwise.orchestrator.rest.provider.D11ParamConverterProvider;
+import com.logwise.orchestrator.rest.provider.ParamConverterProvider;
 import javax.ws.rs.ext.ParamConverter;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/** Unit tests for D11ParamConverterProvider. */
-public class D11ParamConverterProviderTest {
+/** Unit tests for ParamConverterProvider. */
+public class ParamConverterProviderTest {
 
-  private D11ParamConverterProvider provider;
+  private ParamConverterProvider provider;
 
   @Test
   public void setUp() {
-    provider = new D11ParamConverterProvider();
+    provider = new ParamConverterProvider();
   }
 
   @Test

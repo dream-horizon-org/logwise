@@ -5,7 +5,6 @@ import com.logwise.orchestrator.common.guice.DefaultModule;
 import com.logwise.orchestrator.common.util.CompletableUtils;
 import com.logwise.orchestrator.common.util.MaintenanceUtils;
 import com.logwise.orchestrator.config.constant.Constants;
-import com.logwise.orchestrator.config.utils.WatchUtils;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -14,9 +13,6 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.cpu.CpuCoreSensor;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.consul.KeyValue;
-import io.vertx.ext.consul.Watch;
 import io.vertx.ext.dropwizard.DropwizardMetricsOptions;
 import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
@@ -40,7 +36,6 @@ public abstract class AbstractApplication {
   public static final Integer NUM_OF_CORES = CpuCoreSensor.availableProcessors();
 
   @Getter protected Vertx vertx;
-  private Watch<KeyValue> restartWatch;
   private final Thread shutdownThread = new Thread(this::gracefulShutdown);
 
   protected static Completable deployVerticles(
@@ -122,7 +117,6 @@ public abstract class AbstractApplication {
                     healthCheckWaitPeriod))
         .delay(healthCheckWaitPeriod, TimeUnit.SECONDS)
         .andThen(vertx.rxClose())
-        .doOnComplete(this::closeWatch) // stop current watch
         .doOnComplete(AppContext::reset)
         .doOnComplete(() -> log.info("Successfully stopped application"))
         .compose(CompletableUtils.applyDebugLogs(log));
@@ -210,55 +204,11 @@ public abstract class AbstractApplication {
   }
 
   protected String getConsulKey() {
-    return "d11/"
-        + Constants.NAMESPACE
+    return Constants.NAMESPACE
         + "/"
         + Constants.SERVICE_NAME
         + "/"
         + Constants.ENV
         + "/restart.json";
-  }
-
-  public void registerRestartApplicationWatch(Long timeoutSeconds) {
-    final int DEFAULT_MAX_RESTART_DELAY = 2 * 60; // seconds
-    this.restartWatch =
-        WatchUtils.setConsulKeyWatch(
-            this.vertx.getDelegate(),
-            getConsulKey(),
-            timeoutSeconds,
-            watchResult -> {
-              if (watchResult.succeeded()) {
-                if (watchResult.prevResult() != null) { // this is null when application is started
-                  if (watchResult.nextResult().isPresent()) {
-                    log.info("Signal to restart application detected from consul");
-                    JsonObject config = new JsonObject(watchResult.nextResult().getValue());
-                    Integer maxDelaySeconds =
-                        config.containsKey("maxDelaySeconds")
-                            ? config.getInteger("maxDelaySeconds")
-                            : DEFAULT_MAX_RESTART_DELAY;
-                    Integer healthCheckWaitPeriod =
-                        config.containsKey("healthCheckWaitPeriod")
-                            ? config.getInteger("healthCheckWaitPeriod")
-                            : getHealthCheckWaitPeriod();
-                    rxRestartApplication(healthCheckWaitPeriod, maxDelaySeconds).subscribe();
-                  } else {
-                    log.info("Next result is not present");
-                  }
-                }
-              } else {
-                log.error("Unable to retrieve keys from consul", watchResult.cause());
-              }
-            });
-  }
-
-  public void registerRestartApplicationWatch() {
-    registerRestartApplicationWatch(45L);
-  }
-
-  private void closeWatch() {
-    if (this.restartWatch != null) {
-      this.restartWatch.stop();
-      this.restartWatch = null;
-    }
   }
 }

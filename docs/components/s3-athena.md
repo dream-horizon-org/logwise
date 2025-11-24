@@ -27,15 +27,15 @@ The data flow:
 
 - **Cost-effective storage** - Pay-per-use pricing with lifecycle policies for archival (S3 Standard → S3 IA → Glacier)
 - **Serverless querying** - SQL queries without managing infrastructure, pay-per-query pricing
-- **Partitioned storage** - Logs organized by `env`, `service_name`, `component_name`, and `time` for optimized querying
+- **Partitioned storage** - Logs organized by `environment_name`, `component_type`, `service_name` and `time` for optimized querying
 - **Parquet format** - Columnar storage with high compression (70-90% reduction) and schema evolution support
 
 ## Partitioning Strategy
 
 Logs are partitioned in S3 by metadata tags to optimize query performance and reduce costs. The table schema includes four partition keys:
-- `env` - Environment (dev, staging, prod)
+- `environment_name` - Environment (dev, staging, prod)
+- `component_type` - Types (application, kafka)
 - `service_name` - Service identifier
-- `component_name` - Component within the service
 - `time` - Time-based partition (typically date/hour)
 
 ### S3 Path Structure
@@ -43,9 +43,9 @@ Logs are partitioned in S3 by metadata tags to optimize query performance and re
 Logs are organized in S3 with partition keys in the path:
 ```
 s3://bucket-name/logs/
-  env=prod/
-    service_name=order-service/
-      component_name=api/
+  environment_name=prod/
+    component_type=api/
+      service_name=order-service/
         time=2024-01-15/
           part-00000.parquet
 ```

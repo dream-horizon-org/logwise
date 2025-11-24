@@ -20,7 +20,7 @@ public final class ConfigUtils {
   public static ConfigRetriever getRetriever(Vertx vertx, String confFilePathFormat) {
     ConfigFactory.invalidateCaches();
     ConfigStoreOptions hoconStore =
-        new ConfigStoreOptions().setType("file").setFormat("d11hocon").setOptional(true);
+        new ConfigStoreOptions().setType("file").setFormat("hocon").setOptional(true);
     ConfigStoreOptions defaultStore =
         new ConfigStoreOptions(hoconStore)
             .setConfig(new JsonObject().put("path", String.format(confFilePathFormat, "default")));
@@ -29,13 +29,8 @@ public final class ConfigUtils {
             .setConfig(
                 new JsonObject()
                     .put("path", String.format(confFilePathFormat, getAppEnvironment())));
-    int scanPeriod = Integer.parseInt(System.getProperty("d11.config.scanInterval", "0"));
     return ConfigRetriever.create(
-        vertx,
-        new ConfigRetrieverOptions()
-            .addStore(defaultStore)
-            .addStore(environmentStore)
-            .setScanPeriod(scanPeriod * 1000L));
+        vertx, new ConfigRetrieverOptions().addStore(defaultStore).addStore(environmentStore));
   }
 
   public static Config fromConfigFile(@NonNull String confFilePathFormat) {

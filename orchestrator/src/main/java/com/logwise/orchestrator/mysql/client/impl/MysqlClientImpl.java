@@ -1,6 +1,5 @@
 package com.logwise.orchestrator.mysql.client.impl;
 
-import com.logwise.orchestrator.config.utils.WatchUtils;
 import com.logwise.orchestrator.mysql.MysqlClient;
 import com.logwise.orchestrator.mysql.client.MysqlConfig;
 import io.vertx.config.ConfigRetriever;
@@ -9,8 +8,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.consul.KeyValue;
-import io.vertx.ext.consul.Watch;
 import io.vertx.mysqlclient.MySQLPool;
 import java.security.SecureRandom;
 import java.util.Random;
@@ -26,7 +23,6 @@ public class MysqlClientImpl implements MysqlClient {
   private final ConfigRetriever configRetriever;
   private final Vertx vertx;
   private @NonFinal MysqlConfig mysqlConfig;
-  private @NonFinal Watch<KeyValue> reconnectWatch;
   @Setter private Function<JsonObject, MysqlConfig> jsonToConfigTransformer = MysqlConfig::new;
 
   private @NonFinal io.vertx.mysqlclient.MySQLPool mysqlMasterPool;
@@ -101,9 +97,6 @@ public class MysqlClientImpl implements MysqlClient {
                   id -> createSlavePool());
             }
 
-            if (this.mysqlConfig.getUseResetConnection()) {
-              registerConsulWatch();
-            }
             handler.handle(Future.succeededFuture());
           } else {
             Throwable err = configJson.cause();
@@ -176,7 +169,6 @@ public class MysqlClientImpl implements MysqlClient {
 
   public void close() {
     closeConnection();
-    closeWatch();
   }
 
   public void closeConnection() {
@@ -188,43 +180,5 @@ public class MysqlClientImpl implements MysqlClient {
       this.mysqlSlavePool.close();
       this.mysqlSlavePool = null;
     }
-  }
-
-  private void closeWatch() {
-    if (this.reconnectWatch != null) {
-      this.reconnectWatch.stop();
-      this.reconnectWatch = null;
-    }
-  }
-
-  private void registerConsulWatch() {
-    this.reconnectWatch =
-        WatchUtils.setConsulKeyWatch(
-            this.vertx,
-            this.mysqlConfig.getConsulKey(),
-            this.mysqlConfig.getConsulWatchTimeout(),
-            watchResult -> {
-              if (watchResult.succeeded()) {
-                if (watchResult.prevResult() != null) {
-                  if (watchResult.nextResult().isPresent()) {
-                    log.info("Change detected from consul");
-                    JsonObject config = new JsonObject(watchResult.nextResult().getValue());
-                    if (config.containsKey("maxDelaySeconds")) {
-                      int delay =
-                          randomGenerator.nextInt(config.getInteger("maxDelaySeconds")); // seconds
-                      log.info("Will reconnect mysql after {} seconds (generated randomly)", delay);
-                      vertx.setTimer(1L + delay * 1000, id -> createMasterSlavePool());
-                    } else {
-                      log.info("Reconnecting to mysql ...");
-                      createMasterSlavePool();
-                    }
-                  } else {
-                    log.info("Next result is not present");
-                  }
-                }
-              } else {
-                log.error("Unable to retrieve keys from consul", watchResult.cause());
-              }
-            });
   }
 }

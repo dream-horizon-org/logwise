@@ -32,13 +32,7 @@ public class MysqlConfig {
   static final TimeUnit DEFAULT_CONNECTION_TIMEOUT_TIME_UNIT = TimeUnit.SECONDS;
   static final Integer DEFAULT_MAX_WAIT_QUEUE_SIZE = -1;
   static final String DEFAULT_CONSUL_KEY =
-      "d11/"
-          + Constants.NAMESPACE
-          + "/"
-          + Constants.SERVICE_NAME
-          + "/"
-          + Constants.ENV
-          + "/mysql.json";
+      Constants.NAMESPACE + "/" + Constants.SERVICE_NAME + "/" + Constants.ENV + "/mysql.json";
   static final Integer DEFAULT_MAX_SLAVE_POOL_DISCONNECT_JITTER = 7; // seconds
   static final TimeUnit DEFAULT_MAX_SLAVE_POOL_DISCONNECT_JITTER_TIME_UNIT = TimeUnit.SECONDS;
   static final Integer DEFAULT_SLAVE_POOL_DRAIN_DELAY = 5;

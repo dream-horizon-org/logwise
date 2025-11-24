@@ -10,7 +10,7 @@ import javax.ws.rs.ext.ParamConverter;
 import javax.ws.rs.ext.Provider;
 
 @Provider
-public class D11ParamConverterProvider implements javax.ws.rs.ext.ParamConverterProvider {
+public class ParamConverterProvider implements javax.ws.rs.ext.ParamConverterProvider {
   @Override
   public <T> ParamConverter<T> getConverter(
       Class<T> rawType, Type genericType, Annotation[] annotations) {

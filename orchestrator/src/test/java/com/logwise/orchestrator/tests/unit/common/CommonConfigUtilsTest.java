@@ -44,21 +44,6 @@ public class CommonConfigUtilsTest extends com.logwise.orchestrator.setup.BaseTe
   }
 
   @Test
-  public void testFromConfigFile_WithClass_ReturnsTypedConfig() {
-
-    try {
-      com.logwise.orchestrator.config.client.ConfigOptions config =
-          ConfigUtils.fromConfigFile(
-              "config/config-client/config-%s.conf",
-              com.logwise.orchestrator.config.client.ConfigOptions.class);
-      Assert.assertNotNull(config);
-    } catch (ExceptionInInitializerError | NoClassDefFoundError | Exception e) {
-
-      Assert.assertTrue(true);
-    }
-  }
-
-  @Test
   public void testGetConfig_WithPathAndFileName_ReturnsJsonObject() throws Exception {
 
     ObjectMapper objectMapper = new ObjectMapper();
