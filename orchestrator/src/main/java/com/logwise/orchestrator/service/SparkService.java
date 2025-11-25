@@ -119,15 +119,25 @@ public class SparkService {
     sparkProperties.put("spark.driverEnv.AWS_REGION", awsRegion);
     sparkProperties.put("spark.executorEnv.AWS_REGION", awsRegion);
 
-    // S3A Hadoop configuration properties
+    // S3A Hadoop configuration properties - always configure S3A
+    sparkProperties.put("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
+    sparkProperties.put("spark.hadoop.fs.s3a.path.style.access", "false");
+
+    // Set S3A endpoint based on region
+    String s3aEndpoint;
+    if ("us-east-1".equals(awsRegion)) {
+      s3aEndpoint = "s3.amazonaws.com";
+    } else {
+      s3aEndpoint = format("s3-%s.amazonaws.com", awsRegion);
+    }
+    sparkProperties.put("spark.hadoop.fs.s3a.endpoint", s3aEndpoint);
+
+    // Configure credentials provider based on whether credentials are provided
     if (awsAccessKeyId != null
         && !awsAccessKeyId.isEmpty()
         && awsSecretAccessKey != null
         && !awsSecretAccessKey.isEmpty()) {
-      sparkProperties.put("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
-      sparkProperties.put("spark.hadoop.fs.s3a.path.style.access", "false");
-
-      // Set credentials provider based on whether session token is present
+      // Use explicit credentials
       if (awsSessionToken != null && !awsSessionToken.isEmpty()) {
         sparkProperties.put(
             "spark.hadoop.fs.s3a.aws.credentials.provider",
@@ -141,17 +151,7 @@ public class SparkService {
 
       sparkProperties.put("spark.hadoop.fs.s3a.access.key", awsAccessKeyId);
       sparkProperties.put("spark.hadoop.fs.s3a.secret.key", awsSecretAccessKey);
-
-      // Set S3A endpoint based on region
-      String s3aEndpoint;
-      if ("us-east-1".equals(awsRegion)) {
-        s3aEndpoint = "s3.amazonaws.com";
-      } else {
-        s3aEndpoint = format("s3-%s.amazonaws.com", awsRegion);
-      }
-      sparkProperties.put("spark.hadoop.fs.s3a.endpoint", s3aEndpoint);
     }
-
     return SubmitSparkJobRequest.builder()
         .appArgs(appArgs)
         .appResource(sparkConf.getSparkJarPath())
