@@ -34,8 +34,18 @@ export default defineConfig({
     site: 'https://ds-horizon.github.io/logwise/',
     // GitHub Pages config
     base: '/logwise/',
-
+    head: [
+        ['style', {}, `
+            :root {
+                --vp-c-brand-1: #5FD3E0;
+                --vp-c-brand-2: #3ABEB2;
+                --vp-c-brand-3: #1A6A74;
+            }
+        `],
+        ['link', { rel: 'icon', href: '/logwise/logo1.png' }]
+    ],
     themeConfig: {
+        logo: '/logo1.png',
         nav: [
             { text: 'Home', link: '/' },
             { text: 'Overview', link: '/what-is-logwise' },

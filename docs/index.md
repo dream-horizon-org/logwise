@@ -5,6 +5,9 @@ hero:
   name: "Logwise"
   text: "Cost-Effective Log Processing"
   tagline: Open-source end-to-end logging system that delivers high performance at a fraction of the cost
+  image:
+   src: '/logo1.png'
+   alt: 'My logo'
   actions:
     - theme: brand
       text: Get Started
