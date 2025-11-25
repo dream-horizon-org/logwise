@@ -56,7 +56,7 @@ RUN SPARK_FILE="spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" && \
 # This stage is cached separately, so JAR downloads only happen when versions change
 FROM base AS jar-downloader
 ARG HADOOP_AWS_VERSION=3.2.0
-ARG AWS_SDK_VERSION=1.11.375
+ARG AWS_SDK_VERSION=1.12.767
 ARG SPARK_KAFKA_VERSION=3.1.2
 ARG KAFKA_CLIENTS_VERSION=2.6.0
 ARG SPARK_TOKEN_PROVIDER_VERSION=3.1.2
