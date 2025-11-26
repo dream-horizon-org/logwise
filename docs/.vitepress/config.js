@@ -30,7 +30,7 @@ const releaseVersion = version.replace('-SNAPSHOT', '')
 
 export default defineConfig({
     title: 'Logwise',
-    description: 'Open-source end-to-end logging system capable of handling 15+ Gbps log throughput',
+    description: 'Open-source, cost-effective end-to-end logging system featuring full architecture, deployment automation, dashboards, and production-ready scaling guides',
     site: 'https://ds-horizon.github.io/logwise/',
     // GitHub Pages config
     base: '/logwise/',
