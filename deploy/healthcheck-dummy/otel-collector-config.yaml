@@ -28,12 +28,6 @@ processors:
       - key: service_name
         value: healthcheck-dummy
         action: upsert
-      - key: component_type
-        value: application
-        action: upsert
-      - key: environment_name
-        value: local
-        action: upsert
 
   batch:
     timeout: 10s
