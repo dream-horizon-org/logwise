@@ -60,20 +60,50 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Update versions to release (remove SNAPSHOT)
+      - name: Update versions to release version
         run: |
           chmod +x scripts/update-versions.sh
+          # Update all versions to concrete release version (no SNAPSHOT)
           ./scripts/update-versions.sh ${{ steps.extract_version.outputs.version }}
 
-      - name: Verify version updates
+      - name: Verify all versions match release version
         run: |
-          echo "Verifying version updates..."
-          echo "Orchestrator version:"
-          grep -A 2 "<artifactId>orchestrator</artifactId>" orchestrator/pom.xml | grep "<version>"
-          echo "Spark version:"
-          grep -A 2 "<artifactId>logwise-spark</artifactId>" spark/pom.xml | grep "<version>"
-          echo "Docs version:"
-          cat docs/VERSION
+          echo "Verifying all versions match release version..."
+          VERSION="${{ steps.extract_version.outputs.version }}"
+          
+          # Check orchestrator version
+          ORCH_VERSION=$(grep -A 2 "<artifactId>orchestrator</artifactId>" orchestrator/pom.xml | grep "<version>" | sed 's/.*<version>\(.*\)<\/version>.*/\1/' | tr -d ' ')
+          echo "Orchestrator version: $ORCH_VERSION"
+          if [[ "$ORCH_VERSION" != "$VERSION" ]]; then
+            echo "ERROR: Orchestrator version mismatch! Expected: $VERSION, Got: $ORCH_VERSION"
+            exit 1
+          fi
+          
+          # Check spark version
+          SPARK_VERSION=$(grep -A 2 "<artifactId>logwise-spark</artifactId>" spark/pom.xml | grep "<version>" | sed 's/.*<version>\(.*\)<\/version>.*/\1/' | tr -d ' ')
+          echo "Spark version: $SPARK_VERSION"
+          if [[ "$SPARK_VERSION" != "$VERSION" ]]; then
+            echo "ERROR: Spark version mismatch! Expected: $VERSION, Got: $SPARK_VERSION"
+            exit 1
+          fi
+          
+          # Check docs VERSION file
+          DOCS_VERSION=$(cat docs/VERSION | tr -d ' ')
+          echo "Docs VERSION file: $DOCS_VERSION"
+          if [[ "$DOCS_VERSION" != "$VERSION" ]]; then
+            echo "ERROR: Docs VERSION mismatch! Expected: $VERSION, Got: $DOCS_VERSION"
+            exit 1
+          fi
+          
+          # Check docs package.json
+          PACKAGE_VERSION=$(grep '"version"' docs/package.json | sed 's/.*"version": "\(.*\)".*/\1/' | tr -d ' ')
+          echo "Docs package.json version: $PACKAGE_VERSION"
+          if [[ "$PACKAGE_VERSION" != "$VERSION" ]]; then
+            echo "ERROR: Docs package.json version mismatch! Expected: $VERSION, Got: $PACKAGE_VERSION"
+            exit 1
+          fi
+          
+          echo "✓ All versions verified and match release version: $VERSION"
 
       - name: Check if tag already exists and has version changes
         id: check_tag
@@ -126,45 +156,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Checkout main branch for snapshot bump
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          token: ${{ secrets.COMMIT_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
-
-      - name: Setup Java for snapshot bump
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '11'
-
-      - name: Cache Maven dependencies for snapshot bump
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
-      - name: Bump to next snapshot version
-        run: |
-          chmod +x scripts/bump-snapshot.sh
-          ./scripts/bump-snapshot.sh ${{ steps.extract_version.outputs.version }}
-
-      - name: Verify snapshot version bump
-        run: |
-          echo "Verifying snapshot version bump..."
-          echo "Orchestrator version:"
-          grep -A 2 "<artifactId>orchestrator</artifactId>" orchestrator/pom.xml | grep "<version>"
-          echo "Spark version:"
-          grep -A 2 "<artifactId>logwise-spark</artifactId>" spark/pom.xml | grep "<version>"
-          echo "Docs version:"
-          cat docs/VERSION
-
-      - name: Commit snapshot version bump to main
-        run: |
-          git config --local user.email "release-bot"
-          git config --local user.name "GitHub Action"
-          git add orchestrator/pom.xml spark/pom.xml docs/VERSION docs/package.json
-          git commit -m "chore: bump version to next snapshot after release ${{ steps.extract_version.outputs.version }}" || echo "No changes to commit"
-          git push origin main || echo "Nothing to push"
