@@ -2,6 +2,10 @@
 
 Open-source end-to-end logging system for high-volume log processing. Streams logs from Vector → Kafka → Spark → S3/Athena, with Grafana dashboards and automated orchestration.
 
+## 📚 Documentation
+
+Full documentation is available at: **[https://ds-horizon.github.io/logwise/](https://ds-horizon.github.io/logwise/)**
+
 ## 🚀 Quick Start
 
 ### Docker Setup (Recommended)
@@ -21,10 +25,6 @@ Open-source end-to-end logging system for high-volume log processing. Streams lo
    - Orchestrator: `http://localhost:8080`
 
 For detailed instructions, see the [Docker Setup Guide](https://ds-horizon.github.io/logwise/setup-guides/docker/).
-
-## 📚 Documentation
-
-Full documentation is available at: **[https://ds-horizon.github.io/logwise/](https://ds-horizon.github.io/logwise/)**
 
 ### Quick Links
 - **[Docker Setup](https://ds-horizon.github.io/logwise/setup-guides/docker/)** - One-click Docker deployment
