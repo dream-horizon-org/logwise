@@ -145,29 +145,11 @@ public class ServiceTest extends BaseTest {
           throws Exception {
 
     Tenant tenant = TestConstants.VALID_TENANT;
-    List<String> envPrefixes =
-        Arrays.asList("logs/environment_name=prod/", "logs/environment_name=staging/");
-    List<String> componentPrefixes =
-        Arrays.asList(
-            "logs/environment_name=prod/component_type=component1/",
-            "logs/environment_name=staging/component_type=component2/");
     List<String> servicePrefixes =
-        Arrays.asList(
-            "logs/environment_name=prod/component_type=component1/service_name=service1/",
-            "logs/environment_name=staging/component_type=component2/service_name=service2/");
+        Arrays.asList("logs/service_name=service1/", "logs/service_name=service2/");
 
-    ServiceDetails service1 =
-        ServiceDetails.builder()
-            .environmentName("prod")
-            .serviceName("service1")
-            .componentType("component1")
-            .build();
-    ServiceDetails service2 =
-        ServiceDetails.builder()
-            .environmentName("staging")
-            .serviceName("service2")
-            .componentType("component2")
-            .build();
+    ServiceDetails service1 = ServiceDetails.builder().serviceName("service1").build();
+    ServiceDetails service2 = ServiceDetails.builder().serviceName("service2").build();
 
     try (MockedStatic<ObjectStoreFactory> mockedFactory =
             Mockito.mockStatic(ObjectStoreFactory.class);
@@ -183,28 +165,8 @@ public class ServiceTest extends BaseTest {
           .thenReturn(mockTenantConfig);
 
       lenient()
-          .when(mockObjectStoreClient.listCommonPrefix("logs/environment_name=", "/"))
-          .thenReturn(Single.just(envPrefixes));
-      lenient()
-          .when(
-              mockObjectStoreClient.listCommonPrefix(
-                  "logs/environment_name=prod/component_type=", "/"))
-          .thenReturn(Single.just(Collections.singletonList(componentPrefixes.get(0))));
-      lenient()
-          .when(
-              mockObjectStoreClient.listCommonPrefix(
-                  "logs/environment_name=staging/component_type=", "/"))
-          .thenReturn(Single.just(Collections.singletonList(componentPrefixes.get(1))));
-      lenient()
-          .when(
-              mockObjectStoreClient.listCommonPrefix(
-                  "logs/environment_name=prod/component_type=component1/service_name=", "/"))
-          .thenReturn(Single.just(Collections.singletonList(servicePrefixes.get(0))));
-      lenient()
-          .when(
-              mockObjectStoreClient.listCommonPrefix(
-                  "logs/environment_name=staging/component_type=component2/service_name=", "/"))
-          .thenReturn(Single.just(Collections.singletonList(servicePrefixes.get(1))));
+          .when(mockObjectStoreClient.listCommonPrefix("logs/service_name=", "/"))
+          .thenReturn(Single.just(servicePrefixes));
 
       mockedUtils
           .when(() -> ApplicationUtils.getServiceFromObjectKey(servicePrefixes.get(0)))
@@ -213,20 +175,13 @@ public class ServiceTest extends BaseTest {
           .when(() -> ApplicationUtils.getServiceFromObjectKey(servicePrefixes.get(1)))
           .thenReturn(service2);
 
-      ApplicationConfig.EnvLogsRetentionDaysConfig retentionConfig =
-          new ApplicationConfig.EnvLogsRetentionDaysConfig();
-      retentionConfig.setEnvs(Arrays.asList("prod", "staging"));
-      retentionConfig.setRetentionDays(30);
-      when(mockTenantConfig.getEnvLogsRetentionDays())
-          .thenReturn(Collections.singletonList(retentionConfig));
-      when(mockTenantConfig.getDefaultLogsRetentionDays()).thenReturn(3);
+      when(mockTenantConfig.getDefaultLogsRetentionDays()).thenReturn(30);
 
       Single<List<ServiceDetails>> result = objectStoreService.getAllDistinctServicesInAws(tenant);
       List<ServiceDetails> services = result.blockingGet();
 
       Assert.assertNotNull(services);
       Assert.assertEquals(services.size(), 2);
-      Assert.assertEquals(services.get(0).getEnvironmentName(), "prod");
       Assert.assertEquals(services.get(0).getServiceName(), "service1");
       Assert.assertEquals(services.get(0).getRetentionDays(), Integer.valueOf(30));
       Assert.assertEquals(services.get(0).getTenant(), tenant.getValue());
@@ -252,7 +207,7 @@ public class ServiceTest extends BaseTest {
           .thenReturn(mockTenantConfig);
 
       lenient()
-          .when(mockObjectStoreClient.listCommonPrefix("logs/environment_name=", "/"))
+          .when(mockObjectStoreClient.listCommonPrefix("logs/service_name=", "/"))
           .thenReturn(Single.just(Collections.emptyList()));
 
       Single<List<ServiceDetails>> result = objectStoreService.getAllDistinctServicesInAws(tenant);
@@ -282,7 +237,7 @@ public class ServiceTest extends BaseTest {
           .thenReturn(mockTenantConfig);
 
       lenient()
-          .when(mockObjectStoreClient.listCommonPrefix("logs/environment_name=", "/"))
+          .when(mockObjectStoreClient.listCommonPrefix("logs/service_name=", "/"))
           .thenReturn(Single.error(error));
 
       Single<List<ServiceDetails>> result = objectStoreService.getAllDistinctServicesInAws(tenant);
@@ -456,12 +411,7 @@ public class ServiceTest extends BaseTest {
 
     Tenant tenant = TestConstants.VALID_TENANT;
     List<ServiceDetails> serviceDetailsList = new ArrayList<>();
-    serviceDetailsList.add(
-        ServiceDetails.builder()
-            .environmentName("prod")
-            .serviceName("test-service")
-            .componentType("application")
-            .build());
+    serviceDetailsList.add(ServiceDetails.builder().serviceName("test-service").build());
 
     when(mockServicesDaoForManager.getAllServiceDetails(tenant))
         .thenReturn(Single.just(serviceDetailsList));
@@ -484,12 +434,7 @@ public class ServiceTest extends BaseTest {
     List<ServiceDetails> dbServices = new ArrayList<>();
 
     List<ServiceDetails> objectStoreServices = new ArrayList<>();
-    ServiceDetails newService =
-        ServiceDetails.builder()
-            .environmentName("prod")
-            .serviceName("new-service")
-            .componentType("application")
-            .build();
+    ServiceDetails newService = ServiceDetails.builder().serviceName("new-service").build();
     objectStoreServices.add(newService);
 
     when(mockServicesDaoForManager.getAllServiceDetails(tenant))
@@ -511,12 +456,7 @@ public class ServiceTest extends BaseTest {
 
     Tenant tenant = TestConstants.VALID_TENANT;
 
-    ServiceDetails service =
-        ServiceDetails.builder()
-            .environmentName("prod")
-            .serviceName("test-service")
-            .componentType("application")
-            .build();
+    ServiceDetails service = ServiceDetails.builder().serviceName("test-service").build();
 
     List<ServiceDetails> services = Collections.singletonList(service);
 
@@ -537,7 +477,7 @@ public class ServiceTest extends BaseTest {
     Tenant tenant = TestConstants.VALID_TENANT;
     List<String> objectNames = new ArrayList<>();
     objectNames.add(
-        "logs/env=prod/service_name=test-service/component_name=test-component/year=2024/month=01/day=01/hour=10/minute=30/file.log");
+        "logs/service_name=test-service/year=2024/month=01/day=01/hour=10/minute=30/file.log");
 
     try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
             Mockito.mockStatic(ApplicationConfigUtil.class);

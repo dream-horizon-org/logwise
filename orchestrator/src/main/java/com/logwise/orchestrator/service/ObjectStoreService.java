@@ -2,7 +2,6 @@ package com.logwise.orchestrator.service;
 
 import com.google.inject.Inject;
 import com.logwise.orchestrator.client.ObjectStoreClient;
-import com.logwise.orchestrator.config.ApplicationConfig.EnvLogsRetentionDaysConfig;
 import com.logwise.orchestrator.config.ApplicationConfig.TenantConfig;
 import com.logwise.orchestrator.dao.ServicesDao;
 import com.logwise.orchestrator.dto.entity.ServiceDetails;
@@ -27,16 +26,8 @@ public class ObjectStoreService {
     TenantConfig tenantConfig = ApplicationConfigUtil.getTenantConfig(tenant);
 
     return objectStoreClient
-        .listCommonPrefix(tenantConfig.getSpark().getLogsDir() + "/environment_name=", "/")
+        .listCommonPrefix(tenantConfig.getSpark().getLogsDir() + "/service_name=", "/")
         .flatMapObservable(Observable::fromIterable)
-        .flatMap(
-            prefix ->
-                objectStoreClient.listCommonPrefix(prefix + "component_type=", "/").toObservable())
-        .flatMap(Observable::fromIterable)
-        .flatMap(
-            prefix ->
-                objectStoreClient.listCommonPrefix(prefix + "service_name=", "/").toObservable())
-        .flatMap(Observable::fromIterable)
         .toList()
         .map(
             logsObjectKeys ->
@@ -44,20 +35,13 @@ public class ObjectStoreService {
                     .map(ApplicationUtils::getServiceFromObjectKey)
                     .peek(
                         serviceDetails -> {
-                          serviceDetails.setRetentionDays(
-                              getEnvRetentionDays(tenantConfig, serviceDetails));
+                          serviceDetails.setRetentionDays(getDefaultRetentionDays(tenantConfig));
                           serviceDetails.setTenant(tenant.getValue());
                         })
                     .collect(Collectors.toList()));
   }
 
-  private static Integer getEnvRetentionDays(TenantConfig config, ServiceDetails serviceDetails) {
-    return config.getEnvLogsRetentionDays().stream()
-        .filter(
-            retentionDaysConfig ->
-                retentionDaysConfig.getEnvs().contains(serviceDetails.getEnvironmentName()))
-        .findFirst()
-        .map(EnvLogsRetentionDaysConfig::getRetentionDays)
-        .orElse(config.getDefaultLogsRetentionDays());
+  private static Integer getDefaultRetentionDays(TenantConfig config) {
+    return config.getDefaultLogsRetentionDays();
   }
 }

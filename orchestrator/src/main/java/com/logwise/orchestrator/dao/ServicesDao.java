@@ -44,14 +44,7 @@ public class ServicesDao {
     log.info("Inserting service details in DB: {}", serviceDetails);
     List<Tuple> tuples =
         serviceDetails.stream()
-            .map(
-                s ->
-                    Tuple.of(
-                        s.getEnvironmentName(),
-                        s.getComponentType(),
-                        s.getServiceName(),
-                        s.getRetentionDays(),
-                        s.getTenant()))
+            .map(s -> Tuple.of(s.getServiceName(), s.getRetentionDays(), s.getTenant()))
             .collect(Collectors.toList());
     String query = Query.INSERT_SERVICE_DETAILS;
     return mysqlClient
@@ -69,7 +62,7 @@ public class ServicesDao {
     log.info("Deleting service details: {}", serviceDetails);
     List<Tuple> tuples =
         serviceDetails.stream()
-            .map(s -> Tuple.of(s.getEnvironmentName(), s.getServiceName(), s.getTenant()))
+            .map(s -> Tuple.of(s.getServiceName(), s.getTenant()))
             .collect(Collectors.toList());
     String query = Query.DELETE_SERVICE_DETAILS;
     return mysqlClient

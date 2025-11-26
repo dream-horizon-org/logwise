@@ -44,9 +44,9 @@ The Orchestrator Service enables:
 
 The Orchestrator automatically discovers services by scanning object storage partitions. Services are identified by their path structure:
 
-**Format**: `logs/environment_name={env}/component_type={service}/service_name={service}/`
+**Format**: `logs/service_name={service}/`
 
-**Example**: `logs/environment_name=prod/component_type=application/service_name=api-service/`
+**Example**: `logs/service_name=api-service/`
 
 **Process**:
 1. Scans S3 prefixes to discover all unique service combinations
@@ -157,7 +157,7 @@ The Orchestrator uses HOCON configuration files with environment variable substi
 - **Kafka**: Broker hosts, manager URLs, rate limits (used to configure Spark jobs - orchestrator doesn't manage Kafka)
 - **Spark**: Master hosts, resource allocation, job configuration
 - **Object Storage**: S3 buckets, regions, role ARNs
-- **Delay Metrics**: Sample service configuration (env, serviceName, componentName) for delay calculation
+- **Delay Metrics**: Sample service configuration (serviceName) for delay calculation
 
 **Environment Variables**:
 - Database credentials

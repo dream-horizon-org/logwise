@@ -2,7 +2,6 @@ package com.logwise.orchestrator.util;
 
 import com.google.inject.ConfigurationException;
 import com.logwise.orchestrator.common.app.AppContext;
-import com.logwise.orchestrator.dto.entity.*;
 import com.logwise.orchestrator.dto.entity.ServiceDetails;
 import io.reactivex.Maybe;
 import io.vertx.reactivex.core.Vertx;
@@ -53,15 +52,10 @@ public class ApplicationUtils {
   }
 
   public ServiceDetails getServiceFromObjectKey(String logPath) {
-    Pattern pattern =
-        Pattern.compile("environment_name=(.+?)/component_type=(.+?)/service_name=(.+?)/");
+    Pattern pattern = Pattern.compile("service_name=(.+?)/");
     Matcher matcher = pattern.matcher(logPath);
     if (matcher.find()) {
-      return ServiceDetails.builder()
-          .environmentName(matcher.group(1))
-          .componentType(matcher.group(2))
-          .serviceName(matcher.group(3))
-          .build();
+      return ServiceDetails.builder().serviceName(matcher.group(1)).build();
     }
     log.error("Error in getting service details from object key: {}", logPath);
     return null;

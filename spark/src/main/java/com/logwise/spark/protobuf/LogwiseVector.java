@@ -39,13 +39,11 @@ public final class LogwiseVector extends com.google.protobuf.GeneratedFile {
   static {
     java.lang.String[] descriptorData = {
       "\n\024logwise-vector.proto\022\023logwise.vector.l"
-          + "ogs\032\037google/protobuf/timestamp.proto\"\247\001\n"
-          + "\nVectorLogs\022\024\n\014service_name\030\001 \001(\t\022\030\n\020env"
-          + "ironment_name\030\002 \001(\t\022\017\n\007message\030\003 \001(\t\022\021\n\t"
-          + "log_level\030\004 \001(\t\022-\n\ttimestamp\030\005 \001(\0132\032.goo"
-          + "gle.protobuf.Timestamp\022\026\n\016component_type"
-          + "\030\006 \001(\tB\036\n\032com.logwise.spark.protobufP\001b\006"
-          + "proto3"
+          + "ogs\032\037google/protobuf/timestamp.proto\"u\n\n"
+          + "VectorLogs\022\024\n\014service_name\030\001 \001(\t\022\017\n\007mess"
+          + "age\030\002 \001(\t\022\021\n\tlog_level\030\003 \001(\t\022-\n\ttimestam"
+          + "p\030\004 \001(\0132\032.google.protobuf.TimestampB\036\n\032c"
+          + "om.logwise.spark.protobufP\001b\006proto3"
     };
     descriptor =
         com.google.protobuf.Descriptors.FileDescriptor.internalBuildGeneratedFileFrom(
@@ -58,7 +56,7 @@ public final class LogwiseVector extends com.google.protobuf.GeneratedFile {
         new com.google.protobuf.GeneratedMessage.FieldAccessorTable(
             internal_static_logwise_vector_logs_VectorLogs_descriptor,
             new java.lang.String[] {
-              "ServiceName", "EnvironmentName", "Message", "LogLevel", "Timestamp", "ComponentType",
+              "ServiceName", "Message", "LogLevel", "Timestamp",
             });
     descriptor.resolveAllFeaturesImmutable();
     com.google.protobuf.TimestampProto.getDescriptor();

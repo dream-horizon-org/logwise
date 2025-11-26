@@ -24,9 +24,7 @@ public class VectorLogsSerializationTest {
         VectorLogs.newBuilder()
             .setMessage("Test log message")
             .setTimestamp(timestamp)
-            .setEnvironmentName("production")
             .setServiceName("api-service")
-            .setComponentType("api-container")
             .setLogLevel("info")
             .build();
 
@@ -37,9 +35,7 @@ public class VectorLogsSerializationTest {
     // Assert
     Assert.assertEquals(deserialized.getMessage(), original.getMessage());
     Assert.assertEquals(deserialized.getTimestamp(), original.getTimestamp());
-    Assert.assertEquals(deserialized.getEnvironmentName(), original.getEnvironmentName());
     Assert.assertEquals(deserialized.getServiceName(), original.getServiceName());
-    Assert.assertEquals(deserialized.getComponentType(), original.getComponentType());
     Assert.assertEquals(deserialized.getLogLevel(), original.getLogLevel());
   }
 
@@ -56,9 +52,7 @@ public class VectorLogsSerializationTest {
     // Assert
     Assert.assertEquals(deserialized.getMessage(), "Minimal log");
     Assert.assertFalse(deserialized.hasTimestamp());
-    Assert.assertEquals(deserialized.getEnvironmentName(), "");
     Assert.assertEquals(deserialized.getServiceName(), "");
-    Assert.assertEquals(deserialized.getComponentType(), "");
     Assert.assertEquals(deserialized.getLogLevel(), "");
   }
 
@@ -116,13 +110,7 @@ public class VectorLogsSerializationTest {
       throws InvalidProtocolBufferException {
     // Arrange
     VectorLogs original =
-        VectorLogs.newBuilder()
-            .setMessage("")
-            .setEnvironmentName("")
-            .setServiceName("")
-            .setComponentType("")
-            .setLogLevel("")
-            .build();
+        VectorLogs.newBuilder().setMessage("").setServiceName("").setLogLevel("").build();
 
     // Act
     byte[] serialized = original.toByteArray();
@@ -130,9 +118,7 @@ public class VectorLogsSerializationTest {
 
     // Assert
     Assert.assertEquals(deserialized.getMessage(), "");
-    Assert.assertEquals(deserialized.getEnvironmentName(), "");
     Assert.assertEquals(deserialized.getServiceName(), "");
-    Assert.assertEquals(deserialized.getComponentType(), "");
     Assert.assertEquals(deserialized.getLogLevel(), "");
   }
 
@@ -211,8 +197,6 @@ public class VectorLogsSerializationTest {
         VectorLogs.newBuilder()
             .setMessage("Test message")
             .setServiceName("test-service")
-            .setEnvironmentName("test-env")
-            .setComponentType("test-component")
             .setLogLevel("debug")
             .setTimestamp(timestamp)
             .build();
@@ -224,8 +208,6 @@ public class VectorLogsSerializationTest {
     // Assert
     Assert.assertEquals(deserialized.getMessage(), "Test message");
     Assert.assertEquals(deserialized.getServiceName(), "test-service");
-    Assert.assertEquals(deserialized.getEnvironmentName(), "test-env");
-    Assert.assertEquals(deserialized.getComponentType(), "test-component");
     Assert.assertEquals(deserialized.getLogLevel(), "debug");
     Assert.assertTrue(deserialized.hasTimestamp());
     Assert.assertEquals(deserialized.getTimestamp().getSeconds(), timestamp.getSeconds());

@@ -8,7 +8,7 @@ Vector is the **log ingestion and transformation** component in LogWise. It rece
 
 ## Overview
 
-Vector handles log ingestion via OTLP (OpenTelemetry Protocol), validates and normalizes log data, and routes logs to Kafka topics organized by type, environment, and service.
+Vector handles log ingestion via OTLP (OpenTelemetry Protocol), validates and normalizes log data, and routes logs to Kafka topics organized by service.
 
 ## Architecture in LogWise
 
@@ -19,7 +19,7 @@ OpenTelemetry Collector → Vector → Kafka → Spark Jobs
 Vector handles:
 - **Ingestion**: Receives OTLP logs via gRPC (4317) and HTTP (4318)
 - **Transformation**: Validates, normalizes, and enriches log data
-- **Routing**: Publishes logs to Kafka topics organized by type, environment, and service
+- **Routing**: Publishes logs to Kafka topics organized by service
 
 ## Key Features
 
@@ -30,9 +30,9 @@ Vector handles:
 
 ## Topic Routing
 
-Vector automatically creates Kafka topics using the naming convention: `logs.{type}_{environment_name}_{service_name}` based on log metadata tags.
+Vector automatically creates Kafka topics using the naming convention: `logs.{service_name}` based on log metadata tags.
 
-**Example:** `logs.application_prod_order-service`
+**Example:** `logs.order-service`
 
 ## Configuration
 

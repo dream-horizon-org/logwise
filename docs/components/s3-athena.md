@@ -27,14 +27,12 @@ The data flow:
 
 - **Cost-effective storage** - Pay-per-use pricing with lifecycle policies for archival (S3 Standard → S3 IA → Glacier)
 - **Serverless querying** - SQL queries without managing infrastructure, pay-per-query pricing
-- **Partitioned storage** - Logs organized by `environment_name`, `component_type`, `service_name` and `time` for optimized querying
+- **Partitioned storage** - Logs organized by `service_name` and `time` for optimized querying
 - **Parquet format** - Columnar storage with high compression (70-90% reduction) and schema evolution support
 
 ## Partitioning Strategy
 
-Logs are partitioned in S3 by metadata tags to optimize query performance and reduce costs. The table schema includes four partition keys:
-- `environment_name` - Environment (dev, staging, prod)
-- `component_type` - Types (application, kafka)
+Logs are partitioned in S3 by metadata tags to optimize query performance and reduce costs. The table schema includes two partition keys:
 - `service_name` - Service identifier
 - `time` - Time-based partition (typically date/hour)
 
@@ -43,14 +41,12 @@ Logs are partitioned in S3 by metadata tags to optimize query performance and re
 Logs are organized in S3 with partition keys in the path:
 ```
 s3://bucket-name/logs/
-  environment_name=prod/
-    component_type=api/
-      service_name=order-service/
-        time=2024-01-15/
-          part-00000.parquet
+  service_name=order-service/
+    time=2024-01-15/
+      part-00000.parquet
 ```
 
-When querying with filters like `WHERE env = 'prod' AND service_name = 'order-service'`, Athena only scans the relevant partition directories, dramatically reducing scan time and costs.
+When querying with filters like `WHERE service_name = 'order-service' AND time >= '2024-01-15'`, Athena only scans the relevant partition directories, dramatically reducing scan time and costs.
 
 ## Data Format: Parquet
 

@@ -29,16 +29,13 @@ Kafka enables:
 
 ## Topic Management
 
-Vector dynamically creates Kafka topics using tags: `environment_name`, `component_type`, and `service_name`. Topics follow the naming convention: `{environment_name}_{component_type}_{service_name}`.
+Vector dynamically creates Kafka topics using the `service_name` tag. Topics follow the naming convention: `logs.{service_name}`.
 
 **Format:**
-- `environment_name` - Environment identifier (e.g., `prod`, `staging`, `dev`, `test`)
-- `component_type` - Type of data (e.g., `application`, `kafka`, `mysql`, `nginx`)
 - `service_name` - Service or application name generating the logs
 
 **Examples:**
-- `nginx_prod_order-service` - nginx logs from production order-service
-- `application_prod_order-service` - application logs from production order-service
+- `logs.order-service` - logs from the `order-service`
 
 This automatic topic creation enables organized log routing and processing.
 

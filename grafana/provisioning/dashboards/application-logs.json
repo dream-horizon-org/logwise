@@ -134,7 +134,7 @@
             "uid": "asadsadf"
           },
           "format": 1,
-          "rawSQL": "-- Dashboard: ${__dashboard.title}\n-- User Email: ${__user.email}\nSELECT ${columns:raw}\nFROM \"${ATHENA_DATABASE}\".\"application-logs\"\nWHERE \n  time BETWEEN date_format(TIMESTAMP $__rawTimeFrom(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i') AND date_format(TIMESTAMP $__rawTimeTo(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i')\n  AND environment_name = '${environment_name}'\n  AND service_name IN (${service_name:singlequote})\n  AND component_type IN (${component_type:singlequote})\n  AND (length('$text_search') = 0 OR REGEXP_LIKE(message, REGEXP_REPLACE('$text_search', ',', '|')))\n  AND (length('$exclude_text') = 0 OR NOT REGEXP_LIKE(message, REGEXP_REPLACE('$exclude_text', ',', '|')))\n  AND (length('$regex_search') = 0 OR REGEXP_LIKE(message, '$regex_search'))\n  AND (length('$instanceIds') = 0 OR hostname IN (SELECT * FROM UNNEST(split('$instanceIds', ',')) AS t(value)))\nORDER BY \"timestamp\" ${sortby:raw}\nLIMIT $limit",
+          "rawSQL": "-- Dashboard: ${__dashboard.title}\n-- User Email: ${__user.email}\nSELECT ${columns:raw}\nFROM \"${ATHENA_DATABASE}\".\"application-logs\"\nWHERE \n  time BETWEEN date_format(TIMESTAMP $__rawTimeFrom(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i') AND date_format(TIMESTAMP $__rawTimeTo(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i')\n  AND service_name IN (${service_name:singlequote})\n  AND (length('$text_search') = 0 OR REGEXP_LIKE(message, REGEXP_REPLACE('$text_search', ',', '|')))\n  AND (length('$exclude_text') = 0 OR NOT REGEXP_LIKE(message, REGEXP_REPLACE('$exclude_text', ',', '|')))\n  AND (length('$regex_search') = 0 OR REGEXP_LIKE(message, '$regex_search'))\n  AND (length('$instanceIds') = 0 OR hostname IN (SELECT * FROM UNNEST(split('$instanceIds', ',')) AS t(value)))\nORDER BY \"timestamp\" ${sortby:raw}\nLIMIT $limit",
           "refId": "A"
         }
       ],
@@ -190,132 +190,6 @@
       },
       {
         "current": {
-          "selected": false,
-          "text": "prod",
-          "value": "prod"
-        },
-        "datasource": {
-          "type": "yesoreyeram-infinity-datasource",
-          "uid": "wakask"
-        },
-        "definition": "log-central-orchestrator- (infinity) json",
-        "description": "",
-        "hide": 0,
-        "includeAll": false,
-        "label": "environment_name",
-        "multi": false,
-        "name": "environment_name",
-        "options": [],
-        "query": {
-          "infinityQuery": {
-            "columns": [],
-            "data": "$service_details",
-            "filters": [],
-            "format": "table",
-            "parser": "backend",
-            "refId": "variable",
-            "root_selector": "$.data.serviceDetails[*].environmentName",
-            "source": "url",
-            "type": "json",
-            "url": "http://orchestrator:8080/service-details",
-            "url_options": {
-              "data": "",
-              "headers": [
-                {
-                  "key": "X-Tenant-Name",
-                  "value": "ABC"
-                }
-              ],
-              "method": "GET"
-            }
-          },
-          "query": "",
-          "queryType": "infinity"
-        },
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 5,
-        "type": "query",
-        "staticOptions": [
-          {
-            "text": "prod",
-            "value": "prod"
-          }
-        ]
-      },
-      {
-        "current": {
-          "selected": true,
-          "text": [
-            "healthcheck"
-          ],
-          "value": [
-            "healthcheck"
-          ]
-        },
-        "datasource": {
-          "type": "yesoreyeram-infinity-datasource",
-          "uid": "wakask"
-        },
-        "definition": "log-central-orchestrator- (infinity) json",
-        "hide": 0,
-        "includeAll": false,
-        "label": "component_type",
-        "multi": true,
-        "name": "component_type",
-        "options": [],
-        "query": {
-          "infinityQuery": {
-            "columns": [],
-            "computed_columns": [
-              {
-                "selector": "",
-                "text": "",
-                "type": "string"
-              }
-            ],
-            "data": "$service_details",
-            "filterExpression": "",
-            "filters": [],
-            "format": "table",
-            "groq": "*[\"data\" in keys(@)][0].data.serviceDetails[environmentName in $environment_name]{ componentType }",
-            "parser": "backend",
-            "refId": "variable",
-            "root_selector": "$.data.serviceDetails[environmentName in [${environment_name:singlequote}]].componentType",
-            "source": "url",
-            "summarizeBy": "componentType",
-            "type": "json",
-            "uql": "parse-json\n",
-            "url": "http://orchestrator:8080/service-details",
-            "url_options": {
-              "data": "",
-              "headers": [
-                {
-                  "key": "X-Tenant-Name",
-                  "value": "ABC"
-                }
-              ],
-              "method": "GET"
-            }
-          },
-          "query": "",
-          "queryType": "infinity"
-        },
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 5,
-        "type": "query",
-        "staticOptions": [
-          {
-            "text": "healthcheck",
-            "value": "healthcheck"
-          }
-        ]
-      },
-      {
-        "current": {
           "selected": true,
           "text": [
             "healthcheck-dummy"
@@ -351,11 +225,11 @@
             "format": "table",
             "parser": "backend",
             "refId": "variable",
-            "root_selector": "$.data.serviceDetails[environmentName in [${environment_name:singlequote}] and componentType in [${component_type:singlequote}]].serviceName",
+            "root_selector": "$.data.serviceDetails[*].serviceName",
             "source": "url",
             "summarizeBy": "serviceName",
             "type": "json",
-            "uql": "parse-json\n$.data.serviceDetails[environmentName == '${environment_name}' && componentType == '${component_type}'].serviceName",
+            "uql": "parse-json\n$.data.serviceDetails[*].serviceName",
             "url": "http://orchestrator:8080/service-details",
             "url_options": {
               "data": "",
@@ -486,18 +360,8 @@
         "options": [
           {
             "selected": false,
-            "text": "environment_name",
-            "value": "environment_name"
-          },
-          {
-            "selected": false,
             "text": "service_name",
             "value": "service_name"
-          },
-          {
-            "selected": false,
-            "text": "component_type",
-            "value": "component_type"
           },
           {
             "selected": false,
@@ -515,7 +379,7 @@
             "value": "message"
           }
         ],
-        "query": "environment_nameironment_name,service_name,component_type,timestamp,hostname,message",
+        "query": "service_name,timestamp,hostname,message",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

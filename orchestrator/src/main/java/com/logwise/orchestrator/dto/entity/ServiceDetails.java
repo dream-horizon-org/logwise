@@ -8,9 +8,7 @@ import lombok.experimental.NonFinal;
 @AllArgsConstructor
 @Builder
 public class ServiceDetails {
-  @NonFinal @NonNull String environmentName;
   @NonFinal @NonNull String serviceName;
-  @NonFinal String componentType;
   @NonFinal Integer retentionDays;
   @NonFinal String tenant;
 
@@ -19,6 +17,11 @@ public class ServiceDetails {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ServiceDetails that = (ServiceDetails) o;
-    return environmentName.equals(that.environmentName) && serviceName.equals(that.serviceName);
+    return serviceName.equals(that.serviceName);
+  }
+
+  @Override
+  public int hashCode() {
+    return serviceName.hashCode();
   }
 }

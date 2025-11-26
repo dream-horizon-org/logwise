@@ -57,9 +57,7 @@ CREATE EXTERNAL TABLE `application-logs`(
   `message` string, 
   `source_type` string, 
   `timestamp` string)
-PARTITIONED BY ( 
-  `environment_name` string, 
-  `component_type` string, 
+PARTITIONED BY (   
   `service_name` string, 
   `time` string)
 ROW FORMAT SERDE 
@@ -73,20 +71,18 @@ LOCATION
 TBLPROPERTIES (
   'compressionType'='gzip', 
   'parquet.ignore.statistics'='true', 
-  'projection.component_type.type'='injected', 
   'projection.enabled'='true', 
-  'projection.environment_name.type'='injected', 
   'projection.service_name.type'='injected', 
   'projection.time.format'='\'year=\'yyyy\'/month=\'MM\'/day=\'dd\'/hour=\'HH\'/minute=\'mm', 
   'projection.time.interval'='1', 
   'projection.time.interval.unit'='MINUTES', 
   'projection.time.range'='NOW-1YEARS,NOW', 
   'projection.time.type'='date', 
-  'storage.location.template'='s3://your-bucket-name/logs/environment_name=${environment_name}/component_type=${component_type}/service_name=${service_name}/${time}')
+  'storage.location.template'='s3://your-bucket-name/logs/service_name=${service_name}/${time}')
 ```
 
 ::: warning Important
-The table schema includes partition keys (`environment_name`, `component_type`, `service_name`, `time`) which are essential for efficient querying in Athena. Ensure your log data is organized in S3 with these partitions in the path structure.
+The table schema includes partition keys (`service_name`, `time`) which are essential for efficient querying in Athena. Ensure your log data is organized in S3 with these partitions in the path structure.
 
 **Before running the query**, replace `s3://your-bucket-name/logs` with your actual S3 URI from step 2 in both the `LOCATION` clause and the `storage.location.template` property.
 :::

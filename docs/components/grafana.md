@@ -18,12 +18,12 @@ Grafana visualizes logs from your datasource (Athena) and enables tag-based filt
 
 ## How It Works
 
-The Orchestrator Service aggregates metadata from source tags (for example: `environment_name`, `component_type`, `service_name`). That metadata is used to populate dashboard dropdowns (Grafana variables), ensuring consistent filter options across dashboards.
+The Orchestrator Service aggregates metadata from source tags (for example: `service_name`). That metadata is used to populate dashboard dropdowns (Grafana variables), ensuring consistent filter options across dashboards.
 
 **Data Flow:**
-1. All logs pushed by the OTEL Collector include tags: `environment_name`, `component_type`, `service_name`
-2. Vector converts these tags into fields, makes them part of the schema, and sends the data to Kafka
-3. Spark reads this schema and writes it to S3, partitioned by these tag fields
+1. All logs pushed by the OTEL Collector include the `service_name` tag
+2. Vector converts this tag into a field, makes it part of the schema, and sends the data to Kafka
+3. Spark reads this schema and writes it to S3, partitioned by `service_name` and time
 4. The Orchestrator Service periodically fetches partition keys, creates metadata in the database, and exposes that metadata via APIs
 5. Grafana uses this metadata to populate dropdowns (variables)
 

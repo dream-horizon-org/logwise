@@ -12,8 +12,6 @@ public class Schema {
     return new StructType()
         .add(Constants.APPLICATION_LOG_COLUMN_MESSAGE, DataTypes.StringType)
         .add(Constants.APPLICATION_LOG_COLUMN_TIMESTAMP, DataTypes.StringType)
-        .add(Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME, DataTypes.StringType)
-        .add(Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME, DataTypes.StringType)
-        .add(Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE, DataTypes.StringType);
+        .add(Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME, DataTypes.StringType);
   }
 }

@@ -76,8 +76,8 @@ public class ObjectStoreServiceTest extends BaseTest {
   @Test
   public void testGetAllDistinctServicesInAws_WithValidTenant_ReturnsServiceDetails() {
     Tenant tenant = Tenant.ABC;
-    String prefix1 = "logs/environment_name=prod/component_type=web/service_name=api/";
-    String prefix2 = "logs/environment_name=staging/component_type=web/service_name=api/";
+    String prefix1 = "logs/service_name=api/";
+    String prefix2 = "logs/service_name=api2/";
 
     try (MockedStatic<ObjectStoreFactory> mockedFactory =
             Mockito.mockStatic(ObjectStoreFactory.class);
@@ -139,106 +139,27 @@ public class ObjectStoreServiceTest extends BaseTest {
   }
 
   @Test
-  public void testGetEnvRetentionDays_WithMatchingEnv_ReturnsRetentionDays() throws Exception {
+  public void testGetDefaultRetentionDays_ReturnsDefaultRetentionDays() throws Exception {
     Method method =
         ObjectStoreService.class.getDeclaredMethod(
-            "getEnvRetentionDays", ApplicationConfig.TenantConfig.class, ServiceDetails.class);
+            "getDefaultRetentionDays", ApplicationConfig.TenantConfig.class);
     method.setAccessible(true);
 
     ApplicationConfig.TenantConfig config = ApplicationTestConfig.createMockTenantConfig("ABC");
-    ServiceDetails serviceDetails =
-        ServiceDetails.builder().environmentName("prod").serviceName("test-service").build();
+    config.setDefaultLogsRetentionDays(30);
 
-    // Set up retention days config
-    ApplicationConfig.EnvLogsRetentionDaysConfig retentionConfig =
-        new ApplicationConfig.EnvLogsRetentionDaysConfig();
-    retentionConfig.setEnvs(Arrays.asList("prod"));
-    retentionConfig.setRetentionDays(30);
-    config.setEnvLogsRetentionDays(Arrays.asList(retentionConfig));
-
-    Integer result = (Integer) method.invoke(null, config, serviceDetails);
+    Integer result = (Integer) method.invoke(null, config);
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result, Integer.valueOf(30));
   }
 
   @Test
-  public void testGetEnvRetentionDays_WithNonMatchingEnv_ReturnsDefault() throws Exception {
-    Method method =
-        ObjectStoreService.class.getDeclaredMethod(
-            "getEnvRetentionDays", ApplicationConfig.TenantConfig.class, ServiceDetails.class);
-    method.setAccessible(true);
-
-    ApplicationConfig.TenantConfig config = ApplicationTestConfig.createMockTenantConfig("ABC");
-    ServiceDetails serviceDetails =
-        ServiceDetails.builder().environmentName("dev").serviceName("test-service").build();
-
-    // Set up retention days config with different env
-    ApplicationConfig.EnvLogsRetentionDaysConfig retentionConfig =
-        new ApplicationConfig.EnvLogsRetentionDaysConfig();
-    retentionConfig.setEnvs(Arrays.asList("prod"));
-    retentionConfig.setRetentionDays(30);
-    config.setEnvLogsRetentionDays(Arrays.asList(retentionConfig));
-    config.setDefaultLogsRetentionDays(7);
-
-    Integer result = (Integer) method.invoke(null, config, serviceDetails);
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result, Integer.valueOf(7)); // Should return default
-  }
-
-  @Test
-  public void testGetEnvRetentionDays_WithEmptyRetentionConfig_ReturnsDefault() throws Exception {
-    Method method =
-        ObjectStoreService.class.getDeclaredMethod(
-            "getEnvRetentionDays", ApplicationConfig.TenantConfig.class, ServiceDetails.class);
-    method.setAccessible(true);
-
-    ApplicationConfig.TenantConfig config = ApplicationTestConfig.createMockTenantConfig("ABC");
-    ServiceDetails serviceDetails =
-        ServiceDetails.builder().environmentName("prod").serviceName("test-service").build();
-
-    config.setEnvLogsRetentionDays(Collections.emptyList());
-    config.setDefaultLogsRetentionDays(14);
-
-    Integer result = (Integer) method.invoke(null, config, serviceDetails);
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result, Integer.valueOf(14));
-  }
-
-  @Test
-  public void testGetEnvRetentionDays_WithMultipleEnvsInConfig_MatchesCorrectly() throws Exception {
-    Method method =
-        ObjectStoreService.class.getDeclaredMethod(
-            "getEnvRetentionDays", ApplicationConfig.TenantConfig.class, ServiceDetails.class);
-    method.setAccessible(true);
-
-    ApplicationConfig.TenantConfig config = ApplicationTestConfig.createMockTenantConfig("ABC");
-    ServiceDetails serviceDetails =
-        ServiceDetails.builder().environmentName("staging").serviceName("test-service").build();
-
-    ApplicationConfig.EnvLogsRetentionDaysConfig retentionConfig =
-        new ApplicationConfig.EnvLogsRetentionDaysConfig();
-    retentionConfig.setEnvs(Arrays.asList("prod", "staging"));
-    retentionConfig.setRetentionDays(60);
-    config.setEnvLogsRetentionDays(Arrays.asList(retentionConfig));
-
-    Integer result = (Integer) method.invoke(null, config, serviceDetails);
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result, Integer.valueOf(60));
-  }
-
-  @Test
-  public void testGetAllDistinctServicesInAws_WithNestedPrefixes_ReturnsAllServices() {
+  public void testGetAllDistinctServicesInAws_WithMultipleServices_ReturnsAllServices() {
     Tenant tenant = Tenant.ABC;
-    String envPrefix = "logs/environment_name=prod/";
-    String componentPrefix1 = "logs/environment_name=prod/component_type=web/";
-    String componentPrefix2 = "logs/environment_name=prod/component_type=api/";
-    String servicePrefix1 = "logs/environment_name=prod/component_type=web/service_name=api1/";
-    String servicePrefix2 = "logs/environment_name=prod/component_type=web/service_name=api2/";
-    String servicePrefix3 = "logs/environment_name=prod/component_type=api/service_name=api3/";
+    String servicePrefix1 = "logs/service_name=api1/";
+    String servicePrefix2 = "logs/service_name=api2/";
+    String servicePrefix3 = "logs/service_name=api3/";
 
     try (MockedStatic<ObjectStoreFactory> mockedFactory =
             Mockito.mockStatic(ObjectStoreFactory.class);
@@ -256,17 +177,9 @@ public class ObjectStoreServiceTest extends BaseTest {
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(tenantConfig);
 
-      // Mock nested listCommonPrefix calls
-      when(mockObjectStoreClient.listCommonPrefix(contains("environment_name="), eq("/")))
-          .thenReturn(Single.just(Arrays.asList(envPrefix)));
-      when(mockObjectStoreClient.listCommonPrefix(contains("component_type="), eq("/")))
-          .thenReturn(
-              Single.just(Arrays.asList(componentPrefix1, componentPrefix2)),
-              Single.just(Arrays.asList(componentPrefix1, componentPrefix2)));
+      // Mock listCommonPrefix call for service_name
       when(mockObjectStoreClient.listCommonPrefix(contains("service_name="), eq("/")))
-          .thenReturn(
-              Single.just(Arrays.asList(servicePrefix1, servicePrefix2)),
-              Single.just(Arrays.asList(servicePrefix3)));
+          .thenReturn(Single.just(Arrays.asList(servicePrefix1, servicePrefix2, servicePrefix3)));
 
       Single<List<ServiceDetails>> result = objectStoreService.getAllDistinctServicesInAws(tenant);
       List<ServiceDetails> services = result.blockingGet();

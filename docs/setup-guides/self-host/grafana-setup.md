@@ -49,7 +49,7 @@ Alternative installs: refer to Grafana docs for Linux packages or Kubernetes Hel
 ## 4) Import the provided dashboard JSON and start querying
 
 1. In Grafana: Dashboards → Import → Upload JSON → select the file and import
-2. Use the dropdowns to filter by `environment_name`, `component_type`, `service_name` and start querying logs
+2. Use the dropdowns to filter by `service_name` and start querying logs
 
  
 

@@ -57,7 +57,7 @@ From the `logwise/vector/` directory (where you are after Step 1), run:
 protoc --include_imports --descriptor_set_out=logwise-vector.desc logwise-vector.proto
 ```
 
-> **Important:** The protobuf schema defined in `logwise-vector.proto` uses the package `logwise.vector.logs` with message type `VectorLogs`. Ensure that your Spark jobs are configured to consume messages with this schema. If you're upgrading from an older version, you may need to regenerate the Spark protobuf classes and update the Spark code to match the new schema fields (`environment_name`,`component_type`,`service_name`).
+> **Important:** The protobuf schema defined in `logwise-vector.proto` uses the package `logwise.vector.logs` with message type `VectorLogs`. Ensure that your Spark jobs are configured to consume messages with this schema. If you're upgrading from an older version, you may need to regenerate the Spark protobuf classes and update the Spark code to match the new schema fields (for example: `service_name`).
 
 ## 4) Install Vector configuration
 

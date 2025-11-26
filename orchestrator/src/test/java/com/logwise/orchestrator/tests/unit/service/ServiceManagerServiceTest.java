@@ -41,12 +41,7 @@ public class ServiceManagerServiceTest extends BaseTest {
   public void testGetServiceDetailsFromDB_WithValidTenant_ReturnsResponse() {
     Tenant tenant = Tenant.ABC;
     List<ServiceDetails> serviceDetailsList =
-        Arrays.asList(
-            ServiceDetails.builder()
-                .serviceName("test-service")
-                .environmentName("prod")
-                .componentType("web")
-                .build());
+        Arrays.asList(ServiceDetails.builder().serviceName("test-service").build());
 
     when(mockServicesDao.getAllServiceDetails(tenant)).thenReturn(Single.just(serviceDetailsList));
 
@@ -82,12 +77,7 @@ public class ServiceManagerServiceTest extends BaseTest {
 
     List<ServiceDetails> dbServices = Collections.emptyList();
     List<ServiceDetails> awsServices =
-        Arrays.asList(
-            ServiceDetails.builder()
-                .serviceName("new-service")
-                .environmentName("prod")
-                .componentType("web")
-                .build());
+        Arrays.asList(ServiceDetails.builder().serviceName("new-service").build());
 
     when(mockServicesDao.getAllServiceDetails(tenant)).thenReturn(Single.just(dbServices));
     when(mockObjectStoreService.getAllDistinctServicesInAws(tenant))
@@ -105,12 +95,7 @@ public class ServiceManagerServiceTest extends BaseTest {
     Tenant tenant = Tenant.ABC;
 
     List<ServiceDetails> dbServices =
-        Arrays.asList(
-            ServiceDetails.builder()
-                .serviceName("old-service")
-                .environmentName("prod")
-                .componentType("web")
-                .build());
+        Arrays.asList(ServiceDetails.builder().serviceName("old-service").build());
     List<ServiceDetails> awsServices = Collections.emptyList();
 
     when(mockServicesDao.getAllServiceDetails(tenant)).thenReturn(Single.just(dbServices));
@@ -129,12 +114,7 @@ public class ServiceManagerServiceTest extends BaseTest {
     Tenant tenant = Tenant.ABC;
 
     List<ServiceDetails> services =
-        Arrays.asList(
-            ServiceDetails.builder()
-                .serviceName("existing-service")
-                .environmentName("prod")
-                .componentType("web")
-                .build());
+        Arrays.asList(ServiceDetails.builder().serviceName("existing-service").build());
 
     when(mockServicesDao.getAllServiceDetails(tenant)).thenReturn(Single.just(services));
     when(mockObjectStoreService.getAllDistinctServicesInAws(tenant))
@@ -154,12 +134,11 @@ public class ServiceManagerServiceTest extends BaseTest {
     method.setAccessible(true);
 
     List<ServiceDetails> dbServices =
-        Arrays.asList(
-            ServiceDetails.builder().environmentName("prod").serviceName("existing").build());
+        Arrays.asList(ServiceDetails.builder().serviceName("existing").build());
     List<ServiceDetails> objectStoreServices =
         Arrays.asList(
-            ServiceDetails.builder().environmentName("prod").serviceName("existing").build(),
-            ServiceDetails.builder().environmentName("prod").serviceName("new").build());
+            ServiceDetails.builder().serviceName("existing").build(),
+            ServiceDetails.builder().serviceName("new").build());
 
     @SuppressWarnings("unchecked")
     List<ServiceDetails> result =
@@ -178,12 +157,12 @@ public class ServiceManagerServiceTest extends BaseTest {
 
     List<ServiceDetails> dbServices =
         Arrays.asList(
-            ServiceDetails.builder().environmentName("prod").serviceName("service1").build(),
-            ServiceDetails.builder().environmentName("prod").serviceName("service2").build());
+            ServiceDetails.builder().serviceName("service1").build(),
+            ServiceDetails.builder().serviceName("service2").build());
     List<ServiceDetails> objectStoreServices =
         Arrays.asList(
-            ServiceDetails.builder().environmentName("prod").serviceName("service1").build(),
-            ServiceDetails.builder().environmentName("prod").serviceName("service2").build());
+            ServiceDetails.builder().serviceName("service1").build(),
+            ServiceDetails.builder().serviceName("service2").build());
 
     @SuppressWarnings("unchecked")
     List<ServiceDetails> result =
@@ -203,11 +182,10 @@ public class ServiceManagerServiceTest extends BaseTest {
 
     List<ServiceDetails> dbServices =
         Arrays.asList(
-            ServiceDetails.builder().environmentName("prod").serviceName("service1").build(),
-            ServiceDetails.builder().environmentName("prod").serviceName("service2").build());
+            ServiceDetails.builder().serviceName("service1").build(),
+            ServiceDetails.builder().serviceName("service2").build());
     List<ServiceDetails> objectStoreServices =
-        Arrays.asList(
-            ServiceDetails.builder().environmentName("prod").serviceName("service1").build());
+        Arrays.asList(ServiceDetails.builder().serviceName("service1").build());
 
     @SuppressWarnings("unchecked")
     List<ServiceDetails> result =
@@ -227,12 +205,11 @@ public class ServiceManagerServiceTest extends BaseTest {
     method.setAccessible(true);
 
     List<ServiceDetails> dbServices =
-        Arrays.asList(
-            ServiceDetails.builder().environmentName("prod").serviceName("service1").build());
+        Arrays.asList(ServiceDetails.builder().serviceName("service1").build());
     List<ServiceDetails> objectStoreServices =
         Arrays.asList(
-            ServiceDetails.builder().environmentName("prod").serviceName("service1").build(),
-            ServiceDetails.builder().environmentName("prod").serviceName("service2").build());
+            ServiceDetails.builder().serviceName("service1").build(),
+            ServiceDetails.builder().serviceName("service2").build());
 
     @SuppressWarnings("unchecked")
     List<ServiceDetails> result =
@@ -248,12 +225,7 @@ public class ServiceManagerServiceTest extends BaseTest {
     GetServiceDetailsResponse cachedResponse =
         GetServiceDetailsResponse.builder()
             .serviceDetails(
-                Arrays.asList(
-                    ServiceDetails.builder()
-                        .serviceName("cached-service")
-                        .environmentName("prod")
-                        .componentType("web")
-                        .build()))
+                Arrays.asList(ServiceDetails.builder().serviceName("cached-service").build()))
             .build();
 
     // The cache is created in constructor, so we need to mock the cache behavior
@@ -267,19 +239,9 @@ public class ServiceManagerServiceTest extends BaseTest {
     Tenant tenant = Tenant.ABC;
 
     List<ServiceDetails> dbServices =
-        Arrays.asList(
-            ServiceDetails.builder()
-                .serviceName("old-service")
-                .environmentName("prod")
-                .componentType("web")
-                .build());
+        Arrays.asList(ServiceDetails.builder().serviceName("old-service").build());
     List<ServiceDetails> awsServices =
-        Arrays.asList(
-            ServiceDetails.builder()
-                .serviceName("new-service")
-                .environmentName("prod")
-                .componentType("web")
-                .build());
+        Arrays.asList(ServiceDetails.builder().serviceName("new-service").build());
 
     when(mockServicesDao.getAllServiceDetails(tenant)).thenReturn(Single.just(dbServices));
     when(mockObjectStoreService.getAllDistinctServicesInAws(tenant))
@@ -298,12 +260,7 @@ public class ServiceManagerServiceTest extends BaseTest {
   public void testOnBoardNewServices_WithError_PropagatesError() {
     Tenant tenant = Tenant.ABC;
     List<ServiceDetails> servicesNotInDb =
-        Arrays.asList(
-            ServiceDetails.builder()
-                .serviceName("new-service")
-                .environmentName("prod")
-                .componentType("web")
-                .build());
+        Arrays.asList(ServiceDetails.builder().serviceName("new-service").build());
 
     when(mockServicesDao.getAllServiceDetails(tenant))
         .thenReturn(Single.just(Collections.emptyList()));
@@ -328,16 +285,8 @@ public class ServiceManagerServiceTest extends BaseTest {
 
     List<ServiceDetails> dbServices =
         Arrays.asList(
-            ServiceDetails.builder()
-                .serviceName("service1")
-                .environmentName("prod")
-                .componentType("web")
-                .build(),
-            ServiceDetails.builder()
-                .serviceName("service2")
-                .environmentName("prod")
-                .componentType("web")
-                .build());
+            ServiceDetails.builder().serviceName("service1").build(),
+            ServiceDetails.builder().serviceName("service2").build());
     List<ServiceDetails> awsServices = Collections.emptyList();
 
     when(mockServicesDao.getAllServiceDetails(tenant)).thenReturn(Single.just(dbServices));

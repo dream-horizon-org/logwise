@@ -43,8 +43,6 @@ public class MetricsService {
         getPrefixList(
             nowTime,
             config.getSpark().getLogsDir(),
-            delayMetricsConfig.getApp().getSampleEnv(),
-            delayMetricsConfig.getApp().getSampleComponentType(),
             delayMetricsConfig.getApp().getSampleServiceName());
 
     return ApplicationUtils.executeBlockingCallable(
@@ -76,12 +74,7 @@ public class MetricsService {
         .toSingle();
   }
 
-  private static List<String> getPrefixList(
-      LocalDateTime nowTime,
-      String dir,
-      String environmentName,
-      String componentType,
-      String serviceName) {
+  private static List<String> getPrefixList(LocalDateTime nowTime, String dir, String serviceName) {
     List<String> dirPrefixList = new ArrayList<>();
     for (int deltaHours = 0;
         deltaHours <= ApplicationConstants.MAX_LOGS_SYNC_DELAY_HOURS;
@@ -92,8 +85,8 @@ public class MetricsService {
       String hour = String.format("%02d", time.getHour());
       String dirPrefix =
           String.format(
-              "%s/environment_name=%s/component_type=%s/service_name=%s/year=%d/month=%s/day=%s/hour=%s/minute=",
-              dir, environmentName, componentType, serviceName, time.getYear(), month, day, hour);
+              "%s/service_name=%s/year=%d/month=%s/day=%s/hour=%s/minute=",
+              dir, serviceName, time.getYear(), month, day, hour);
       if (!dirPrefixList.contains(dirPrefix)) {
         dirPrefixList.add(dirPrefix);
       }

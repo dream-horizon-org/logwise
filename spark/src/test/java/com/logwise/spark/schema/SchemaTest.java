@@ -32,9 +32,7 @@ public class SchemaTest {
     // Assert
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_MESSAGE));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_TIMESTAMP));
-    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME));
     assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME));
-    assertNotNull(schema.getFieldIndex(Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE));
   }
 
   @Test
@@ -43,7 +41,7 @@ public class SchemaTest {
     StructType schema = Schema.getVectorApplicationLogsSchema();
 
     // Assert
-    assertEquals(schema.fields().length, 5, "Schema should contain exactly 5 fields");
+    assertEquals(schema.fields().length, 3, "Schema should contain exactly 3 fields");
   }
 
   @Test
@@ -94,20 +92,6 @@ public class SchemaTest {
   }
 
   @Test
-  public void testGetVectorApplicationLogsSchema_EnvironmentFieldExists() {
-    // Act
-    StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField envField = schema.apply(Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME);
-
-    // Assert
-    assertNotNull(envField, "Environment field should exist");
-    assertEquals(
-        envField.name(),
-        Constants.APPLICATION_LOG_COLUMN_ENVIRONMENT_NAME,
-        "Field name should match constant");
-  }
-
-  @Test
   public void testGetVectorApplicationLogsSchema_ServiceNameFieldExists() {
     // Act
     StructType schema = Schema.getVectorApplicationLogsSchema();
@@ -119,20 +103,10 @@ public class SchemaTest {
         serviceNameField.name(),
         Constants.APPLICATION_LOG_COLUMN_SERVICE_NAME,
         "Field name should match constant");
-  }
-
-  @Test
-  public void testGetVectorApplicationLogsSchema_ComponentNameFieldExists() {
-    // Act
-    StructType schema = Schema.getVectorApplicationLogsSchema();
-    StructField componentNameField = schema.apply(Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE);
-
-    // Assert
-    assertNotNull(componentNameField, "Component name field should exist");
     assertEquals(
-        componentNameField.name(),
-        Constants.APPLICATION_LOG_COLUMN_COMPONENT_TYPE,
-        "Field name should match constant");
+        serviceNameField.dataType(),
+        DataTypes.StringType,
+        "Service name field should be StringType");
   }
 
   @Test

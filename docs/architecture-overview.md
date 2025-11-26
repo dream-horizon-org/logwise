@@ -26,9 +26,7 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
 ### **2. [Kafka](/components/kafka)**
 
 - Provides a **high-throughput**, **fault-tolerant**, and **scalable** log ingestion layer.  
-- Vector dynamically creates **Kafka topics** using tags:
-  - `environment_name`
-  - `component_type`
+- Vector dynamically creates **Kafka topics** using the `service_name` tag:
   - `service_name`
 - Enables decoupled, delayed, or batched log processing to support downstream consumers like Spark.
 
@@ -42,7 +40,7 @@ It provides an end-to-end pipeline for log ingestion, transformation, storage, a
   - Faster queries and optimized data scanning.
 - Writes output into **Amazon S3** in **Hive-compatible directory structure** using this path pattern:
   ```
-  env/service_name/year/month/day/hour/minute
+  service_name/year/month/day/hour/minute
   ```
 - The **Orchestrator Service** monitors job health and manages Spark drivers.
 
