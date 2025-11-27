@@ -22,7 +22,7 @@ Kubernetes setup guide for the OpenTelemetry Collector log shipping system. In o
 
 2. **Deploy to Cluster**
    - Apply the complete manifest: `kubectl apply -f otel-collector-config.yaml`
-     The configuration file is available at [`otel-collector-config.yaml`](./otel-collector-config.yaml).
+     The configuration file is available at [`otel-collector-config.yaml`](https://github.com/ds-horizon/logwise/blob/main/docs/send-logs/kubernetes/otel-collector-config.yaml).
    - Verify deployment: `kubectl get pods -n observability`
 
 3. **Verify Log Collection**
@@ -57,13 +57,10 @@ Set these environment variables in the DaemonSet section of `otel-collector-conf
 env:
   - name: SERVICE_NAME
     value: "your-service-name"
-  - name: ENVIRONMENT
-    value: "production"
 ```
 
 These environment variables are used by the resource processor to add metadata to your logs:
 - `SERVICE_NAME` - Identifies your service
-- `ENVIRONMENT` - Specifies the deployment environment (e.g., production, staging, development)
 
 **Note**: The configuration also automatically adds `type: application` to all logs as a resource attribute.
 
@@ -108,8 +105,6 @@ The collector enriches logs with the following metadata structure:
 ### Resource Attributes
 
 - **`service_name`**: Service identifier (from `SERVICE_NAME` environment variable)
-- **`environment`**: Environment identifier (from `ENVIRONMENT` environment variable)
-- **`type`**: Automatically set to `application` for all logs
 
 ### Log Body
 

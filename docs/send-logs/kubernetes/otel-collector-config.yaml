@@ -33,12 +33,6 @@ data:
           - key: service_name
             value: ${env:SERVICE_NAME}
             action: upsert
-          - key: environment
-            value: ${env:ENVIRONMENT}
-            action: upsert
-          - key: type
-            value: application
-            action: upsert
 
       memory_limiter:
         limit_mib: 1500

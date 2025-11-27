@@ -4,7 +4,7 @@ We take security seriously. Please report vulnerabilities privately and responsi
 
 ## Reporting a Vulnerability
 
-- Email: security@logwise.dev
+- Email: onkar.sarvade@dream11.com
 - Acknowledgement target: within 24 hours
 - Please do not open public issues for security reports
 
