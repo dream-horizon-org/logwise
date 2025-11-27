@@ -54,10 +54,10 @@ export default defineConfig({
                 --vp-c-brand-3: #1A6A74;
             }
         `],
-        ['link', { rel: 'icon', href: '/logwise/logo1.png' }]
+        ['link', { rel: 'icon', href: '/logwise/logwise.png' }]
     ],
     themeConfig: {
-        logo: '/logo1.png',
+        logo: '/logwise.png',
         nav: [
             { text: 'Home', link: '/' },
             { text: 'Overview', link: '/what-is-logwise' },
