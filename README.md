@@ -58,7 +58,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the LGPL-3 License. See the [LICENSE](LICENSE) file for details.
 
 ## 📧 Contact
 
