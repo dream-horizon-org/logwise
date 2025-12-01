@@ -14,7 +14,7 @@ hero:
       link: /what-is-logwise
     - theme: alt
       text: View on GitHub
-      link: https://github.com/ds-horizon/logwise
+      link: https://github.com/dream-horizon-org/logwise
 
 features:
   - icon: 💰

@@ -31,7 +31,7 @@ const releaseVersion = version.replace('-SNAPSHOT', '')
 export default defineConfig({
     title: 'Logwise',
     description: 'Open-source, cost-effective end-to-end logging system featuring full architecture, deployment automation, dashboards, and production-ready scaling guides',
-    site: 'https://ds-horizon.github.io/logwise/',
+    site: 'https://dream-horizon-org.github.io/logwise/',
     // GitHub Pages config
     base: '/logwise/',
     head: [
@@ -65,14 +65,14 @@ export default defineConfig({
             { text: 'Setup', link: '/setup-guides/docker' },
             {
                 text: `v${version}`, items: isSnapshot ? [
-                    { text: 'Latest Release', link: 'https://github.com/ds-horizon/logwise/releases/latest' },
-                    { text: 'All Releases', link: 'https://github.com/ds-horizon/logwise/releases' }
+                    { text: 'Latest Release', link: 'https://github.com/dream-horizon-org/logwise/releases/latest' },
+                    { text: 'All Releases', link: 'https://github.com/dream-horizon-org/logwise/releases' }
                 ] : [
-                    { text: 'Release Notes', link: `https://github.com/ds-horizon/logwise/releases/tag/v${releaseVersion}` },
-                    { text: 'All Releases', link: 'https://github.com/ds-horizon/logwise/releases' }
+                    { text: 'Release Notes', link: `https://github.com/dream-horizon-org/logwise/releases/tag/v${releaseVersion}` },
+                    { text: 'All Releases', link: 'https://github.com/dream-horizon-org/logwise/releases' }
                 ]
             },
-            { text: 'GitHub', link: 'https://github.com/ds-horizon/logwise' }
+            { text: 'GitHub', link: 'https://github.com/dream-horizon-org/logwise' }
         ],
 
         sidebar: {
@@ -133,7 +133,7 @@ export default defineConfig({
         },
 
         socialLinks: [
-            { icon: 'github', link: 'https://github.com/ds-horizon/logwise' }
+            { icon: 'github', link: 'https://github.com/dream-horizon-org/logwise' }
         ],
 
         footer: {

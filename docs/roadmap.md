@@ -32,7 +32,7 @@ This page outlines our planned features and improvements for Logwise. We're comm
 
 We welcome community input on our roadmap! If you have feature requests or ideas, please:
 
-- Open an issue on [GitHub](https://github.com/ds-horizon/logwise/issues)
+- Open an issue on [GitHub](https://github.com/dream-horizon-org/logwise/issues)
 - Join our discussions
 - Contribute code for features you'd like to see
 

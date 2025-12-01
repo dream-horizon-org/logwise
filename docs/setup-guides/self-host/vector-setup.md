@@ -33,13 +33,13 @@ sudo firewall-cmd --reload
 ## 1) Clone repository
 
 ```bash
-git clone https://github.com/ds-horizon/logwise.git
+git clone https://github.com/dream-horizon-org/logwise.git
 cd logwise/vector/
 ```
 
 ## 2) Set Kafka broker address
 
-Edit [`vector.yaml`](https://github.com/ds-horizon/logwise/blob/main/vector/vector.yaml) directly and replace the environment variable with your Kafka address:
+Edit [`vector.yaml`](https://github.com/dream-horizon-org/logwise/blob/main/vector/vector.yaml) directly and replace the environment variable with your Kafka address:
 
 ```yaml
 # Before
