@@ -22,7 +22,7 @@ Kubernetes setup guide for the OpenTelemetry Collector log shipping system. In o
 
 2. **Deploy to Cluster**
    - Apply the complete manifest: `kubectl apply -f otel-collector-config.yaml`
-     The configuration file is available at [`otel-collector-config.yaml`](https://github.com/ds-horizon/logwise/blob/main/docs/send-logs/kubernetes/otel-collector-config.yaml).
+     The configuration file is available at [`otel-collector-config.yaml`](https://github.com/dream-horizon-org/logwise/blob/main/docs/send-logs/kubernetes/otel-collector-config.yaml).
    - Verify deployment: `kubectl get pods -n observability`
 
 3. **Verify Log Collection**
