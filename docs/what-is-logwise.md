@@ -48,9 +48,9 @@ Logwise proves that powerful log management doesn't have to be expensive. It's o
 
 ## License
 
-Logwise is released under the **MIT License** - see the [LICENSE](https://github.com/ds-horizon/logwise/blob/main/LICENSE) file for details.
+Logwise is released under the **MIT License** - see the [LICENSE](https://github.com/dream-horizon-org/logwise/blob/main/LICENSE) file for details.
 
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](https://github.com/ds-horizon/logwise/blob/main/CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](https://github.com/dream-horizon-org/logwise/blob/main/CONTRIBUTING.md) for details.
