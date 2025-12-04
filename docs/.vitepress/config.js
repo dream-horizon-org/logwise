@@ -114,6 +114,7 @@ export default defineConfig({
                             items: [
                                 { text: 'Kafka', link: '/setup-guides/self-host/kafka-setup' },
                                 { text: 'Vector', link: '/setup-guides/self-host/vector-setup' },
+                                { text: 'Log collectors', link: '/setup-guides/self-host/collectors' },
                                 { text: 'S3 + Athena', link: '/setup-guides/self-host/s3-athena-setup' },
                                 { text: 'Spark', link: '/setup-guides/self-host/spark-setup' },
                                 { text: 'Grafana', link: '/setup-guides/self-host/grafana-setup' },
