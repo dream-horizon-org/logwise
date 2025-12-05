@@ -9,7 +9,7 @@ This guide covers production scaling strategies and patterns for Logwise compone
 - [Vector Setup](./vector-setup.md) | [Kafka Setup](./kafka-setup.md) | [Spark Setup](./spark-setup.md)
 - [Orchestrator Setup](./orchestrator-service-setup.md) | [Grafana Setup](./grafana-setup.md) | [S3 & Athena Setup](./s3-athena-setup.md)
 
-![Log-Central Architecture](../../production-setup.png)
+![Logwise Architecture](../../production-setup.png)
 
 
 # Architecture Overview
@@ -323,8 +323,3 @@ Set up alerts for:
 - **Orchestrator**: 2 instances
 - **Grafana**: 1 instances (depends on Users)
 
-## Additional Resources
-
-- [Architecture Overview](../architecture-overview.md)
-- [Component Setup Guides](./) - Individual component setup instructions
-- [Orchestrator Component Details](../components/orchestrator.md) - Detailed orchestrator behavior
