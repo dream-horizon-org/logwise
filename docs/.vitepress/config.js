@@ -138,7 +138,7 @@ export default defineConfig({
         ],
 
         footer: {
-            message: `Released under the MIT License. Version ${version}`,
+            message: `Released under the LGPL-3.0 License. Version ${version}`,
             copyright: 'Copyright © 2025 Logwise'
         },
 
