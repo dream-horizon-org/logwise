@@ -114,7 +114,6 @@ export default defineConfig({
                             items: [
                                 { text: 'Kafka', link: '/setup-guides/self-host/kafka-setup' },
                                 { text: 'Vector', link: '/setup-guides/self-host/vector-setup' },
-                                { text: 'Log collectors', link: '/setup-guides/self-host/collectors' },
                                 { text: 'S3 + Athena', link: '/setup-guides/self-host/s3-athena-setup' },
                                 { text: 'Spark', link: '/setup-guides/self-host/spark-setup' },
                                 { text: 'Grafana', link: '/setup-guides/self-host/grafana-setup' },
@@ -126,6 +125,18 @@ export default defineConfig({
                 {
                     text: 'Send Logs',
                     items: [
+                        {
+                            text: 'Log collectors - General info',
+                            link: '/send-logs/collectors/index',
+                            collapsed: true,
+                            items: [
+                                { text: 'OpenTelemetry Collector', link: '/send-logs/collectors/otel' },
+                                { text: 'Fluent Bit', link: '/send-logs/collectors/fluent-bit' },
+                                { text: 'Fluentd', link: '/send-logs/collectors/fluentd' },
+                                { text: 'Logstash', link: '/send-logs/collectors/logstash' },
+                                { text: 'Syslog (syslog-ng / rsyslog)', link: '/send-logs/collectors/syslog' }
+                            ]
+                        },
                         { text: 'OpenTelemetry - EC2', link: '/send-logs/ec2/opentelemetry' },
                         { text: 'OpenTelemetry - Kubernetes', link: '/send-logs/kubernetes/opentelemetry' }
                     ]
