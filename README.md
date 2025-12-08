@@ -4,14 +4,14 @@ Open-source end-to-end logging system for high-volume log processing. Streams lo
 
 ## 📚 Documentation
 
-Full documentation is available at: **[https://ds-horizon.github.io/logwise/](https://ds-horizon.github.io/logwise/)**
+Full documentation is available at: **[https://dream-horizon-org.github.io/logwise/](https://dream-horizon-org.github.io/logwise/)**
 
 ## 🚀 Quick Start
 
 ### Docker Setup (Recommended)
 
 1. **Complete S3 & Athena Setup** (required first step):
-   - Follow the [S3 & Athena Setup Guide](https://ds-horizon.github.io/logwise/setup-guides/self-host/s3-athena-setup)
+   - Follow the [S3 & Athena Setup Guide](https://dream-horizon-org.github.io/logwise/setup-guides/self-host/s3-athena-setup)
 
 2. **Run the setup script**:
    ```bash
@@ -24,13 +24,13 @@ Full documentation is available at: **[https://ds-horizon.github.io/logwise/](ht
    - Spark Master UI: `http://localhost:18080`
    - Orchestrator: `http://localhost:8080`
 
-For detailed instructions, see the [Docker Setup Guide](https://ds-horizon.github.io/logwise/setup-guides/docker/).
+For detailed instructions, see the [Docker Setup Guide](https://dream-horizon-org.github.io/logwise/setup-guides/docker/).
 
 ### Quick Links
-- **[Docker Setup](https://ds-horizon.github.io/logwise/setup-guides/docker/)** - One-click Docker deployment
-- **[Architecture Overview](https://ds-horizon.github.io/logwise/architecture-overview)** - System design and flow
-- **[Component Guides](https://ds-horizon.github.io/logwise/components/vector)** - Detailed component documentation
-- **[Self-Host Setup](https://ds-horizon.github.io/logwise/setup-guides/self-host/)** - Manual component setup
+- **[Docker Setup](https://dream-horizon-org.github.io/logwise/setup-guides/docker/)** - One-click Docker deployment
+- **[Architecture Overview](https://dream-horizon-org.github.io/logwise/architecture-overview)** - System design and flow
+- **[Component Guides](https://dream-horizon-org.github.io/logwise/components/vector)** - Detailed component documentation
+- **[Self-Host Setup](https://dream-horizon-org.github.io/logwise/setup-guides/self-host/)** - Manual component setup
 
 ## 📁 Project Structure
 
@@ -58,7 +58,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the LGPL-3 License. See the [LICENSE](LICENSE) file for details.
 
 ## 📧 Contact
 
