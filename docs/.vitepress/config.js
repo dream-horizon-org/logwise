@@ -33,6 +33,7 @@ export default defineConfig({
     description: 'Open-source, cost-effective end-to-end logging system featuring full architecture, deployment automation, dashboards, and production-ready scaling guides',
     site: 'https://dream-horizon-org.github.io/logwise/',
     // GitHub Pages config
+    appearance: 'force-dark',
     base: '/logwise/',
     head: [
         [
@@ -54,12 +55,14 @@ export default defineConfig({
                 --vp-c-brand-3: #1A6A74;
             }
         `],
+        ['script', { src: '/theme/index.js' }],
+        ['link', { rel: 'stylesheet', href: '/theme/custom.css' }],
         ['link', { rel: 'icon', href: '/logwise/logwise.png' }]
     ],
     themeConfig: {
+        theme: 'dark',
         logo: '/logwise.png',
         nav: [
-            { text: 'Home', link: '/' },
             { text: 'Overview', link: '/what-is-logwise' },
             { text: 'Roadmap', link: '/roadmap' },
             { text: 'Setup', link: '/setup-guides/docker' },
@@ -103,14 +106,12 @@ export default defineConfig({
                     items: [
                         {
                             text: 'Docker Logwise',
-                            collapsed: true,
                             items: [
                                 { text: 'Docker Setup Guide', link: '/setup-guides/docker/index' }
                             ]
                         },
                         {
                             text: 'Self-Host Logwise',
-                            collapsed: true,
                             items: [
                                 { text: 'Kafka', link: '/setup-guides/self-host/kafka-setup' },
                                 { text: 'Vector', link: '/setup-guides/self-host/vector-setup' },
@@ -137,7 +138,7 @@ export default defineConfig({
         ],
 
         footer: {
-            message: `Released under the MIT License. Version ${version}`,
+            message: `Released under the LGPL-3.0 License. Version ${version}`,
             copyright: 'Copyright © 2025 Logwise'
         },
 
