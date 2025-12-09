@@ -19,13 +19,17 @@ public class ApplicationConfig {
   public static class TenantConfig {
     // Tenant name
     @NonFinal @NotNull String name;
-    // defaultLogsRetentionDays is used to set default retention days for service logs in db while
+    // defaultLogsRetentionDays is used to set default retention days for service
+    // logs in db while
     // onboarding
     @NonFinal @NotNull Integer defaultLogsRetentionDays;
-    // envLogsRetentionDays is used to override default retention days for service logs in db
+    // envLogsRetentionDays is used to override default retention days for service
+    // logs in db
     @NonFinal @NotNull @Optional List<EnvLogsRetentionDaysConfig> envLogsRetentionDays = List.of();
     // objectStore is used for s3/gcs configurations
     @NonFinal @NotNull ObjectStoreConfig objectStore;
+
+    @NonFinal @NotNull VectorConfig vector;
     // kafka is used for kafka configurations
     @NonFinal @NotNull KafkaConfig kafka;
     // spark is used for spark configurations
@@ -47,6 +51,12 @@ public class ApplicationConfig {
     @NonFinal @Optional String roleArn;
     // endpointOverride is used for localstack
     @NonFinal @Optional String endpointOverride;
+  }
+
+  @Data
+  public static class VectorConfig {
+    @NonFinal @NotNull String host;
+    @NonFinal @NotNull Integer apiPort;
   }
 
   @Data

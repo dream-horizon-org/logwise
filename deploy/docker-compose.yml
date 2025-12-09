@@ -155,12 +155,16 @@ services:
       - SPARK_MASTER_HOST=${SPARK_MASTER_HOST:-spark://spark-master:7077}
       - SPARK_JAR_PATH=${SPARK_JAR_PATH:-/tmp/spark.jar}
       - LOG4J_PROPERTIES_FILE_PATH=${LOG4J_PROPERTIES_FILE_PATH:-/tmp/log4j.properties}
+      - VECTOR_HOST=${VECTOR_HOST:-vector}
+      - VECTOR_API_PORT=${VECTOR_API_PORT:-8686}
     ports:
       - "${ORCH_PORT:-8080}:8080" # user-facing (optional for local dev)
     networks:
       - lc_net
     depends_on:
       db:
+        condition: service_healthy
+      vector:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "bash", "-lc", "curl -fsS http://localhost:8080/health | grep 'UP' >/dev/null"]

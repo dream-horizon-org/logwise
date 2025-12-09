@@ -147,6 +147,18 @@ The Orchestrator computes and reports log processing delays:
 ### Health Check
 - `GET /healthcheck` - Application health status
   - **Response**: Health check status including MySQL connectivity
+  
+- `GET /pipeline/health` - Complete pipeline health check
+  - **Headers**: `X-Tenant-Name` (required)
+  - **Response**: `JsonObject` with:
+    - `status`: Overall pipeline status (UP/DOWN)
+    - `message`: Overall health message
+    - `tenant`: Tenant name
+    - `checks`: Array of component health checks (vector, kafka, spark, s3)
+      - Each check contains `component` name and `check` object with:
+        - `status`: Component status (UP/DOWN/WARNING)
+        - `message`: Component-specific health message
+        - Additional component-specific details (e.g., responseCode, drivers, recentObjects)
 
 ## Configuration
 
