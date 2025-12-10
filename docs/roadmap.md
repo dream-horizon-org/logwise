@@ -9,9 +9,7 @@ This page outlines our planned features and improvements for Logwise. We're comm
 ## 🎯 Upcoming Features
 
 - Automate Kubernetes-based deployments with full scaling support across all core components.
-- Provide a production-ready setup guide and end-to-end deployment documentation.
 - Extend existing AWS implementation to support GCP for complete multi-cloud compatibility.
-- Add support for multiple ingestion agents beyond OpenTelemetry for flexible data collection.
 - Enable custom tagging for logs and metrics to improve traceability and cross-system correlation.
 - Establish benchmarking suites to define performance baselines and detect regressions.
 - Introduce dedicated frontend and backend services for metadata management and the query engine.
