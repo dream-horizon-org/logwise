@@ -120,7 +120,8 @@ export default defineConfig({
                                 { text: 'Grafana', link: '/setup-guides/self-host/grafana-setup' },
                                 { text: 'Orchestrator Service', link: '/setup-guides/self-host/orchestrator-service-setup' },
                             ]
-                        }
+                        },
+                        { text: 'Production Setup Guide', link: '/setup-guides/production-setup' },
                     ]
                 },
                 {
