@@ -33,6 +33,10 @@ A complete end-to-end logging system that streams logs from Vector → Kafka →
 - **Orchestrator**: Spring Boot service for job management
 - **MySQL**: Database for orchestrator configuration
 
+> **Note on log collectors**  
+> In the Docker-based Logwise stack, logs are shipped into Vector using the **OpenTelemetry Collector (OTEL)** over OTLP by default.  
+> If you prefer to use other agents such as Fluent Bit, Fluentd, Logstash, or syslog-ng/rsyslog, see the **Send Logs → Log collectors** section for agent-specific setup guides and the required Vector configuration changes.
+
 ## 📋 Prerequisites
 
 ### Required

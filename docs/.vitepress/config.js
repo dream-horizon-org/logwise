@@ -126,8 +126,26 @@ export default defineConfig({
                 {
                     text: 'Send Logs',
                     items: [
-                        { text: 'OpenTelemetry - EC2', link: '/send-logs/ec2/opentelemetry' },
-                        { text: 'OpenTelemetry - Kubernetes', link: '/send-logs/kubernetes/opentelemetry' }
+                        {
+                            text: 'Log collectors',
+                            link: '/send-logs/collectors/index',
+                            collapsed: false,
+                            items: [
+                                {
+                                    text: 'OpenTelemetry',
+                                    link: '/send-logs/collectors/otel/index',
+                                    collapsed: true,
+                                    items: [
+                                        { text: 'EC2', link: '/send-logs/collectors/otel/ec2/opentelemetry' },
+                                        { text: 'Kubernetes', link: '/send-logs/collectors/otel/kubernetes/opentelemetry' }
+                                    ]
+                                },
+                                { text: 'Fluent Bit', link: '/send-logs/collectors/fluent-bit' },
+                                { text: 'Fluentd', link: '/send-logs/collectors/fluentd' },
+                                { text: 'Logstash', link: '/send-logs/collectors/logstash' },
+                                { text: 'Syslog (syslog-ng / rsyslog)', link: '/send-logs/collectors/syslog' }
+                            ]
+                        },
                     ]
                 },
             ]

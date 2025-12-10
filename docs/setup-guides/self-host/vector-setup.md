@@ -2,6 +2,10 @@
 
 Vector will accept OTLP HTTP logs on port 4318 and forward to Kafka using your configured bootstrap servers. Follow these steps to get Vector running on your instance for LogWise. This guide extracts only the actionable setup steps.
 
+> **Note on log collectors**  
+> In the default Logwise setup (both Docker and self-hosted), we use the **OpenTelemetry Collector (OTEL)** to ship logs into Vector over OTLP.  
+> If you want to use other agents (Fluent Bit, Fluentd, Logstash, syslog-ng/rsyslog), see the **Send Logs → Log collectors** section for per-agent configuration and the exact Vector changes required.
+
 ## Prerequisites
 
 Install the following on your instance:
