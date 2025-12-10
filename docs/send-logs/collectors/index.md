@@ -56,11 +56,137 @@ Any collector that can speak OTLP can send logs to:
 
 Logwise supports (or provides examples for) the following collectors:
 
-- **OpenTelemetry Collector** – OTEL-native agent, preferred when you want full OTEL processing.
-- **Fluent Bit** – lightweight agent, great for container-heavy environments.
-- **Fluentd** – full-featured log processor with a rich plugin ecosystem.
-- **Logstash** – part of the Elastic stack, often used where it is already deployed.
-- **syslog-ng / rsyslog** – traditional syslog daemons, forwarding logs over TCP/UDP.
+<div class="collector-grid">
+
+<div class="collector-card">
+  <div class="collector-card-header">
+    <h3>OpenTelemetry Collector</h3>
+  </div>
+  <div class="collector-card-body">
+    <p>OTEL-native agent, preferred when you want full OTEL processing.</p>
+  </div>
+  <div class="collector-card-footer">
+    <a href="/send-logs/collectors/otel/index">View Guide →</a>
+  </div>
+</div>
+
+<div class="collector-card">
+  <div class="collector-card-header">
+    <h3>Fluent Bit</h3>
+  </div>
+  <div class="collector-card-body">
+    <p>Lightweight agent, great for container-heavy environments.</p>
+  </div>
+  <div class="collector-card-footer">
+    <a href="/send-logs/collectors/fluent-bit">View Guide →</a>
+  </div>
+</div>
+
+<div class="collector-card">
+  <div class="collector-card-header">
+    <h3>Fluentd</h3>
+  </div>
+  <div class="collector-card-body">
+    <p>Full-featured log processor with a rich plugin ecosystem.</p>
+  </div>
+  <div class="collector-card-footer">
+    <a href="/send-logs/collectors/fluentd">View Guide →</a>
+  </div>
+</div>
+
+<div class="collector-card">
+  <div class="collector-card-header">
+    <h3>Logstash</h3>
+  </div>
+  <div class="collector-card-body">
+    <p>Part of the Elastic stack, often used where it is already deployed.</p>
+  </div>
+  <div class="collector-card-footer">
+    <a href="/send-logs/collectors/logstash">View Guide →</a>
+  </div>
+</div>
+
+<div class="collector-card">
+  <div class="collector-card-header">
+    <h3>Syslog</h3>
+  </div>
+  <div class="collector-card-body">
+    <p>Traditional syslog daemons (syslog-ng / rsyslog), forwarding logs over TCP/UDP.</p>
+  </div>
+  <div class="collector-card-footer">
+    <a href="/send-logs/collectors/syslog">View Guide →</a>
+  </div>
+</div>
+
+</div>
+
+<style>
+.collector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.collector-card {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.collector-card:hover {
+  border-color: var(--vp-c-brand-1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(95, 211, 224, 0.15);
+}
+
+.collector-card-header h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--vp-c-brand-1);
+}
+
+.collector-card-body {
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+.collector-card-body p {
+  margin: 0;
+  color: var(--vp-c-text-2);
+  line-height: 1.6;
+}
+
+.collector-card-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.collector-card-footer a {
+  color: var(--vp-c-brand-1);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.collector-card-footer a:hover {
+  color: var(--vp-c-brand-2);
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .collector-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 
 
 ## 3. Choosing a collector
