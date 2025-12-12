@@ -108,14 +108,18 @@ public class KafkaScalingService {
     long maxLagPerPartition =
         kafkaConfig.getMaxLagPerPartition() != null ? kafkaConfig.getMaxLagPerPartition() : 50_000L;
 
-    // Lag-based scaling
+    // Lag-based scaling: calculate how many partitions we need to handle the lag
+    // If lag is 100k and max is 50k, we need at least 2x partitions (but we want more headroom)
     long requiredForLag = lagPerPartition > 0 ? (lagPerPartition / maxLagPerPartition) + 1 : 1;
+
+    // Calculate total partitions needed: current * multiplier
+    int partitionsNeeded = (int) (currentPartitions * requiredForLag);
 
     // Round up to nearest multiple of defaultPartitions
     int newPartitionCount =
-        (int) Math.ceil((double) requiredForLag / defaultPartitions) * defaultPartitions;
+        (int) Math.ceil((double) partitionsNeeded / defaultPartitions) * defaultPartitions;
 
-    // Ensure we're increasing
+    // Ensure we're increasing by at least defaultPartitions
     return Math.max(newPartitionCount, currentPartitions + defaultPartitions);
   }
 

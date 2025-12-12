@@ -1,7 +1,5 @@
 package com.logwise.orchestrator.tests.unit.client.kafka;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
 import com.logwise.orchestrator.client.kafka.MskKafkaClient;
@@ -80,10 +78,32 @@ public class MskKafkaClientTest extends BaseTest {
     assertTrue(config.containsKey(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG));
   }
 
-  @Test(expectedExceptions = IllegalStateException.class)
+  @Test
   public void testBuildBootstrapServers_WithNoHostOrArn_ThrowsException() {
-    kafkaConfig.setKafkaBrokersHost(null);
-    kafkaConfig.setMskClusterArn(null);
-    mskKafkaClient.buildBootstrapServers().blockingGet();
+    // Create a new client with null configs to test the exception
+    ApplicationConfig.KafkaConfig testConfig = new ApplicationConfig.KafkaConfig();
+    testConfig.setKafkaType(KafkaType.MSK);
+    testConfig.setKafkaBrokersHost(null);
+    testConfig.setMskClusterArn(null);
+    testConfig.setMskRegion("us-east-1");
+    MskKafkaClient testClient = new MskKafkaClient(testConfig);
+
+    try {
+      testClient.buildBootstrapServers().blockingGet();
+      fail("Expected IllegalStateException to be thrown");
+    } catch (RuntimeException e) {
+      // RxJava wraps exceptions, so check the cause
+      Throwable cause = e.getCause();
+      if (cause instanceof IllegalStateException) {
+        assertTrue(cause.getMessage().contains("MSK bootstrap servers must be provided"));
+      } else {
+        // If not wrapped, the exception itself should be IllegalStateException
+        if (e instanceof IllegalStateException) {
+          assertTrue(e.getMessage().contains("MSK bootstrap servers must be provided"));
+        } else {
+          fail("Expected IllegalStateException but got: " + e.getClass().getName());
+        }
+      }
+    }
   }
 }

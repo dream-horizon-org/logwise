@@ -2,7 +2,9 @@ package com.logwise.orchestrator.tests.integration;
 
 import static org.testng.Assert.*;
 
+import com.google.inject.AbstractModule;
 import com.logwise.orchestrator.client.kafka.Ec2KafkaClient;
+import com.logwise.orchestrator.common.app.AppContext;
 import com.logwise.orchestrator.config.ApplicationConfig;
 import com.logwise.orchestrator.dto.kafka.ScalingDecision;
 import com.logwise.orchestrator.dto.kafka.TopicPartitionMetrics;
@@ -10,6 +12,7 @@ import com.logwise.orchestrator.enums.KafkaType;
 import com.logwise.orchestrator.service.KafkaScalingService;
 import com.logwise.orchestrator.setup.BaseTest;
 import io.reactivex.Single;
+import io.vertx.reactivex.core.Vertx;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -32,36 +35,136 @@ import org.testng.annotations.Test;
 public class KafkaScalingIntegrationTest extends BaseTest {
 
   private static KafkaContainer kafka;
+  private static ApplicationConfig.KafkaConfig staticKafkaConfig;
+  private static String staticBootstrapServers;
+  private static volatile boolean staticSetupComplete = false;
+  private static final Object setupLock = new Object();
   private AdminClient adminClient;
   private KafkaProducer<String, String> producer;
   private ApplicationConfig.KafkaConfig kafkaConfig;
   private Ec2KafkaClient ec2KafkaClient;
 
-  @BeforeClass
-  public static void setUpKafka() {
-    kafka =
-        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.0")).withReuse(true);
-    kafka.start();
+  @BeforeClass(alwaysRun = true)
+  public static void setUpKafka() throws Exception {
+    synchronized (setupLock) {
+      if (staticSetupComplete) {
+        return; // Already initialized
+      }
+
+      try {
+        kafka =
+            new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.0"))
+                .withReuse(true);
+        kafka.start();
+
+        // Wait for Kafka to be fully ready
+        int maxRetries = 30;
+        int retryCount = 0;
+        while ((kafka == null || !kafka.isRunning()) && retryCount < maxRetries) {
+          Thread.sleep(200); // Wait 200ms
+          retryCount++;
+        }
+
+        if (kafka == null || !kafka.isRunning()) {
+          throw new IllegalStateException("Kafka container failed to start");
+        }
+
+        // Initialize config in static method to ensure it's available
+        staticKafkaConfig = new ApplicationConfig.KafkaConfig();
+        staticKafkaConfig.setKafkaType(KafkaType.EC2);
+
+        // Handle bootstrap servers format (could be "PLAINTEXT://host:port" or
+        // "host:port")
+        staticBootstrapServers = kafka.getBootstrapServers();
+        if (staticBootstrapServers == null || staticBootstrapServers.isEmpty()) {
+          throw new IllegalStateException("Kafka bootstrap servers cannot be null or empty");
+        }
+
+        // If format is "PLAINTEXT://host:port", we need to extract host and port
+        // differently
+        if (staticBootstrapServers.contains("://")) {
+          String afterProtocol =
+              staticBootstrapServers.substring(staticBootstrapServers.indexOf("://") + 3);
+          String[] hostPort = afterProtocol.split(":");
+          if (hostPort.length < 2) {
+            throw new IllegalStateException(
+                "Invalid bootstrap servers format: " + staticBootstrapServers);
+          }
+          staticKafkaConfig.setKafkaBrokersHost(hostPort[0]);
+          staticKafkaConfig.setKafkaBrokerPort(Integer.parseInt(hostPort[1]));
+        } else {
+          String[] parts = staticBootstrapServers.split(":");
+          if (parts.length < 2) {
+            throw new IllegalStateException(
+                "Invalid bootstrap servers format: " + staticBootstrapServers);
+          }
+          staticKafkaConfig.setKafkaBrokersHost(parts[0]);
+          staticKafkaConfig.setKafkaBrokerPort(Integer.parseInt(parts[1]));
+        }
+
+        staticKafkaConfig.setMaxLagPerPartition(50_000L);
+        staticKafkaConfig.setDefaultPartitions(3);
+
+        staticSetupComplete = true;
+      } catch (Exception e) {
+        // Mark as failed so we don't retry indefinitely
+        staticSetupComplete = false;
+        throw e;
+      }
+    }
   }
 
-  @BeforeClass
+  @BeforeClass(alwaysRun = true)
   public void setUp() throws Exception {
-    super.setUp();
-    kafkaConfig = new ApplicationConfig.KafkaConfig();
-    kafkaConfig.setKafkaType(KafkaType.EC2);
-    kafkaConfig.setKafkaBrokersHost(kafka.getBootstrapServers().split(":")[0]);
-    kafkaConfig.setKafkaBrokerPort(Integer.parseInt(kafka.getBootstrapServers().split(":")[1]));
-    kafkaConfig.setMaxLagPerPartition(50_000L);
-    kafkaConfig.setDefaultPartitions(3);
+    // Ensure static setup runs first
+    setUpKafka();
 
-    // Create AdminClient
+    super.setUp();
+
+    // Wait for static setup to complete (with synchronized check)
+    int maxRetries = 100;
+    int retryCount = 0;
+    while (!staticSetupComplete && retryCount < maxRetries) {
+      Thread.sleep(100); // Wait 100ms
+      retryCount++;
+    }
+
+    // Ensure static setup completed
+    if (!staticSetupComplete || staticKafkaConfig == null || staticBootstrapServers == null) {
+      throw new IllegalStateException(
+          "Static setup not completed after waiting. staticSetupComplete="
+              + staticSetupComplete
+              + ", staticKafkaConfig="
+              + staticKafkaConfig
+              + ", staticBootstrapServers="
+              + staticBootstrapServers);
+    }
+
+    // Initialize AppContext with Vertx (required for Ec2KafkaClient)
+    // Reset first in case it was already initialized
+    AppContext.reset();
+    Vertx vertx = BaseTest.getReactiveVertx();
+    AppContext.initialize(
+        Collections.singletonList(
+            new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(Vertx.class).toInstance(vertx);
+                bind(io.vertx.core.Vertx.class).toInstance(vertx.getDelegate());
+              }
+            }));
+
+    // Use the config initialized in static method
+    kafkaConfig = staticKafkaConfig;
+
+    // Create AdminClient using static bootstrap servers
     Map<String, Object> adminConfig = new HashMap<>();
-    adminConfig.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+    adminConfig.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, staticBootstrapServers);
     adminClient = AdminClient.create(adminConfig);
 
-    // Create Producer
+    // Create Producer using static bootstrap servers
     Map<String, Object> producerConfig = new HashMap<>();
-    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers());
+    producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, staticBootstrapServers);
     producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     producer = new KafkaProducer<>(producerConfig);
@@ -212,5 +315,7 @@ public class KafkaScalingIntegrationTest extends BaseTest {
     if (ec2KafkaClient != null) {
       ec2KafkaClient.close();
     }
+    // Reset AppContext after tests
+    AppContext.reset();
   }
 }

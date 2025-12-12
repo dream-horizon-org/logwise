@@ -279,8 +279,8 @@ public class KafkaServiceTest extends BaseTest {
       Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
       List<ScalingDecision> decisions = result.blockingGet();
       assertNotNull(decisions);
-      assertEquals(decisions.size(), 1);
-      assertEquals(decisions.get(0).getTopic(), topic);
+      // With unavailable checkpoint, zero lag is used, so no scaling decisions should be made
+      assertEquals(decisions.size(), 0);
 
       verify(mockKafkaClient, times(1)).listTopics(anyString());
       verify(mockKafkaClient, never()).calculateLag(any(), any());

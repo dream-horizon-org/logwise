@@ -202,21 +202,37 @@ public class SparkCheckpointService {
       JsonNode offsetsNode = objectMapper.readTree(offsetsJson);
       Map<TopicPartition, Long> offsets = new HashMap<>();
 
-      offsetsNode
-          .fields()
-          .forEachRemaining(
-              topicEntry -> {
-                String topic = topicEntry.getKey();
-                JsonNode partitionOffsets = topicEntry.getValue();
-                partitionOffsets
-                    .fields()
-                    .forEachRemaining(
-                        partitionEntry -> {
-                          int partition = Integer.parseInt(partitionEntry.getKey());
-                          long offset = partitionEntry.getValue().asLong();
-                          offsets.put(new TopicPartition(topic, partition), offset);
-                        });
-              });
+      // Parse offsets - expect structure: {"topic": {"partition": offset}}
+      if (offsetsNode.isObject()) {
+        offsetsNode
+            .fields()
+            .forEachRemaining(
+                topicEntry -> {
+                  String topic = topicEntry.getKey();
+                  JsonNode partitionOffsets = topicEntry.getValue();
+                  // Check if this looks like partition offsets (object with numeric keys)
+                  if (partitionOffsets.isObject()) {
+                    partitionOffsets
+                        .fields()
+                        .forEachRemaining(
+                            partitionEntry -> {
+                              try {
+                                int partition = Integer.parseInt(partitionEntry.getKey());
+                                long offset = partitionEntry.getValue().asLong();
+                                offsets.put(new TopicPartition(topic, partition), offset);
+                              } catch (NumberFormatException e) {
+                                // Ignore invalid partition numbers
+                              }
+                            });
+                  }
+                });
+      }
+
+      // If no offsets were parsed, this might be config JSON, not offsets JSON
+      if (offsets.isEmpty()) {
+        log.warn("Checkpoint file does not contain valid offsets structure");
+        return createEmptyCheckpointOffsets(checkpointPath);
+      }
 
       log.info("Parsed {} partition offsets from checkpoint", offsets.size());
       return SparkCheckpointOffsets.builder()

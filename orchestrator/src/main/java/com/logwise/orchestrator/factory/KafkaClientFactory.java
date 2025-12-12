@@ -30,6 +30,10 @@ public class KafkaClientFactory {
   public KafkaClient createKafkaClient(KafkaConfig kafkaConfig) {
     KafkaType kafkaType = kafkaConfig.getKafkaType();
 
+    if (kafkaType == null) {
+      throw new IllegalArgumentException("Kafka type cannot be null");
+    }
+
     log.info("Creating Kafka client for type: {}", kafkaType);
 
     switch (kafkaType) {

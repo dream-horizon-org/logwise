@@ -8,6 +8,7 @@ import com.logwise.orchestrator.dto.response.LogSyncDelayResponse;
 import com.logwise.orchestrator.enums.Tenant;
 import com.logwise.orchestrator.factory.ObjectStoreFactory;
 import com.logwise.orchestrator.util.ApplicationConfigUtil;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import java.time.LocalDateTime;
@@ -46,11 +47,11 @@ public class MetricsService {
             delayMetricsConfig.getApp().getSampleServiceName());
 
     return Observable.fromIterable(prefixList)
-        .flatMapSingle(
+        .flatMapMaybe(
             prefix ->
                 ObjectStoreFactory.getClient(tenant)
                     .listObjects(prefix)
-                    .map(
+                    .flatMapMaybe(
                         objNames -> {
                           if (!objNames.isEmpty()) {
                             objNames.sort(Collections.reverseOrder());
@@ -64,12 +65,11 @@ public class MetricsService {
                               int nowMinute = nowTime.getMinute();
                               int timeDiff =
                                   (nowHour * 60 + nowMinute) - (objHour * 60 + objMinute);
-                              return Math.max(1, timeDiff);
+                              return Maybe.just(Math.max(1, timeDiff));
                             }
                           }
-                          return null;
+                          return Maybe.empty();
                         }))
-        .filter(computed -> computed != null)
         .firstElement()
         .defaultIfEmpty(ApplicationConstants.MAX_LOGS_SYNC_DELAY_HOURS * 60)
         .toSingle();

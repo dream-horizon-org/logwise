@@ -82,10 +82,24 @@ public class KafkaClientFactoryTest extends BaseTest {
     verify(confluentFactory, times(1)).create(config);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test
   public void testCreateKafkaClient_WithNullType_ThrowsException() {
     ApplicationConfig.KafkaConfig config = new ApplicationConfig.KafkaConfig();
-    config.setKafkaType(null);
-    factory.createKafkaClient(config);
+    // The setter converts null to EC2, so we need to use reflection to set it to null
+    try {
+      java.lang.reflect.Field field =
+          ApplicationConfig.KafkaConfig.class.getDeclaredField("kafkaType");
+      field.setAccessible(true);
+      field.set(config, null);
+    } catch (Exception e) {
+      fail("Failed to set kafkaType to null via reflection: " + e.getMessage());
+    }
+
+    try {
+      factory.createKafkaClient(config);
+      fail("Expected IllegalArgumentException to be thrown");
+    } catch (IllegalArgumentException e) {
+      assertTrue(e.getMessage().contains("Kafka type cannot be null"));
+    }
   }
 }
