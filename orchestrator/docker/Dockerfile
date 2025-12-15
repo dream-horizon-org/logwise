@@ -14,7 +14,7 @@ RUN mvn -B -T 4 dependency:go-offline -Dmaven.artifact.threads=10
 COPY src ./src
 
 # Build the application JAR
-RUN mvn -B -T 4 clean package -DskipTests -Dmaven.artifact.threads=10
+RUN mvn -B -T 4 clean package -Dmaven.test.skip -Dmaven.artifact.threads=10
 
 # Runtime stage: Use a Java 11 JRE base image
 FROM eclipse-temurin:11-jre
