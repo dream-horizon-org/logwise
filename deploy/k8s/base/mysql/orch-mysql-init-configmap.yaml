@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orch-mysql-init-sql
+  namespace: logwise
+data:
+  init-log_central.sql: |
+    -- Create DB and grant access for orchestrator
+    CREATE DATABASE IF NOT EXISTS log_central
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+
+    GRANT ALL PRIVILEGES ON log_central.* TO 'logwise_orch'@'%';
+    FLUSH PRIVILEGES;
+
+    -- Create service_details table (mirrors orchestrator/db/init/00_create_log_central.sql)
+    USE log_central;
+
+    DROP TABLE IF EXISTS service_details;
+
+    CREATE TABLE `service_details` (
+      `serviceName` varchar(50) NOT NULL,
+      `retentionDays` mediumint unsigned NOT NULL,
+      `tenant` enum('ABC') NOT NULL,
+      `lastCheckedAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY (`serviceName`, `tenant`)
+    );
+
+

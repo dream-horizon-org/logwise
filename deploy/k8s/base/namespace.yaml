@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logwise
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+
+

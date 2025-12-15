@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master
+  namespace: logwise
+  labels:
+    app: spark-master
+spec:
+  selector:
+    app: spark-master
+  ports:
+    - name: rpc
+      port: 7077
+      targetPort: 7077
+    - name: ui
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-master
+  namespace: logwise
+  labels:
+    app: spark-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-master
+  template:
+    metadata:
+      labels:
+        app: spark-master
+    spec:
+      containers:
+        - name: spark-master
+          # Build and push this image from the spark/docker/Dockerfile
+          image: logwise-spark:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPARK_MODE
+              value: "master"
+            - name: SPARK_MASTER_OPTS
+              value: "-Dspark.master.rest.enabled=true"
+            # Override any injected SPARK_MASTER_PORT env from the Service to a plain numeric port
+            - name: SPARK_MASTER_PORT
+              value: "7077"
+          command:
+            - bash
+            - -lc
+            - >
+              mkdir -p /opt/spark/logs &&
+              /opt/spark/bin/spark-class
+              org.apache.spark.deploy.master.Master
+              --host 0.0.0.0
+              --port 7077
+              --webui-port 8080
+          ports:
+            - containerPort: 7077
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+
+
