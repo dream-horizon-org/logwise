@@ -1,0 +1,11 @@
+    /* .vitepress/theme/custom.css */
+
+    /* Target the main content area and remove max-width */
+    .vp-doc {
+        max-width: 100vw !important;
+        padding: 0 !important;
+    }
+
+    .VPHome {
+        margin-bottom: 0px !important;
+    }
