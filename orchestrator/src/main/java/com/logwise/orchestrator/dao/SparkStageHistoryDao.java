@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor(onConstructor = @__({@Inject}))
 public class SparkStageHistoryDao {
-    final MysqlClient mysqlClient;
-    final ObjectMapper objectMapper;
+  final MysqlClient mysqlClient;
+  final ObjectMapper objectMapper;
 
   public Single<List<SparkStageHistory>> getSparkStageHistory(
       Tenant tenant, int limit, boolean fromMaster) {

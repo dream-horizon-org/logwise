@@ -29,9 +29,11 @@ import org.apache.spark.sql.streaming.Trigger;
 public class ApplicationLogsStreamToS3 extends AbstractApplicationLogsStream {
 
   @Inject
-  public ApplicationLogsStreamToS3(Config config, KafkaService kafkaService, SparkMasterService sparkMasterService,
-
-                                   SparkScaleService sparkScaleService) {
+  public ApplicationLogsStreamToS3(
+      Config config,
+      KafkaService kafkaService,
+      SparkMasterService sparkMasterService,
+      SparkScaleService sparkScaleService) {
     super(config, kafkaService, sparkMasterService, sparkScaleService);
   }
 

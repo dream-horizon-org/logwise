@@ -32,7 +32,7 @@ import org.apache.http.HttpStatus;
 @Path("/scale-spark-cluster")
 @Tag(name = "Spark", description = "Spark job management operations")
 public class ScaleSparkCluster {
-    private final SparkService sparkService;
+  private final SparkService sparkService;
 
   @POST
   @Consumes(MediaType.WILDCARD)
@@ -70,8 +70,8 @@ public class ScaleSparkCluster {
     request.getSparkStageHistory().setTenant(tenant.getValue());
 
     log.info("request here is {}", request);
-    if(sparkService == null){
-        log.info("sparkService is null");
+    if (sparkService == null) {
+      log.info("sparkService is null");
     }
     sparkService
         .insertSparkStageHistory(request.getSparkStageHistory())

@@ -66,18 +66,19 @@ public abstract class AbstractApplicationLogsStream implements Stream {
       return config.getLong("spark.offsetPerTrigger.default");
     }
   }
+
   private Long getMaxOffset(Integer availableCore) {
     long maxOffset = config.getLong("spark.offsetPerTrigger.default");
 
     if (availableCore != null) {
       try {
         long rawMaxOffset =
-                availableCore * config.getLong("spark.eventProcessPerCore.count")
-                        + (config.getLong("spark.offsetPerTrigger.buffer"));
+            availableCore * config.getLong("spark.eventProcessPerCore.count")
+                + (config.getLong("spark.offsetPerTrigger.buffer"));
         maxOffset =
-                Math.min(
-                        config.getLong("spark.offsetPerTrigger.max"),
-                        Math.max(config.getLong("spark.offsetPerTrigger.min"), rawMaxOffset));
+            Math.min(
+                config.getLong("spark.offsetPerTrigger.max"),
+                Math.max(config.getLong("spark.offsetPerTrigger.min"), rawMaxOffset));
       } catch (Exception e) {
         log.error("Error in fetching max offset: ", e);
       }
@@ -92,7 +93,6 @@ public abstract class AbstractApplicationLogsStream implements Stream {
     sparkStageHistory.setTenant(config.getString("tenant.name"));
     sparkScaleService.setCurrentSparkStageHistory(sparkStageHistory);
   }
-
 
   protected abstract StreamingQuery getVectorApplicationLogsStreamQuery(
       Dataset<Row> kafkaValueTopicStream);

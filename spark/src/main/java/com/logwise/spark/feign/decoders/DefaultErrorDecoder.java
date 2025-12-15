@@ -5,7 +5,6 @@ import com.logwise.spark.feign.exceptions.FeignClientException;
 import com.logwise.spark.feign.exceptions.ServerErrorException;
 import feign.Response;
 import feign.codec.ErrorDecoder;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;

@@ -154,12 +154,11 @@ public class SparkStageListener extends SparkListener {
       }
     }
 
-    if( sparkScaleService == null){
+    if (sparkScaleService == null) {
       log.info("it is null");
-    }else{
+    } else {
       log.info("it is not null");
     }
-
 
     SparkStageHistory sparkStageHistory = sparkScaleService.getCurrentSparkStageHistory();
     sparkStageHistory.setInputRecords(stageMetrics.inputRecords);

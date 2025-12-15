@@ -1,19 +1,18 @@
 package com.logwise.spark.clients.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logwise.spark.clients.FeignClient;
 import com.logwise.spark.constants.Constants;
 import com.logwise.spark.feign.decoders.DefaultErrorDecoder;
 import com.logwise.spark.feign.logger.Log4jLogger;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.Feign;
 import feign.Logger;
 import feign.Request.Options;
 import feign.Retryer;
 import feign.jackson.JacksonDecoder;
 import feign.jackson.JacksonEncoder;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class FeignClientImpl implements FeignClient {

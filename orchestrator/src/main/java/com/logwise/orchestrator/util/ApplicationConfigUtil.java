@@ -33,9 +33,7 @@ public class ApplicationConfigUtil {
     ApplicationConfig.VMConfig.VMConfigBuilder vmConfig = ApplicationConfig.VMConfig.builder();
     if (asgConfig.getAws() != null) {
       vmConfig.aws(
-          ApplicationConfig.EC2Config.builder()
-              .region(asgConfig.getAws().getRegion())
-              .build());
+          ApplicationConfig.EC2Config.builder().region(asgConfig.getAws().getRegion()).build());
     }
     return vmConfig.build();
   }
