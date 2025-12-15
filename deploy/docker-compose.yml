@@ -157,6 +157,7 @@ services:
       - LOG4J_PROPERTIES_FILE_PATH=${LOG4J_PROPERTIES_FILE_PATH:-/tmp/log4j.properties}
       - VECTOR_HOST=${VECTOR_HOST:-vector}
       - VECTOR_API_PORT=${VECTOR_API_PORT:-8686}
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://orchestrator:8080}
     ports:
       - "${ORCH_PORT:-8080}:8080" # user-facing (optional for local dev)
     networks:
