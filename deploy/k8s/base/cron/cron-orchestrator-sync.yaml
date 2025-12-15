@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: orchestrator-sync
+  namespace: logwise
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: curl
+              image: curlimages/curl:8.8.0
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: ORCH_URL
+                  value: "http://orchestrator.logwise.svc.cluster.local:8080"
+                - name: TENANT
+                  value: "ABC"
+              args:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  echo "$(date -Is) Triggering component sync and Spark monitor"
+                  curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+                    -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: ${TENANT}" \
+                    "${ORCH_URL}/component/sync?componentType=application" \
+                    || echo "$(date -Is) Component Sync failed" >&2
+
+                  curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+                    -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: ${TENANT}" \
+                    "${ORCH_URL}/monitor-spark-job" \
+                    || echo "$(date -Is) Monitor Spark Job failed" >&2
+
+

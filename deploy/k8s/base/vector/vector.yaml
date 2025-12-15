@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector-logs
+  namespace: logwise
+  labels:
+    app: vector-logs
+spec:
+  selector:
+    app: vector-logs
+  ports:
+    - name: api
+      port: 8686
+      targetPort: 8686
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # Additional service to support the healthcheck-dummy OTEL config,
+  # which expects to reach Vector at http://vector:4318.
+  name: vector
+  namespace: logwise
+spec:
+  selector:
+    app: vector-logs
+  ports:
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config
+  namespace: logwise
+data:
+  vector.yaml: |
+    api:
+      enabled: true
+      address: 0.0.0.0:8686
+      playground: false
+
+    sources:
+      otlp_logs_http:
+        type: otlp
+        protocol:
+          http:
+            listen_address: 0.0.0.0:4318
+      otlp_logs_grpc:
+        type: otlp
+        protocol:
+          grpc:
+            listen_address: 0.0.0.0:4317
+
+    transforms:
+      normalize_logs:
+        type: remap
+        inputs: [otlp_logs_http, otlp_logs_grpc]
+        source: |
+          # Ensure service_name exists
+          .service_name = .attributes.service_name || .resource.service_name || "unknown-service"
+
+    sinks:
+      kafka_logs:
+        type: kafka
+        inputs: [normalize_logs]
+        bootstrap_servers: "${KAFKA_BROKERS}"
+        topic: "logs.${service_name}"
+        encoding:
+          codec: protobuf
+        compression: "zstd"
+        batch:
+          max_bytes: 2500000
+          timeout_secs: 1
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-logs
+  namespace: logwise
+  labels:
+    app: vector-logs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vector-logs
+  template:
+    metadata:
+      labels:
+        app: vector-logs
+    spec:
+      containers:
+        - name: vector
+          image: timberio/vector:0.45.0-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: VECTOR_API_VERSION
+              value: "2"
+            - name: VECTOR_API_ADDRESS
+              value: "0.0.0.0:8686"
+            - name: VECTOR_WATCH_CONFIG
+              value: "true"
+          ports:
+            - containerPort: 8686
+            - containerPort: 4317
+            - containerPort: 4318
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vector
+              readOnly: true
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+      volumes:
+        - name: config
+          configMap:
+            name: vector-config
+            items:
+              - key: vector.yaml
+                path: vector.yaml
+
+
