@@ -31,10 +31,12 @@ img() {
 ORCH_IMAGE="$(img logwise-orchestrator)"
 SPARK_IMAGE="$(img logwise-spark)"
 HEALTH_IMAGE="$(img logwise-healthcheck-dummy)"
+VECTOR_IMAGE="$(img logwise-vector)"
 
 echo "Orchestrator image:        $ORCH_IMAGE"
 echo "Spark image:               $SPARK_IMAGE"
 echo "healthcheck-dummy image:   $HEALTH_IMAGE"
+echo "Vector image:              $VECTOR_IMAGE"
 echo
 
 # Build Orchestrator
@@ -49,12 +51,17 @@ docker build -t "$SPARK_IMAGE" -f spark/docker/Dockerfile spark
 echo "==> Building healthcheck-dummy image"
 docker build -t "$HEALTH_IMAGE" deploy/healthcheck-dummy
 
+# Build Vector (custom image with protobuf descriptor)
+echo "==> Building Vector image"
+docker build -t "$VECTOR_IMAGE" vector
+
 # Optional push
 if [ -n "$REGISTRY" ]; then
   echo "==> Pushing images to registry: $REGISTRY"
   docker push "$ORCH_IMAGE"
   docker push "$SPARK_IMAGE"
   docker push "$HEALTH_IMAGE"
+  docker push "$VECTOR_IMAGE"
 else
   echo "==> REGISTRY not set, skipping push (using local images only)"
 fi
@@ -65,6 +72,7 @@ if [ "$CLUSTER_TYPE" = "kind" ]; then
   kind load docker-image "$ORCH_IMAGE"
   kind load docker-image "$SPARK_IMAGE"
   kind load docker-image "$HEALTH_IMAGE"
+  kind load docker-image "$VECTOR_IMAGE"
 fi
 
 echo "==> Applying kustomize overlay: $ENV"

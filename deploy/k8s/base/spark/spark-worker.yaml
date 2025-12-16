@@ -15,6 +15,20 @@ spec:
       labels:
         app: spark-worker
     spec:
+      initContainers:
+        - name: wait-for-spark-master
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Spark master at spark-master:7077..."
+              until nc -z spark-master 7077; do
+                echo "Spark master not ready, sleeping..."
+                sleep 3
+              done
+              echo "Spark master is up."
       containers:
         - name: spark-worker
           image: logwise-spark:latest

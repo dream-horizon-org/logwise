@@ -30,6 +30,59 @@ spec:
       labels:
         app: orchestrator
     spec:
+      initContainers:
+        - name: wait-for-orch-mysql
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for orch-mysql:3306..."
+              until nc -z orch-mysql 3306; do
+                echo "orch-mysql not ready, sleeping..."
+                sleep 3
+              done
+              echo "orch-mysql is up."
+        - name: wait-for-kafka
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for kafka-bootstrap:9092..."
+              until nc -z kafka-bootstrap 9092; do
+                echo "Kafka not ready, sleeping..."
+                sleep 3
+              done
+              echo "Kafka is up."
+        - name: wait-for-vector
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for vector-logs:8686..."
+              until nc -z vector-logs 8686; do
+                echo "Vector not ready, sleeping..."
+                sleep 3
+              done
+              echo "Vector is up."
+        - name: wait-for-spark-master
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for spark-master:7077..."
+              until nc -z spark-master 7077; do
+                echo "Spark master not ready, sleeping..."
+                sleep 3
+              done
+              echo "Spark master is up."
       containers:
         - name: orchestrator
           # Build and push this image from orchestrator/docker/Dockerfile
@@ -76,6 +129,11 @@ spec:
                 configMapKeyRef:
                   name: logwise-config
                   key: KAFKA_BOOTSTRAP_SERVERS
+            # Vector configuration (used for health/metadata calls)
+            - name: VECTOR_HOST
+              value: "vector-logs"
+            - name: VECTOR_API_PORT
+              value: "8686"
             - name: SPARK_MASTER_HOST
               value: "spark://spark-master.logwise.svc.cluster.local:7077"
             - name: SPARK_JAR_PATH
