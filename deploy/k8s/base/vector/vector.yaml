@@ -34,52 +34,6 @@ spec:
       port: 4318
       targetPort: 4318
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vector-config
-  namespace: logwise
-data:
-  vector.yaml: |
-    api:
-      enabled: true
-      address: 0.0.0.0:8686
-      playground: false
-
-    sources:
-      otlp_logs_http:
-        type: otlp
-        protocol:
-          http:
-            listen_address: 0.0.0.0:4318
-      otlp_logs_grpc:
-        type: otlp
-        protocol:
-          grpc:
-            listen_address: 0.0.0.0:4317
-
-    transforms:
-      normalize_logs:
-        type: remap
-        inputs: [otlp_logs_http, otlp_logs_grpc]
-        source: |
-          # Ensure service_name exists
-          .service_name = .attributes.service_name || .resource.service_name || "unknown-service"
-
-    sinks:
-      kafka_logs:
-        type: kafka
-        inputs: [normalize_logs]
-        bootstrap_servers: "${KAFKA_BROKERS}"
-        topic: "logs.${service_name}"
-        encoding:
-          codec: protobuf
-        compression: "zstd"
-        batch:
-          max_bytes: 2500000
-          timeout_secs: 1
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -97,9 +51,24 @@ spec:
       labels:
         app: vector-logs
     spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Kafka at kafka-bootstrap:9092..."
+              until nc -z kafka-bootstrap 9092; do
+                echo "Kafka not ready, sleeping..."
+                sleep 3
+              done
+              echo "Kafka is up."
       containers:
         - name: vector
-          image: timberio/vector:0.45.0-alpine
+          # Custom image that includes /etc/vector/logwise-vector.desc
+          image: logwise-vector:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: KAFKA_BROKERS
@@ -117,23 +86,10 @@ spec:
             - containerPort: 8686
             - containerPort: 4317
             - containerPort: 4318
-          volumeMounts:
-            - name: config
-              mountPath: /etc/vector
-              readOnly: true
           resources:
             requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
               cpu: "250m"
               memory: "256Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-      volumes:
-        - name: config
-          configMap:
-            name: vector-config
-            items:
-              - key: vector.yaml
-                path: vector.yaml
-
-

@@ -3,5 +3,10 @@ kind: Kustomization
 
 resources:
   - ../base
+  - spark-worker-ui-service.yaml
+
+patchesStrategicMerge:
+  - services-nodeport.yaml
+
 
 

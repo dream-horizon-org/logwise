@@ -43,10 +43,11 @@ spec:
               value: "broker,controller"
             - name: KAFKA_NODE_ID
               value: "1"
+            # Valid base64-encoded UUID required for KRaft cluster id
             - name: KAFKA_CLUSTER_ID
-              value: "logwiseClusterId"
+              value: "9ZkYwXlQ2Tq8rBn5JcH0xA"
             - name: CLUSTER_ID
-              value: "logwiseClusterId"
+              value: "9ZkYwXlQ2Tq8rBn5JcH0xA"
             - name: KAFKA_LISTENERS
               value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093"
             - name: KAFKA_ADVERTISED_LISTENERS
