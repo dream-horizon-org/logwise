@@ -134,12 +134,20 @@ spec:
               value: "vector-logs"
             - name: VECTOR_API_PORT
               value: "8686"
+            # Spark configuration
+            # Plain hostname (no scheme/port); used to build:
+            # - http://<host>:8080/json
+            # - http://<host>:6066/v1/submissions/create
+            # - spark://<host>:7077
             - name: SPARK_MASTER_HOST
-              value: "spark://spark-master.logwise.svc.cluster.local:7077"
+              value: "spark-master"
+            # Location of the streaming job JAR, as seen by Spark master/worker pods.
+            # Our spark image copies the built JAR to /opt/app/app.jar
             - name: SPARK_JAR_PATH
-              value: "/tmp/spark.jar"
+              value: "/opt/app/app.jar"
+            # Log4j configuration used by driver & executors
             - name: LOG4J_PROPERTIES_FILE_PATH
-              value: "/tmp/log4j.properties"
+              value: "file:/opt/spark/conf/log4j.properties"
 
             # AWS / S3 configuration
             - name: AWS_REGION
@@ -157,6 +165,12 @@ spec:
                 secretKeyRef:
                   name: aws-credentials
                   key: secretAccessKey
+            # Optional session token for temporary STS credentials
+            - name: AWS_SESSION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: sessionToken
             - name: S3_BUCKET_NAME
               valueFrom:
                 configMapKeyRef:
@@ -184,10 +198,10 @@ spec:
             periodSeconds: 10
           resources:
             requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
               cpu: "500m"
               memory: "512Mi"
-            limits:
-              cpu: "1000m"
-              memory: "1Gi"
 
 
