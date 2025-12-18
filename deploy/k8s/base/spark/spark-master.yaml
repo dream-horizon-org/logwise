@@ -9,6 +9,9 @@ spec:
   selector:
     app: spark-master
   ports:
+    - name: job
+      port: 6066
+      targetPort: 6066
     - name: rpc
       port: 7077
       targetPort: 7077
