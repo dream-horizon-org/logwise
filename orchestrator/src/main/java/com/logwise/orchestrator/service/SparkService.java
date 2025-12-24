@@ -154,7 +154,7 @@ public class SparkService {
       // roles)
       sparkProperties.put(
           "spark.hadoop.fs.s3a.aws.credentials.provider",
-          "org.apache.hadoop.fs.s3a.auth.DefaultAWSCredentialsProviderChain");
+          "com.amazonaws.auth.DefaultAWSCredentialsProviderChain");
     }
     return SubmitSparkJobRequest.builder()
         .appArgs(appArgs)
