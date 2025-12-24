@@ -178,6 +178,8 @@ services:
       dockerfile: docker/Dockerfile
     image: logwise-spark:latest
     container_name: logwise_spark_master
+    extra_hosts:
+      - "169.254.169.254:host-gateway"
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_OPTS=-Dspark.master.rest.enabled=true
@@ -212,6 +214,8 @@ services:
   spark-worker:
     image: logwise-spark:latest
     container_name: logwise_spark_worker
+    extra_hosts:
+      - "169.254.169.254:host-gateway"
     environment:
       - SPARK_MODE=worker
       - SPARK_WORKER_MEMORY=2g
@@ -241,6 +245,8 @@ services:
   spark-worker-2:
     image: logwise-spark:latest
     container_name: logwise_spark_worker_2
+    extra_hosts:
+      - "169.254.169.254:host-gateway"
     environment:
       - SPARK_MODE=worker
       - SPARK_WORKER_MEMORY=2g
