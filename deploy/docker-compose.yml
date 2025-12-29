@@ -338,7 +338,12 @@ services:
         condition: service_healthy
     entrypoint: ["sh", "-c"]
     command: >
-      "mysql -h mysql -uroot -pgrafana_root_password -e
+      "until mysqladmin ping -h mysql -uroot -pgrafana_root_password --silent; do
+        echo 'Waiting for MySQL to be ready...';
+        sleep 2;
+      done;
+      echo 'MySQL is ready, initializing database...';
+      mysql -h mysql -uroot -pgrafana_root_password -e
       \"CREATE DATABASE IF NOT EXISTS grafana CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
       CREATE USER IF NOT EXISTS 'grafana'@'%' IDENTIFIED BY 'grafana_password';
       GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'%';
