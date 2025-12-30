@@ -167,7 +167,7 @@ services:
       vector:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "bash", "-lc", "curl -fsS http://localhost:8080/health | grep 'UP' >/dev/null"]
+      test: ["CMD", "bash", "-lc", "curl -fsS http://localhost:8080/healthcheck | grep 'UP' >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 20
