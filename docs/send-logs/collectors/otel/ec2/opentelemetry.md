@@ -41,7 +41,7 @@ chmod +x otelcol-contrib
 ./otelcol-contrib --config=otel-collector-config.yaml
 ```
 
-**Note**: The configuration file [`otel-collector-config.yaml`](https://github.com/dream-horizon-org/logwise/blob/main/docs/send-logs/ec2/otel-collector-config.yaml) contains the production-ready setup. Make sure to customize it according to your requirements before running.
+**Note**: The configuration file [`otel-collector-config.yaml`](https://github.com/dream-horizon-org/logwise/blob/main/docs/send-logs/collectors/otel/ec2/otel-collector-config.yaml) contains the production-ready setup. Make sure to customize it according to your requirements before running.
 
 ### Verify Installation
 
