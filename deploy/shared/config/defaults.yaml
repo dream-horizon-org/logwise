@@ -1,0 +1,92 @@
+# Default configuration values for LogWise
+# These values are used across both Docker and Kubernetes deployments
+
+# Application Configuration
+app:
+  name: logwise
+  namespace: logwise
+  version: "1.0.0"
+
+# Service Ports
+ports:
+  orchestrator: 8080
+  grafana: 3000
+  vector_api: 8686
+  vector_otlp_grpc: 4317
+  vector_otlp_http: 4318
+  spark_master_ui: 18080
+  spark_worker_ui: 18081
+  kafka: 9092
+  kafka_jmx: 9999
+
+# AWS Configuration
+aws:
+  region: "us-east-1"
+  s3_bucket_name: "your-logwise-bucket"
+  s3_athena_output: "s3://your-logwise-bucket/athena-output/"
+  athena_workgroup: "logwise"
+  athena_catalog: "AwsDataCatalog"
+  athena_database: "logwise"
+
+# Kafka Configuration
+kafka:
+  bootstrap_servers: "kafka-bootstrap.logwise.svc.cluster.local:9092"
+  broker_id: 1
+  node_id: 1
+  cluster_id: "9ZkYwXlQ2Tq8rBn5JcH0xA"
+  auto_create_topics: true
+  replication_factor: 1
+  min_isr: 1
+
+# Database Configuration
+database:
+  orchestrator:
+    host: "db"
+    port: 3306
+    name: "myapp"
+    user: "myapp"
+    root_password: "root_pass"
+  grafana:
+    host: "mysql"
+    port: 3306
+    name: "grafana"
+    user: "grafana"
+    password: "grafana_password"
+    root_password: "grafana_root_password"
+
+# Vector Configuration
+vector:
+  api_version: "2"
+  api_address: "0.0.0.0:8686"
+  watch_config: true
+
+# Spark Configuration
+spark:
+  master_host: "spark://spark-master:7077"
+  jar_path: "/tmp/spark.jar"
+  log4j_properties_file_path: "/tmp/log4j.properties"
+
+# Resource Limits (for Kubernetes)
+resources:
+  orchestrator:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+  spark:
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  vector:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+

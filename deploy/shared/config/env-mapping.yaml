@@ -1,0 +1,166 @@
+# Environment variable mapping between Docker and Kubernetes
+# This file defines how environment variables map to configuration in both platforms
+
+mappings:
+  # AWS Configuration
+  - name: AWS_REGION
+    docker: "${AWS_REGION}"
+    kubernetes: "ConfigMap:logwise-config:AWS_REGION"
+    default: "us-east-1"
+    description: "AWS region for S3 and Athena"
+    
+  - name: AWS_ACCESS_KEY_ID
+    docker: "${AWS_ACCESS_KEY_ID}"
+    kubernetes: "Secret:aws-credentials:AWS_ACCESS_KEY_ID"
+    secret: true
+    description: "AWS access key ID"
+    
+  - name: AWS_SECRET_ACCESS_KEY
+    docker: "${AWS_SECRET_ACCESS_KEY}"
+    kubernetes: "Secret:aws-credentials:AWS_SECRET_ACCESS_KEY"
+    secret: true
+    description: "AWS secret access key"
+    
+  - name: AWS_SESSION_TOKEN
+    docker: "${AWS_SESSION_TOKEN:-}"
+    kubernetes: "Secret:aws-credentials:AWS_SESSION_TOKEN"
+    secret: true
+    optional: true
+    description: "AWS session token (for temporary credentials)"
+    
+  - name: S3_BUCKET_NAME
+    docker: "${S3_BUCKET_NAME}"
+    kubernetes: "ConfigMap:logwise-config:S3_BUCKET_NAME"
+    description: "S3 bucket name for log storage"
+    
+  - name: S3_ATHENA_OUTPUT
+    docker: "${S3_ATHENA_OUTPUT}"
+    kubernetes: "ConfigMap:logwise-config:S3_ATHENA_OUTPUT"
+    description: "S3 path for Athena query results"
+    
+  - name: ATHENA_WORKGROUP
+    docker: "${ATHENA_WORKGROUP}"
+    kubernetes: "ConfigMap:logwise-config:ATHENA_WORKGROUP"
+    default: "logwise"
+    description: "Athena workgroup name"
+    
+  - name: ATHENA_CATALOG
+    docker: "${ATHENA_CATALOG}"
+    kubernetes: "ConfigMap:logwise-config:ATHENA_CATALOG"
+    default: "AwsDataCatalog"
+    description: "Athena catalog name"
+    
+  - name: ATHENA_DATABASE
+    docker: "${ATHENA_DATABASE}"
+    kubernetes: "ConfigMap:logwise-config:ATHENA_DATABASE"
+    default: "logwise"
+    description: "Athena database name"
+    
+  # Kafka Configuration
+  - name: KAFKA_BROKERS
+    docker: "${KAFKA_BROKERS}"
+    kubernetes: "ConfigMap:logwise-config:KAFKA_BOOTSTRAP_SERVERS"
+    description: "Kafka bootstrap servers"
+    
+  - name: KAFKA_BROKERS_HOST
+    docker: "${KAFKA_BROKERS_HOST:-kafka}"
+    kubernetes: "ConfigMap:logwise-config:KAFKA_BOOTSTRAP_SERVERS"
+    default: "kafka"
+    description: "Kafka broker host and port"
+    
+  - name: KAFKA_CLUSTER_ID
+    docker: "${KAFKA_CLUSTER_ID:-9ZkYwXlQ2Tq8rBn5JcH0xA}"
+    kubernetes: "ConfigMap:kafka-config:KAFKA_CLUSTER_ID"
+    default: "9ZkYwXlQ2Tq8rBn5JcH0xA"
+    description: "Kafka cluster ID (for KRaft mode)"
+    
+  # Database Configuration - Orchestrator
+  - name: MYSQL_DATABASE
+    docker: "${MYSQL_DATABASE:-myapp}"
+    kubernetes: "Secret:db-orch-credentials:DB_NAME"
+    default: "myapp"
+    description: "Orchestrator database name"
+    
+  - name: MYSQL_USER
+    docker: "${MYSQL_USER:-myapp}"
+    kubernetes: "Secret:db-orch-credentials:DB_USER"
+    default: "myapp"
+    description: "Orchestrator database user"
+    
+  - name: MYSQL_PASSWORD
+    docker: "${MYSQL_PASSWORD:-myapp_pass}"
+    kubernetes: "Secret:db-orch-credentials:DB_PASSWORD"
+    secret: true
+    default: "myapp_pass"
+    description: "Orchestrator database password"
+    
+  - name: MYSQL_ROOT_PASSWORD
+    docker: "${MYSQL_ROOT_PASSWORD:-root_pass}"
+    kubernetes: "Secret:db-orch-credentials:DB_ROOT_PASSWORD"
+    secret: true
+    default: "root_pass"
+    description: "MySQL root password"
+    
+  - name: DB_HOST
+    docker: "db"
+    kubernetes: "ConfigMap:logwise-config:DB_HOST"
+    default: "db"
+    description: "Database host"
+    
+  - name: DB_PORT
+    docker: "3306"
+    kubernetes: "ConfigMap:logwise-config:DB_PORT"
+    default: "3306"
+    description: "Database port"
+    
+  # Vector Configuration
+  - name: VECTOR_API_PORT
+    docker: "${VECTOR_API_PORT:-8686}"
+    kubernetes: "ConfigMap:logwise-config:VECTOR_API_PORT"
+    default: "8686"
+    description: "Vector API port"
+    
+  - name: VECTOR_OTLP_GRPC_PORT
+    docker: "${VECTOR_OTLP_GRPC_PORT:-4317}"
+    kubernetes: "ConfigMap:logwise-config:VECTOR_OTLP_GRPC_PORT"
+    default: "4317"
+    description: "Vector OTLP gRPC port"
+    
+  - name: VECTOR_OTLP_HTTP_PORT
+    docker: "${VECTOR_OTLP_HTTP_PORT:-4318}"
+    kubernetes: "ConfigMap:logwise-config:VECTOR_OTLP_HTTP_PORT"
+    default: "4318"
+    description: "Vector OTLP HTTP port"
+    
+  # Service Ports
+  - name: ORCH_PORT
+    docker: "${ORCH_PORT:-8080}"
+    kubernetes: "ConfigMap:logwise-config:ORCH_PORT"
+    default: "8080"
+    description: "Orchestrator service port"
+    
+  - name: GRAFANA_PORT
+    docker: "${GRAFANA_PORT:-3000}"
+    kubernetes: "ConfigMap:logwise-config:GRAFANA_PORT"
+    default: "3000"
+    description: "Grafana service port"
+    
+  # Spark Configuration
+  - name: SPARK_MASTER_HOST
+    docker: "${SPARK_MASTER_HOST:-spark://spark-master:7077}"
+    kubernetes: "ConfigMap:logwise-config:SPARK_MASTER_HOST"
+    default: "spark://spark-master:7077"
+    description: "Spark master host"
+    
+  - name: SPARK_JAR_PATH
+    docker: "${SPARK_JAR_PATH:-/tmp/spark.jar}"
+    kubernetes: "ConfigMap:logwise-config:SPARK_JAR_PATH"
+    default: "/tmp/spark.jar"
+    description: "Spark JAR file path"
+    
+  - name: LOG4J_PROPERTIES_FILE_PATH
+    docker: "${LOG4J_PROPERTIES_FILE_PATH:-/tmp/log4j.properties}"
+    kubernetes: "ConfigMap:logwise-config:LOG4J_PROPERTIES_FILE_PATH"
+    default: "/tmp/log4j.properties"
+    description: "Log4j properties file path"
+

@@ -1,0 +1,175 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-application-logs
+  namespace: logwise
+  labels:
+    app: grafana
+data:
+  application-logs.json: "{\n  \"annotations\": {\n    \"list\": [\n      {\n    \
+    \    \"builtIn\": 1,\n        \"datasource\": {\n          \"type\": \"grafana\"\
+    ,\n          \"uid\": \"-- Grafana --\"\n        },\n        \"enable\": true,\n\
+    \        \"hide\": true,\n        \"iconColor\": \"rgba(0, 211, 255, 1)\",\n \
+    \       \"name\": \"Annotations & Alerts\",\n        \"target\": {\n         \
+    \ \"limit\": 100,\n          \"matchAny\": false,\n          \"tags\": [],\n \
+    \         \"type\": \"dashboard\"\n        },\n        \"type\": \"dashboard\"\
+    \n      }\n    ]\n  },\n  \"editable\": true,\n  \"fiscalYearStartMonth\": 0,\n\
+    \  \"graphTooltip\": 1,\n  \"id\": 1,\n  \"links\": [],\n  \"liveNow\": false,\n\
+    \  \"panels\": [\n    {\n      \"datasource\": {\n        \"type\": \"grafana-athena-datasource\"\
+    ,\n        \"uid\": \"asadsadf\"\n      },\n      \"fieldConfig\": {\n       \
+    \ \"defaults\": {\n          \"color\": {\n            \"mode\": \"thresholds\"\
+    \n          },\n          \"custom\": {\n            \"align\": \"auto\",\n  \
+    \          \"cellOptions\": {\n              \"type\": \"color-text\",\n     \
+    \         \"wrapText\": false\n            },\n            \"filterable\": true,\n\
+    \            \"inspect\": true,\n            \"minWidth\": 200\n          },\n\
+    \          \"mappings\": [],\n          \"thresholds\": {\n            \"mode\"\
+    : \"absolute\",\n            \"steps\": [\n              {\n                \"\
+    color\": \"green\",\n                \"value\": null\n              }\n      \
+    \      ]\n          }\n        },\n        \"overrides\": [\n          {\n   \
+    \         \"matcher\": {\n              \"id\": \"byName\",\n              \"\
+    options\": \"message 1\"\n            },\n            \"properties\": [\n    \
+    \          {\n                \"id\": \"custom.width\",\n                \"value\"\
+    : 901\n              }\n            ]\n          },\n          {\n           \
+    \ \"matcher\": {\n              \"id\": \"byName\",\n              \"options\"\
+    : \"HOSTNAME\"\n            },\n            \"properties\": [\n              {\n\
+    \                \"id\": \"custom.width\",\n                \"value\": 248\n \
+    \             }\n            ]\n          },\n          {\n            \"matcher\"\
+    : {\n              \"id\": \"byName\",\n              \"options\": \"hostname\"\
+    \n            },\n            \"properties\": [\n              {\n           \
+    \     \"id\": \"custom.width\",\n                \"value\": 172\n            \
+    \  }\n            ]\n          }\n        ]\n      },\n      \"gridPos\": {\n\
+    \        \"h\": 23,\n        \"w\": 24,\n        \"x\": 0,\n        \"y\": 0\n\
+    \      },\n      \"id\": 2,\n      \"options\": {\n        \"cellHeight\": \"\
+    sm\",\n        \"footer\": {\n          \"countRows\": false,\n          \"enablePagination\"\
+    : false,\n          \"fields\": \"\",\n          \"reducer\": [\n            \"\
+    sum\"\n          ],\n          \"show\": false\n        },\n        \"showHeader\"\
+    : true,\n        \"sortBy\": []\n      },\n      \"pluginVersion\": \"10.4.5\"\
+    ,\n      \"targets\": [\n        {\n          \"connectionArgs\": {\n        \
+    \    \"catalog\": \"__default\",\n            \"database\": \"__default\",\n \
+    \           \"region\": \"__default\",\n            \"resultReuseEnabled\": true,\n\
+    \            \"resultReuseMaxAgeInMinutes\": 60\n          },\n          \"datasource\"\
+    : {\n            \"type\": \"grafana-athena-datasource\",\n            \"uid\"\
+    : \"asadsadf\"\n          },\n          \"format\": 1,\n          \"rawSQL\":\
+    \ \"-- Dashboard: ${__dashboard.title}\\n-- User Email: ${__user.email}\\nSELECT\
+    \ ${columns:raw}\\nFROM \\\"${ATHENA_DATABASE}\\\".\\\"application-logs\\\"\\\
+    nWHERE \\n  time BETWEEN date_format(TIMESTAMP $__rawTimeFrom(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i')\
+    \ AND date_format(TIMESTAMP $__rawTimeTo(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i')\\\
+    n  AND service_name IN (${service_name:singlequote})\\n  AND (length('$text_search')\
+    \ = 0 OR REGEXP_LIKE(message, REGEXP_REPLACE('$text_search', ',', '|')))\\n  AND\
+    \ (length('$exclude_text') = 0 OR NOT REGEXP_LIKE(message, REGEXP_REPLACE('$exclude_text',\
+    \ ',', '|')))\\n  AND (length('$regex_search') = 0 OR REGEXP_LIKE(message, '$regex_search'))\\\
+    n  AND (length('$instanceIds') = 0 OR hostname IN (SELECT * FROM UNNEST(split('$instanceIds',\
+    \ ',')) AS t(value)))\\nORDER BY \\\"timestamp\\\" ${sortby:raw}\\nLIMIT $limit\"\
+    ,\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"log-search\"\
+    ,\n      \"transformations\": [\n        {\n          \"id\": \"extractFields\"\
+    ,\n          \"options\": {\n            \"format\": \"json\",\n            \"\
+    keepTime\": false,\n            \"replace\": false,\n            \"source\": \"\
+    message\"\n          }\n        },\n        {\n          \"id\": \"filterFieldsByName\"\
+    ,\n          \"options\": {\n            \"include\": {\n              \"names\"\
+    : []\n            }\n          }\n        }\n      ],\n      \"transparent\":\
+    \ true,\n      \"type\": \"table\"\n    }\n  ],\n  \"refresh\": \"\",\n  \"schemaVersion\"\
+    : 39,\n  \"tags\": [],\n  \"templating\": {\n    \"list\": [\n      {\n      \
+    \  \"current\": {\n          \"selected\": true,\n          \"text\": \"logwise\"\
+    ,\n          \"value\": \"logwise\"\n        },\n        \"description\": \"Athena\
+    \ database name\",\n        \"hide\": 2,\n        \"label\": \"ATHENA_DATABASE\"\
+    ,\n        \"name\": \"ATHENA_DATABASE\",\n        \"options\": [\n          {\n\
+    \            \"selected\": true,\n            \"text\": \"logwise\",\n       \
+    \     \"value\": \"logwise\"\n          }\n        ],\n        \"query\": \"logwise\"\
+    ,\n        \"skipUrlSync\": false,\n        \"type\": \"constant\"\n      },\n\
+    \      {\n        \"current\": {\n          \"selected\": true,\n          \"\
+    text\": [\n            \"healthcheck-dummy\"\n          ],\n          \"value\"\
+    : [\n            \"healthcheck-dummy\"\n          ]\n        },\n        \"datasource\"\
+    : {\n          \"type\": \"yesoreyeram-infinity-datasource\",\n          \"uid\"\
+    : \"wakask\"\n        },\n        \"definition\": \"log-central-orchestrator-\
+    \ (infinity) json\",\n        \"hide\": 0,\n        \"includeAll\": false,\n \
+    \       \"label\": \"service_name\",\n        \"multi\": true,\n        \"name\"\
+    : \"service_name\",\n        \"options\": [],\n        \"query\": {\n        \
+    \  \"infinityQuery\": {\n            \"columns\": [],\n            \"computed_columns\"\
+    : [\n              {\n                \"selector\": \"\",\n                \"\
+    text\": \"\",\n                \"type\": \"string\"\n              }\n       \
+    \     ],\n            \"data\": \"$service_details\",\n            \"filterExpression\"\
+    : \"\",\n            \"filters\": [],\n            \"format\": \"table\",\n  \
+    \          \"parser\": \"backend\",\n            \"refId\": \"variable\",\n  \
+    \          \"root_selector\": \"$.data.serviceDetails[*].serviceName\",\n    \
+    \        \"source\": \"url\",\n            \"summarizeBy\": \"serviceName\",\n\
+    \            \"type\": \"json\",\n            \"uql\": \"parse-json\\n$.data.serviceDetails[*].serviceName\"\
+    ,\n            \"url\": \"http://orchestrator:8080/service-details\",\n      \
+    \      \"url_options\": {\n              \"data\": \"\",\n              \"headers\"\
+    : [\n                {\n                  \"key\": \"X-Tenant-Name\",\n      \
+    \            \"value\": \"ABC\"\n                }\n              ],\n       \
+    \       \"method\": \"GET\"\n            }\n          },\n          \"query\"\
+    : \"\",\n          \"queryType\": \"infinity\"\n        },\n        \"refresh\"\
+    : 1,\n        \"regex\": \"\",\n        \"skipUrlSync\": false,\n        \"sort\"\
+    : 5,\n        \"type\": \"query\",\n        \"staticOptions\": [\n          {\n\
+    \            \"text\": \"healthcheck-dummy\",\n            \"value\": \"healthcheck-dummy\"\
+    \n          }\n        ]\n      },\n      {\n        \"current\": {\n        \
+    \  \"selected\": true,\n          \"text\": \"\",\n          \"value\": \"\"\n\
+    \        },\n        \"description\": \"Comma Separated Search Strings\",\n  \
+    \      \"hide\": 0,\n        \"label\": \"Text Search\",\n        \"name\": \"\
+    text_search\",\n        \"options\": [\n          {\n            \"selected\"\
+    : true,\n            \"text\": \"\",\n            \"value\": \"\"\n          }\n\
+    \        ],\n        \"query\": \"\",\n        \"skipUrlSync\": false,\n     \
+    \   \"type\": \"textbox\"\n      },\n      {\n        \"current\": {\n       \
+    \   \"selected\": true,\n          \"text\": \"\",\n          \"value\": \"\"\n\
+    \        },\n        \"description\": \"Comma Separated String To Exclude In Search\
+    \ Result\",\n        \"hide\": 0,\n        \"label\": \"Exclude Text\",\n    \
+    \    \"name\": \"exclude_text\",\n        \"options\": [\n          {\n      \
+    \      \"selected\": true,\n            \"text\": \"\",\n            \"value\"\
+    : \"\"\n          }\n        ],\n        \"query\": \"\",\n        \"skipUrlSync\"\
+    : false,\n        \"type\": \"textbox\"\n      },\n      {\n        \"current\"\
+    : {\n          \"selected\": true,\n          \"text\": \"\",\n          \"value\"\
+    : \"\"\n        },\n        \"description\": \"Search Logs With Regex\",\n   \
+    \     \"hide\": 0,\n        \"label\": \"Regex Search\",\n        \"name\": \"\
+    regex_search\",\n        \"options\": [\n          {\n            \"selected\"\
+    : true,\n            \"text\": \"\",\n            \"value\": \"\"\n          }\n\
+    \        ],\n        \"query\": \"\",\n        \"skipUrlSync\": false,\n     \
+    \   \"type\": \"textbox\"\n      },\n      {\n        \"current\": {\n       \
+    \   \"selected\": true,\n          \"text\": \"\",\n          \"value\": \"\"\n\
+    \        },\n        \"description\": \"Comma separated aws instanceIds\",\n \
+    \       \"hide\": 0,\n        \"label\": \"Instance Ids\",\n        \"name\":\
+    \ \"instanceIds\",\n        \"options\": [\n          {\n            \"selected\"\
+    : true,\n            \"text\": \"\",\n            \"value\": \"\"\n          }\n\
+    \        ],\n        \"query\": \"\",\n        \"skipUrlSync\": false,\n     \
+    \   \"type\": \"textbox\"\n      },\n      {\n        \"current\": {\n       \
+    \   \"selected\": true,\n          \"text\": [\n            \"message\"\n    \
+    \      ],\n          \"value\": [\n            \"message\"\n          ]\n    \
+    \    },\n        \"description\": \"Columns To Display In Search Results\",\n\
+    \        \"hide\": 0,\n        \"includeAll\": false,\n        \"label\": \"Columns\"\
+    ,\n        \"multi\": true,\n        \"name\": \"columns\",\n        \"options\"\
+    : [\n          {\n            \"selected\": false,\n            \"text\": \"service_name\"\
+    ,\n            \"value\": \"service_name\"\n          },\n          {\n      \
+    \      \"selected\": false,\n            \"text\": \"timestamp\",\n          \
+    \  \"value\": \"timestamp\"\n          },\n          {\n            \"selected\"\
+    : false,\n            \"text\": \"hostname\",\n            \"value\": \"hostname\"\
+    \n          },\n          {\n            \"selected\": true,\n            \"text\"\
+    : \"message\",\n            \"value\": \"message\"\n          }\n        ],\n\
+    \        \"query\": \"service_name,timestamp,hostname,message\",\n        \"queryValue\"\
+    : \"\",\n        \"skipUrlSync\": false,\n        \"type\": \"custom\"\n     \
+    \ },\n      {\n        \"current\": {\n          \"selected\": true,\n       \
+    \   \"text\": \"\",\n          \"value\": \"\"\n        },\n        \"description\"\
+    : \"File Name To Fetch Logs From In Case Of Multiple Log Files. Eg. err.log (only\
+    \ file name)\",\n        \"hide\": 0,\n        \"label\": \"Log File Name\",\n\
+    \        \"name\": \"file_name\",\n        \"options\": [\n          {\n     \
+    \       \"selected\": true,\n            \"text\": \"\",\n            \"value\"\
+    : \"\"\n          }\n        ],\n        \"query\": \"\",\n        \"skipUrlSync\"\
+    : false,\n        \"type\": \"textbox\"\n      },\n      {\n        \"current\"\
+    : {\n          \"selected\": false,\n          \"text\": \"desc\",\n         \
+    \ \"value\": \"desc\"\n        },\n        \"description\": \"Timestamp Wise Sorting\
+    \ Order Of Search Results\",\n        \"hide\": 0,\n        \"includeAll\": false,\n\
+    \        \"label\": \"Sorting\",\n        \"multi\": false,\n        \"name\"\
+    : \"sortby\",\n        \"options\": [\n          {\n            \"selected\":\
+    \ true,\n            \"text\": \"desc\",\n            \"value\": \"desc\"\n  \
+    \        },\n          {\n            \"selected\": false,\n            \"text\"\
+    : \"asc\",\n            \"value\": \"asc\"\n          }\n        ],\n        \"\
+    query\": \"desc,asc\",\n        \"queryValue\": \"\",\n        \"skipUrlSync\"\
+    : false,\n        \"type\": \"custom\"\n      },\n      {\n        \"current\"\
+    : {\n          \"selected\": false,\n          \"text\": \"60\",\n          \"\
+    value\": \"60\"\n        },\n        \"hide\": 0,\n        \"label\": \"Limit\"\
+    ,\n        \"name\": \"limit\",\n        \"options\": [\n          {\n       \
+    \     \"selected\": true,\n            \"text\": \"60\",\n            \"value\"\
+    : \"60\"\n          }\n        ],\n        \"query\": \"60\",\n        \"skipUrlSync\"\
+    : false,\n        \"type\": \"textbox\"\n      }\n    ]\n  },\n  \"time\": {\n\
+    \    \"from\": \"now-5m\",\n    \"to\": \"now-5s\"\n  },\n  \"timepicker\": {\n\
+    \    \"nowDelay\": \"5s\"\n  },\n  \"timezone\": \"\",\n  \"title\": \"Application\
+    \ Logs\",\n  \"uid\": \"ferlywfmzk1kwb\",\n  \"version\": 2,\n  \"weekStart\"\
+    : \"\"\n}"
