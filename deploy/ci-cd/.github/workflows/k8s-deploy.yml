@@ -1,0 +1,108 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'deploy/kubernetes/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'nonprod'
+        type: choice
+        options:
+          - nonprod
+          - prod
+      tag:
+        description: 'Image tag to deploy'
+        required: false
+        default: 'latest'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/logwise
+
+jobs:
+  deploy-nonprod:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'nonprod'))
+    runs-on: ubuntu-latest
+    environment: nonprod
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_NONPROD }}" | base64 -d > ~/.kube/config
+          kubectl config set-context --current --namespace=logwise
+
+      - name: Validate manifests
+        run: |
+          kubectl apply --dry-run=client -k deploy/kubernetes/overlays/nonprod
+
+      - name: Deploy to nonprod
+        run: |
+          export REGISTRY="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}"
+          export TAG="${GITHUB_SHA::7}"
+          export ENV=nonprod
+          ./deploy/kubernetes/scripts/build-and-push.sh || true
+          ./deploy/kubernetes/scripts/deploy.sh
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/orchestrator -n logwise --timeout=5m
+          kubectl get pods -n logwise
+
+  deploy-prod:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > ~/.kube/config
+          kubectl config set-context --current --namespace=logwise
+
+      - name: Validate manifests
+        run: |
+          kubectl apply --dry-run=client -k deploy/kubernetes/overlays/prod
+
+      - name: Deploy to production
+        run: |
+          export REGISTRY="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}"
+          export TAG="${{ github.event.inputs.tag || github.sha }}"
+          export ENV=prod
+          ./deploy/kubernetes/scripts/build-and-push.sh || true
+          ./deploy/kubernetes/scripts/deploy.sh
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/orchestrator -n logwise --timeout=10m
+          kubectl get pods -n logwise
+

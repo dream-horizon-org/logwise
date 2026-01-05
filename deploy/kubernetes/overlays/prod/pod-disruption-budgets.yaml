@@ -1,0 +1,36 @@
+# PodDisruptionBudgets for production environment
+# Ensures minimum availability during voluntary disruptions (node drains, updates)
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: orchestrator-pdb
+  namespace: logwise
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: orchestrator
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vector-pdb
+  namespace: logwise
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: vector-logs
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: spark-master-pdb
+  namespace: logwise
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: spark-master
+
