@@ -27,25 +27,42 @@ metadata:
 data:
 EOF
   
-  # Read .env file and convert to ConfigMap format
-  while IFS='=' read -r key value || [ -n "$key" ]; do
+  # Read .env file and convert to ConfigMap format with better parsing
+  while IFS= read -r line || [ -n "$line" ]; do
     # Skip comments and empty lines
-    [[ "$key" =~ ^#.*$ ]] && continue
-    [[ -z "$key" ]] && continue
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "${line// }" ]] && continue
     
-    # Remove quotes from value
-    value="${value#\"}"
-    value="${value%\"}"
-    value="${value#\'}"
-    value="${value%\'}"
-    
-    # Skip secret variables (they should be in Secrets, not ConfigMaps)
-    if [[ "$key" =~ (PASSWORD|SECRET|TOKEN|KEY) ]]; then
-      continue
+    # Parse key=value, handling quoted values and spaces
+    if [[ "$line" =~ ^[[:space:]]*([^=]+)=(.*)$ ]]; then
+      key="${BASH_REMATCH[1]}"
+      value="${BASH_REMATCH[2]}"
+      
+      # Trim whitespace from key
+      key="${key#"${key%%[![:space:]]*}"}"
+      key="${key%"${key##*[![:space:]]}"}"
+      
+      # Trim whitespace from value
+      value="${value#"${value%%[![:space:]]*}"}"
+      value="${value%"${value##*[![:space:]]}"}"
+      
+      # Remove surrounding quotes (handles both single and double quotes)
+      if [[ "$value" =~ ^\".*\"$ ]]; then
+        value="${value#\"}"
+        value="${value%\"}"
+      elif [[ "$value" =~ ^\'.*\'$ ]]; then
+        value="${value#\'}"
+        value="${value%\'}"
+      fi
+      
+      # Skip secret variables (they should be in Secrets, not ConfigMaps)
+      if [[ "$key" =~ (PASSWORD|SECRET|TOKEN|KEY) ]]; then
+        continue
+      fi
+      
+      # Add to ConfigMap
+      echo "  $key: \"$value\"" >> "$output_file"
     fi
-    
-    # Add to ConfigMap
-    echo "  $key: \"$value\"" >> "$output_file"
   done < "$env_file"
   
   log_success "Generated ConfigMap at $output_file"
@@ -56,7 +73,7 @@ generate_k8s_secrets() {
   local env_file="$1"
   local output_file="$2"
   
-  log_info "Generating Kubernetes Secrets from $env_file (base64 encoded)"
+  log_info "Generating Kubernetes Secrets from $env_file"
   log_warn "This is for local development only. Use proper secret management in production!"
   
   cat > "$output_file" <<EOF
@@ -66,26 +83,47 @@ metadata:
   name: aws-credentials
   namespace: logwise
 type: Opaque
-data:
+stringData:
 EOF
   
-  # Extract secret variables
-  while IFS='=' read -r key value || [ -n "$key" ]; do
+  # Extract secret variables with better parsing
+  while IFS= read -r line || [ -n "$line" ]; do
     # Skip comments and empty lines
-    [[ "$key" =~ ^#.*$ ]] && continue
-    [[ -z "$key" ]] && continue
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "${line// }" ]] && continue
     
-    # Only process secret variables
-    if [[ "$key" =~ (AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN) ]]; then
-      # Remove quotes
-      value="${value#\"}"
-      value="${value%\"}"
-      value="${value#\'}"
-      value="${value%\'}"
+    # Parse key=value, handling quoted values and spaces
+    if [[ "$line" =~ ^[[:space:]]*([^=]+)=(.*)$ ]]; then
+      key="${BASH_REMATCH[1]}"
+      value="${BASH_REMATCH[2]}"
       
-      # Base64 encode
-      encoded_value=$(echo -n "$value" | base64)
-      echo "  $key: $encoded_value" >> "$output_file"
+      # Trim whitespace from key
+      key="${key#"${key%%[![:space:]]*}"}"
+      key="${key%"${key##*[![:space:]]}"}"
+      
+      # Trim whitespace from value
+      value="${value#"${value%%[![:space:]]*}"}"
+      value="${value%"${value##*[![:space:]]}"}"
+      
+      # Remove surrounding quotes (handles both single and double quotes)
+      if [[ "$value" =~ ^\".*\"$ ]]; then
+        value="${value#\"}"
+        value="${value%\"}"
+      elif [[ "$value" =~ ^\'.*\'$ ]]; then
+        value="${value#\'}"
+        value="${value%\'}"
+      fi
+      
+      # Only process AWS credential variables
+      if [[ "$key" =~ ^(AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN)$ ]]; then
+        # Skip if value is empty (e.g., optional AWS_SESSION_TOKEN)
+        if [[ -z "$value" ]]; then
+          continue
+        fi
+        
+        # Write plain text value directly (Kubernetes will handle encoding)
+        echo "  $key: \"$value\"" >> "$output_file"
+      fi
     fi
   done < "$env_file"
   
