@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logwise-config
+  namespace: logwise
+data:
+  # Kafka bootstrap servers used by Vector, Orchestrator and Spark.
+  # Example (in-cluster Kafka): kafka-bootstrap.logwise.svc.cluster.local:9092
+  # Example (managed Kafka): pkc-xxxxx.ap-south-1.aws.confluent.cloud:9092
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-bootstrap.logwise.svc.cluster.local"
+
+  # AWS & S3 / Athena configuration (non-secret parts).
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_NAME: "your-logwise-bucket"
+  S3_ATHENA_OUTPUT: "s3://your-logwise-bucket/athena-output/"
+  ATHENA_WORKGROUP: "logwise"
+  ATHENA_CATALOG: "AwsDataCatalog"
+  ATHENA_DATABASE: "logwise"
+
+  # Default service ports (can be overridden per environment via overlays).
+  ORCH_PORT: "8080"
+  GRAFANA_PORT: "3000"

@@ -1,0 +1,81 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: orchestrator-ingress
+  namespace: logwise
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: orchestrator.nonprod.example.com # TODO: replace with your non-prod domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: orchestrator
+                port:
+                  number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: logwise
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: grafana.nonprod.example.com # TODO: replace with your non-prod domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spark-master-ingress
+  namespace: logwise
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: spark-master.nonprod.example.com # TODO: replace with your non-prod domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spark-master
+                port:
+                  number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spark-worker-ui-ingress
+  namespace: logwise
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: spark-worker.nonprod.example.com # TODO: replace with your non-prod domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spark-worker-ui
+                port:
+                  number: 8081
+
+

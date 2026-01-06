@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-worker
+  namespace: logwise
+  labels:
+    app: spark-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spark-worker
+  template:
+    metadata:
+      labels:
+        app: spark-worker
+    spec:
+      initContainers:
+        - name: wait-for-spark-master
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Spark master at spark-master:7077..."
+              until nc -z spark-master 7077; do
+                echo "Spark master not ready, sleeping..."
+                sleep 3
+              done
+              echo "Spark master is up."
+      containers:
+        - name: spark-worker
+          image: logwise-spark:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPARK_MODE
+              value: "worker"
+            - name: SPARK_WORKER_MEMORY
+              value: "2g"
+            - name: SPARK_WORKER_CORES
+              value: "2"
+          command:
+            - bash
+            - -lc
+            - >
+              mkdir -p /opt/spark/logs &&
+              SPARK_WORKER_OPTS="-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true"
+              /opt/spark/bin/spark-class
+              org.apache.spark.deploy.worker.Worker
+              spark://spark-master:7077
+              --webui-port 8081
+              --memory 2048m
+              --cores 2
+          ports:
+            - containerPort: 8081
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "2Gi"
+            limits:
+              cpu: "2000m"
+              memory: "3Gi"
+
+

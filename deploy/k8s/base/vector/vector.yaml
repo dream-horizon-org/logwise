@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector-logs
+  namespace: logwise
+  labels:
+    app: vector-logs
+spec:
+  selector:
+    app: vector-logs
+  ports:
+    - name: api
+      port: 8686
+      targetPort: 8686
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # Additional service to support the healthcheck-dummy OTEL config,
+  # which expects to reach Vector at http://vector:4318.
+  name: vector
+  namespace: logwise
+spec:
+  selector:
+    app: vector-logs
+  ports:
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-logs
+  namespace: logwise
+  labels:
+    app: vector-logs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vector-logs
+  template:
+    metadata:
+      labels:
+        app: vector-logs
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Kafka at kafka-bootstrap:9092..."
+              until nc -z kafka-bootstrap 9092; do
+                echo "Kafka not ready, sleeping..."
+                sleep 3
+              done
+              echo "Kafka is up."
+      containers:
+        - name: vector
+          # Custom image that includes /etc/vector/logwise-vector.desc
+          image: logwise-vector:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: VECTOR_API_VERSION
+              value: "2"
+            - name: VECTOR_API_ADDRESS
+              value: "0.0.0.0:8686"
+            - name: VECTOR_WATCH_CONFIG
+              value: "true"
+          ports:
+            - containerPort: 8686
+            - containerPort: 4317
+            - containerPort: 4318
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"

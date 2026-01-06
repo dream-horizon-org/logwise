@@ -1,0 +1,28 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    # Map NodePorts from the kind node out to your host so you can use localhost.
+    extraPortMappings:
+      # Grafana Service (NodePort 30080) → http://localhost:30080
+      - containerPort: 30080
+        hostPort: 30080
+        protocol: TCP
+      # Orchestrator Service (NodePort 30081) → http://localhost:30081
+      - containerPort: 30081
+        hostPort: 30081
+        protocol: TCP
+      # Spark Master UI (NodePort 30082) → http://localhost:30082
+      - containerPort: 30082
+        hostPort: 30082
+        protocol: TCP
+      # Spark Worker UI (NodePort 30083) → http://localhost:30083
+      - containerPort: 30083
+        hostPort: 30083
+        protocol: TCP
+      # Vector OTLP HTTP (NodePort 30418) → http://localhost:30418
+      - containerPort: 30418
+        hostPort: 30418
+        protocol: TCP
+
+

@@ -1,0 +1,125 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: logwise
+  labels:
+    app: grafana
+spec:
+  selector:
+    app: grafana
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: logwise
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      initContainers:
+        - name: wait-for-grafana-mysql
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for grafana-mysql:3306..."
+              until nc -z grafana-mysql 3306; do
+                echo "grafana-mysql not ready, sleeping..."
+                sleep 3
+              done
+              echo "grafana-mysql is up."
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.2.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "admin"
+            - name: GF_INSTALL_PLUGINS
+              value: "grafana-athena-datasource,yesoreyeram-infinity-datasource"
+            - name: GF_DATABASE_TYPE
+              value: "mysql"
+            - name: GF_DATABASE_HOST
+              value: "grafana-mysql:3306"
+            - name: GF_DATABASE_NAME
+              value: "grafana"
+            - name: GF_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-db-secret
+                  key: username
+            - name: GF_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-db-secret
+                  key: password
+            - name: GF_DATABASE_SSL_MODE
+              value: "disable"
+
+            # AWS / Athena configuration (used by datasources)
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: AWS_REGION
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: accessKeyId
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: secretAccessKey
+            - name: ATHENA_WORKGROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: ATHENA_WORKGROUP
+            - name: ATHENA_CATALOG
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: ATHENA_CATALOG
+            - name: ATHENA_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: ATHENA_DATABASE
+            - name: S3_ATHENA_OUTPUT
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: S3_ATHENA_OUTPUT
+
+          ports:
+            - containerPort: 3000
+              name: http
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+
+

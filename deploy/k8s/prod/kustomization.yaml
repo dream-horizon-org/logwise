@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../base
+
+patches:
+  # Example: override Kafka bootstrap to point to a managed Kafka cluster in prod.
+  - path: patch-logwise-config-kafka.yaml
+    target:
+      kind: ConfigMap
+      name: logwise-config
+
+

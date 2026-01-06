@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: healthcheck-dummy
+  namespace: logwise
+  labels:
+    app: healthcheck-dummy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: healthcheck-dummy
+  template:
+    metadata:
+      labels:
+        app: healthcheck-dummy
+    spec:
+      initContainers:
+        - name: wait-for-vector
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for vector-logs:4318..."
+              until nc -z vector-logs 4318; do
+                echo "Vector not ready, sleeping..."
+                sleep 3
+              done
+              echo "Vector is up."
+        - name: wait-for-kafka
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for kafka-bootstrap:9092..."
+              until nc -z kafka-bootstrap 9092; do
+                echo "Kafka not ready, sleeping..."
+                sleep 3
+              done
+              echo "Kafka is up."
+      containers:
+        - name: healthcheck-dummy
+          # Build and push this image from deploy/healthcheck-dummy/Dockerfile
+          image: logwise-healthcheck-dummy:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVICE_NAME
+              value: "healthcheck-dummy"
+            - name: ENVIRONMENT
+              value: "local"
+            - name: TYPE
+              value: "healthcheck"
+          ports:
+            - containerPort: 13133
+              name: healthz
+          volumeMounts:
+            - name: healthcheck-logs
+              mountPath: /var/log/healthcheck
+            - name: otel-storage
+              mountPath: /var/lib/otelcol/storage
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+      volumes:
+        - name: healthcheck-logs
+          emptyDir: {}
+        - name: otel-storage
+          emptyDir: {}
+
+
