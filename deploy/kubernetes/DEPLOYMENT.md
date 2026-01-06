@@ -14,7 +14,9 @@ Before deploying, ensure you have:
 
 ## Quick Deployment
 
-### Option 1: One-Command Setup (Local with kind)
+The recommended way to deploy LogWise is using the unified `setup-k8s.sh` script, which handles everything automatically.
+
+### Local Development (kind)
 
 For local development and testing:
 
@@ -35,12 +37,46 @@ This single command will:
 - Orchestrator: http://localhost:30081
 - Grafana: http://localhost:30080
 - Spark Master: http://localhost:30082
+- Spark Worker: http://localhost:30083
+- Vector OTLP: http://localhost:30418
 
-### Option 2: Step-by-Step Deployment
+### Non-Production Environment
 
-For more control or for nonprod/prod environments:
+```bash
+cd deploy/kubernetes
+ENV=nonprod \
+  REGISTRY=ghcr.io/your-org \
+  TAG=1.0.0 \
+  ./scripts/setup-k8s.sh nonprod
+```
 
-## Step-by-Step Deployment
+This will:
+- ✅ Build all Docker images
+- ✅ Push images to the specified registry
+- ✅ Deploy all services to your Kubernetes cluster
+- ✅ Wait for pods to be ready
+
+### Production Environment
+
+```bash
+cd deploy/kubernetes
+ENV=prod \
+  REGISTRY=ghcr.io/your-org \
+  TAG=1.0.0 \
+  ./scripts/setup-k8s.sh prod
+```
+
+**Environment Variables:**
+- `ENV`: Environment (`local`, `nonprod`, `prod`) - **required**
+- `REGISTRY`: Container registry (e.g., `ghcr.io/your-org`, `123456789012.dkr.ecr.us-east-1.amazonaws.com`) - **required for nonprod/prod**
+- `TAG`: Image tag (default: `latest`)
+- `CLUSTER_TYPE`: `kind`, `docker-desktop`, or `other` (default: `docker-desktop`)
+
+## Advanced: Manual Step-by-Step Deployment
+
+> **Note:** For most use cases, the `setup-k8s.sh` script (shown above) is recommended as it handles all steps automatically. Use the manual approach below only if you need more control or are integrating into custom CI/CD pipelines.
+
+For more control or custom CI/CD pipelines, you can run the build and deploy steps separately:
 
 ### Step 1: Prepare Configuration
 
@@ -48,10 +84,10 @@ For more control or for nonprod/prod environments:
 ```bash
 # Create .env file if you haven't already
 cd deploy
-./scripts/create-env.sh --docker
+./scripts/create-env.sh --kubernetes
 
 # Sync .env to Kubernetes ConfigMaps/Secrets
-./shared/scripts/sync-config.sh docker/.env
+./shared/scripts/sync-config.sh kubernetes/.env
 ```
 
 #### For Production:
@@ -143,30 +179,47 @@ kubectl describe pod -n logwise <pod-name>
 
 ### Example 1: Local Development (kind)
 
+**Recommended approach:**
 ```bash
 # From repository root
 cd deploy/kubernetes
 
-# One-command setup
+# One-command setup (handles everything)
 ./scripts/setup-k8s.sh local
 
-# Or step-by-step:
+# Access services
+kubectl port-forward -n logwise svc/orchestrator 8080:8080
+```
+
+**Alternative (manual steps):**
+```bash
 # 1. Build images
 ENV=local CLUSTER_TYPE=kind TAG=latest ./scripts/build-and-push.sh
 
 # 2. Deploy
 ENV=local ./scripts/deploy.sh
-
-# 3. Access services
-kubectl port-forward -n logwise svc/orchestrator 8080:8080
 ```
 
 ### Example 2: Non-Production Deployment
 
+**Recommended approach:**
 ```bash
 # From repository root
 cd deploy/kubernetes
 
+# One-command deployment
+ENV=nonprod \
+  REGISTRY=ghcr.io/myorg \
+  TAG=v1.0.0 \
+  ./scripts/setup-k8s.sh nonprod
+
+# Verify
+kubectl get pods -n logwise
+kubectl get ingress -n logwise
+```
+
+**Alternative (manual steps):**
+```bash
 # 1. Build and push images
 ENV=nonprod \
   REGISTRY=ghcr.io/myorg \
@@ -175,33 +228,36 @@ ENV=nonprod \
 
 # 2. Deploy
 ENV=nonprod ./scripts/deploy.sh
-
-# 3. Verify
-kubectl get pods -n logwise
-kubectl get ingress -n logwise
 ```
 
 ### Example 3: Production Deployment
 
+**Recommended approach:**
 ```bash
 # From repository root
 cd deploy/kubernetes
 
-# 1. Validate first (dry-run)
-ENV=prod DRY_RUN=true ./scripts/deploy.sh
-
-# 2. Build and push images
+# One-command deployment
 ENV=prod \
   REGISTRY=ghcr.io/myorg \
   TAG=v1.0.0 \
-  ./scripts/build-and-push.sh
+  ./scripts/setup-k8s.sh prod
 
-# 3. Deploy
-ENV=prod ./scripts/deploy.sh
-
-# 4. Monitor deployment
+# Monitor deployment
 kubectl rollout status deployment/orchestrator -n logwise
 kubectl get pods -n logwise -w
+```
+
+**Alternative (with validation first):**
+```bash
+# 1. Validate first (dry-run)
+ENV=prod DRY_RUN=true ./scripts/deploy.sh
+
+# 2. Full deployment
+ENV=prod \
+  REGISTRY=ghcr.io/myorg \
+  TAG=v1.0.0 \
+  ./scripts/setup-k8s.sh prod
 ```
 
 ## Accessing Services
