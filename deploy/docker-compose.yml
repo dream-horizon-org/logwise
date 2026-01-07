@@ -220,8 +220,9 @@ services:
       - SPARK_MODE=worker
       - SPARK_WORKER_MEMORY=2g
       - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_OPTS=-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true -Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=3600 -Dspark.worker.cleanup.appDataTtl=3600
     command: ["bash", "-lc", 
-      "mkdir -p /opt/spark/logs && SPARK_WORKER_OPTS='-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true' /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8081 --memory 2048m --cores 2"]
+      "mkdir -p /opt/spark/logs && /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8081 --memory 2048m --cores 2"]
     networks:
       - lc_net
     volumes:
@@ -249,8 +250,9 @@ services:
       - SPARK_MODE=worker
       - SPARK_WORKER_MEMORY=2g
       - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_OPTS=-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true -Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=3600 -Dspark.worker.cleanup.appDataTtl=3600
     command: ["bash", "-lc",
-              "mkdir -p /opt/spark/logs && SPARK_WORKER_WEBUI_PORT=8082 && SPARK_WORKER_OPTS='-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true' /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8082 --memory 2048m --cores 2"]
+              "mkdir -p /opt/spark/logs && SPARK_WORKER_WEBUI_PORT=8082 && /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8082 --memory 2048m --cores 2"]
     networks:
       - lc_net
     volumes:
