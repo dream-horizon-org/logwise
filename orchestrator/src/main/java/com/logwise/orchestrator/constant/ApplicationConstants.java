@@ -29,4 +29,17 @@ public class ApplicationConstants {
   public final String SPARK_GC_JAVA_OPTIONS = "-XX:+UnlockExperimentalVMOptions -XX:+UseG1GC";
 
   public final int MAX_LOGS_SYNC_DELAY_HOURS = 3;
+
+  public final int SPARK_MIN_DOWNSCALE = 2;
+  public final int SPARK_MAX_DOWNSCALE = 50;
+  public final double SPARK_DOWNSCALE_PROPORTION = 0.25;
+  public final int SPARK_MIN_UPSCALE = 1;
+  public final int SPARK_MAX_UPSCALE = 200;
+  public final int SPARK_HISTORY_MONITOR_COUNT = 5;
+  public final String GET_SPARK_MASTER_JSON_RESPONSE_CACHE = "get-spark_master-json-response-cache";
+  public final UnaryOperator<String> SPARK_ASG_INJECTOR_NAME =
+      tenantName -> "spark-asg-" + tenantName;
+
+  public final UnaryOperator<String> SPARK_VM_INJECTOR_NAME =
+      tenantName -> "spark-vm-" + tenantName;
 }

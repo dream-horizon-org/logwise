@@ -16,6 +16,8 @@ public enum ServiceError implements RestError {
       "LogCentralOrchestrator:SPARK_MASTER_ERROR", "Spark Master Rest Error: %s", 500),
   SPARK_SUBMIT_ERROR(
       "LogCentralOrchestrator:SPARK_SUBMIT_ERROR", "Spark Submit Rest Error: %s", 500),
+  IGNORE_SPARK_SCALING(
+      "LogCentralOrchestrator:IGNORE_SPARK_SCALING", "Ignoring spark scaling: %s", 500),
   QUERY_EXECUTION_FAILED(
       "LogCentralOrchestrator:QUERY_EXECUTION_FAILED", "Failed to execute query: %s", 500),
   INVALID_REQUEST_ERROR("LogCentralOrchestrator:INVALID_REQUEST_ERROR", "Invalid Request: %s", 400);

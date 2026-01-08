@@ -3,7 +3,10 @@ package com.logwise.spark.stream.impl;
 import com.google.inject.Inject;
 import com.logwise.spark.constants.Constants;
 import com.logwise.spark.dto.entity.KafkaReadStreamOptions;
+import com.logwise.spark.dto.entity.SparkStageHistory;
 import com.logwise.spark.services.KafkaService;
+import com.logwise.spark.services.SparkMasterService;
+import com.logwise.spark.services.SparkScaleService;
 import com.logwise.spark.stream.Stream;
 import com.logwise.spark.utils.SparkUtils;
 import com.typesafe.config.Config;
@@ -20,6 +23,8 @@ import org.apache.spark.sql.streaming.StreamingQuery;
 public abstract class AbstractApplicationLogsStream implements Stream {
   protected final Config config;
   private final KafkaService kafkaService;
+  private final SparkMasterService sparkMasterService;
+  private final SparkScaleService sparkScaleService;
 
   @Override
   public List<StreamingQuery> startStreams(SparkSession sparkSession) {
@@ -52,7 +57,41 @@ public abstract class AbstractApplicationLogsStream implements Stream {
   }
 
   private Long getMaxOffsetPerTrigger() {
-    return config.getLong("spark.offsetPerTrigger.default");
+    try {
+      Integer coreUsed = sparkMasterService.getCoresUsed();
+      setCurrentSparkStageHistory(coreUsed);
+      return getMaxOffset(coreUsed);
+    } catch (Exception e) {
+      log.error("Error in fetching max offset, so selecting default maxOffset: ", e);
+      return config.getLong("spark.offsetPerTrigger.default");
+    }
+  }
+
+  private Long getMaxOffset(Integer availableCore) {
+    long maxOffset = config.getLong("spark.offsetPerTrigger.default");
+
+    if (availableCore != null) {
+      try {
+        long rawMaxOffset =
+            availableCore * config.getLong("spark.eventProcessPerCore.count")
+                + (config.getLong("spark.offsetPerTrigger.buffer"));
+        maxOffset =
+            Math.min(
+                config.getLong("spark.offsetPerTrigger.max"),
+                Math.max(config.getLong("spark.offsetPerTrigger.min"), rawMaxOffset));
+      } catch (Exception e) {
+        log.error("Error in fetching max offset: ", e);
+      }
+    }
+    log.info("Max Offset: " + maxOffset);
+    return maxOffset;
+  }
+
+  private void setCurrentSparkStageHistory(Integer coreUsed) {
+    SparkStageHistory sparkStageHistory = new SparkStageHistory();
+    sparkStageHistory.setCoresUsed(coreUsed);
+    sparkStageHistory.setTenant(config.getString("tenant.name"));
+    sparkScaleService.setCurrentSparkStageHistory(sparkStageHistory);
   }
 
   protected abstract StreamingQuery getVectorApplicationLogsStreamQuery(

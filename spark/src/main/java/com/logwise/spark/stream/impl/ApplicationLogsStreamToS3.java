@@ -7,6 +7,8 @@ import com.logwise.spark.constants.Constants;
 import com.logwise.spark.protobuf.VectorLogs;
 import com.logwise.spark.schema.Schema;
 import com.logwise.spark.services.KafkaService;
+import com.logwise.spark.services.SparkMasterService;
+import com.logwise.spark.services.SparkScaleService;
 import com.logwise.spark.utils.ApplicationUtils;
 import com.logwise.spark.utils.ConfigUtils;
 import com.typesafe.config.Config;
@@ -27,8 +29,12 @@ import org.apache.spark.sql.streaming.Trigger;
 public class ApplicationLogsStreamToS3 extends AbstractApplicationLogsStream {
 
   @Inject
-  public ApplicationLogsStreamToS3(Config config, KafkaService kafkaService) {
-    super(config, kafkaService);
+  public ApplicationLogsStreamToS3(
+      Config config,
+      KafkaService kafkaService,
+      SparkMasterService sparkMasterService,
+      SparkScaleService sparkScaleService) {
+    super(config, kafkaService, sparkMasterService, sparkScaleService);
   }
 
   private StreamingQuery pushApplicationLogsToS3(Dataset<Row> flattenedDataFrame) {
