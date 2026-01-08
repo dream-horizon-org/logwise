@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logwise-config
+  namespace: {{ include "logwise.namespace" . }}
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "{{ .Values.kafka.bootstrapServers }}"
+  AWS_REGION: "{{ .Values.aws.region }}"
+  S3_BUCKET_NAME: "{{ .Values.aws.s3BucketName }}"
+  S3_ATHENA_OUTPUT: "{{ .Values.aws.s3AthenaOutput }}"
+  ATHENA_WORKGROUP: "{{ .Values.aws.athenaWorkgroup }}"
+  ATHENA_CATALOG: "{{ .Values.aws.athenaCatalog }}"
+  ATHENA_DATABASE: "{{ .Values.aws.athenaDatabase }}"
+  ORCH_PORT: "8080"
+  GRAFANA_PORT: "3000"
+
+

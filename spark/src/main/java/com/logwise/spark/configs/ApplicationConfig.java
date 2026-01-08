@@ -49,8 +49,11 @@ public class ApplicationConfig {
       Config appConfig = ConfigFactory.empty();
 
       for (String conf : configargs) {
-        Config argsConfig = ConfigFactory.parseString(conf);
+        log.info("Loading config from: {}", conf);
+        Config argsConfig = parseConfigString(conf);
+        log.info("Args config: {}", argsConfig);
         appConfig = appConfig.withFallback(argsConfig);
+        log.info("Config loaded: {}", argsConfig);
       }
 
       Config configFromDefaultConfFile =
@@ -63,6 +66,33 @@ public class ApplicationConfig {
       appConfig = appConfig.resolve();
 
       return appConfig;
+    }
+
+    /**
+     * Parses a configuration string, handling both HOCON format (key: value) and
+     * properties format (key=value). For properties format, converts to HOCON format
+     * with proper quoting of values to handle special characters like colons.
+     */
+    private Config parseConfigString(String conf) {
+      // Check if it's properties format (contains =)
+      if (conf.contains("=")) {
+        // Properties format: key=value
+        // Convert to HOCON format: key="value" (quoted to handle special characters)
+        int equalsIndex = conf.indexOf('=');
+        if (equalsIndex > 0 && equalsIndex < conf.length() - 1) {
+          String key = conf.substring(0, equalsIndex).trim();
+          String value = conf.substring(equalsIndex + 1).trim();
+          // Remove existing quotes if present to avoid double-quoting
+          if (value.startsWith("\"") && value.endsWith("\"")) {
+            value = value.substring(1, value.length() - 1);
+          }
+          // Quote the value to handle special characters like colons
+          String hoconFormat = String.format("%s=\"%s\"", key, value);
+          return ConfigFactory.parseString(hoconFormat);
+        }
+      }
+      // Default: assume HOCON format
+      return ConfigFactory.parseString(conf);
     }
   }
 }

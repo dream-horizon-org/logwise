@@ -53,7 +53,7 @@ public class SparkService {
             format("kafka.maxRatePerPartition=%s", sparkConf.getKafkaMaxRatePerPartition()),
             format("kafka.startingOffsets=%s", sparkConf.getKafkaStartingOffsets()),
             format("kafka.subscribePattern=\"%s\"", sparkConf.getSubscribePattern()),
-            format("spark.master.host=\"http://%s:8080\"", sparkConf.getSparkMasterHost()),
+            format("spark.master.host=http://%s:8080", sparkConf.getSparkMasterHost()),
             format("s3.bucket=%s", bucketName));
 
     String extraJavaOptions =
@@ -104,11 +104,18 @@ public class SparkService {
       awsRegion = "us-east-1";
     }
 
+    // Validate credentials are not placeholders
     if (awsAccessKeyId != null && !awsAccessKeyId.isEmpty()) {
+      if (awsAccessKeyId.contains("your-access-key") || awsAccessKeyId.contains("YOUR_ACCESS_KEY")) {
+        log.warn("AWS_ACCESS_KEY_ID appears to be a placeholder value. This may cause authentication failures.");
+      }
       sparkProperties.put("spark.driverEnv.AWS_ACCESS_KEY_ID", awsAccessKeyId);
       sparkProperties.put("spark.executorEnv.AWS_ACCESS_KEY_ID", awsAccessKeyId);
     }
     if (awsSecretAccessKey != null && !awsSecretAccessKey.isEmpty()) {
+      if (awsSecretAccessKey.contains("your-secret-key") || awsSecretAccessKey.contains("YOUR_SECRET_KEY")) {
+        log.warn("AWS_SECRET_ACCESS_KEY appears to be a placeholder value. This may cause authentication failures.");
+      }
       sparkProperties.put("spark.driverEnv.AWS_SECRET_ACCESS_KEY", awsSecretAccessKey);
       sparkProperties.put("spark.executorEnv.AWS_SECRET_ACCESS_KEY", awsSecretAccessKey);
     }

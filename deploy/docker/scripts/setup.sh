@@ -130,7 +130,8 @@ check_port_available() {
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+# Change to docker directory (parent of scripts)
+cd "$SCRIPT_DIR/.."
 
 # Track if services have been started (so we know when to cleanup on failure)
 SERVICES_STARTED=false
@@ -168,16 +169,16 @@ main() {
   print_step "Step 1: Checking Prerequisites"
   print_substep "Verifying required tools..."
   
-  if [ ! -f "./start.sh" ]; then
-    print_error "start.sh not found. Are you in the deploy directory?"
+  if [ ! -f "./scripts/start.sh" ]; then
+    print_error "start.sh not found. Are you in the docker directory?"
     exit 1
   fi
   
   # Run bootstrap if not already done
   if ! command -v docker >/dev/null 2>&1 || ! command -v make >/dev/null 2>&1; then
     print_info "Installing prerequisites (this may take a few minutes)..."
-    chmod +x ./start.sh || true
-    ./start.sh
+    chmod +x ./scripts/start.sh || true
+    ./scripts/start.sh
     print_success "Prerequisites installed"
   else
     print_success "Prerequisites already installed (Docker, Make found)"
@@ -189,13 +190,13 @@ main() {
   print_step "Step 2: Environment Configuration"
   
   if [ ! -f ".env" ]; then
-    if [ ! -f ".env.example" ]; then
-      print_error ".env.example not found. Cannot create .env file."
+    if [ ! -f "../shared/templates/env.template" ]; then
+      print_error "env.template not found. Cannot create .env file."
       exit 1
     fi
     
     print_substep "Creating .env file from template..."
-    cp .env.example .env
+    cp ../shared/templates/env.template .env
     print_success ".env file created"
     
     echo ""
@@ -324,8 +325,8 @@ main() {
   print_step "Step 3.75: Preparing Scripts"
   print_substep "Ensuring required scripts are executable..."
   
-  if [ -f "./cron/entrypoint.sh" ]; then
-    chmod +x ./cron/entrypoint.sh || true
+  if [ -f "../cron/entrypoint.sh" ]; then
+    chmod +x ../cron/entrypoint.sh || true
     print_success "entrypoint.sh is executable"
   else
     print_warn "entrypoint.sh not found (this is OK if not using scheduler service)"

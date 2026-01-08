@@ -1,0 +1,60 @@
+# Production resource limits and requests
+# This patch increases resource allocations for production workloads
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator
+  namespace: logwise
+spec:
+  replicas: 2  # High availability
+  template:
+    spec:
+      containers:
+      - name: orchestrator
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "1Gi"
+          limits:
+            cpu: "2000m"
+            memory: "2Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-logs
+  namespace: logwise
+spec:
+  replicas: 2  # High availability
+  template:
+    spec:
+      containers:
+      - name: vector
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-master
+  namespace: logwise
+spec:
+  template:
+    spec:
+      containers:
+      - name: spark-master
+        resources:
+          requests:
+            cpu: "2000m"
+            memory: "4Gi"
+          limits:
+            cpu: "4000m"
+            memory: "8Gi"
+
+

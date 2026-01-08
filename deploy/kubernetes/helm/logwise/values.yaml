@@ -1,0 +1,40 @@
+global:
+  namespace: logwise
+
+aws:
+  region: us-east-1
+  accessKeyId: ""
+  secretAccessKey: ""
+  sessionToken: ""
+  s3BucketName: ""
+  s3AthenaOutput: ""
+  athenaWorkgroup: primary
+  athenaCatalog: AwsDataCatalog
+  athenaDatabase: logwise
+
+kafka:
+  # For external Kafka (e.g. MSK/Confluent), set this to the external bootstrap servers.
+  # For in-cluster Kafka (default), leave as-is.
+  bootstrapServers: "kafka-bootstrap.logwise.svc.cluster.local:9092"
+
+mysql:
+  orchestrator:
+    username: logwise_orch
+    password: change-me
+  grafana:
+    username: grafana
+    password: change-me
+
+ingress:
+  enabled: false
+  className: nginx
+  orchestrator:
+    host: orchestrator.example.com
+  grafana:
+    host: grafana.example.com
+  sparkMaster:
+    host: spark-master.example.com
+  sparkWorker:
+    host: spark-worker.example.com
+
+

@@ -14,12 +14,19 @@ public class MainApplication {
   private static Config appConfig;
 
   public static void main(String[] args) {
-    log.info("\n<<<************************[Starting Application]************************>>>");
-    init(args);
-    SparkSession sparkSession = CurrentSparkSession.getInstance().getSparkSession();
-    log.info("Application Started: {}", sparkSession.sparkContext().applicationId());
-    String jobName = appConfig.getString("app.job.name");
-    JobFactory.getSparkJob(jobName, sparkSession).start().join();
+    try {
+      log.info("\n<<<************************[Starting Application]************************>>>");
+      init(args);
+      SparkSession sparkSession = CurrentSparkSession.getInstance().getSparkSession();
+      log.info("Application Started: {}", sparkSession.sparkContext().applicationId());
+      String jobName = appConfig.getString("app.job.name");
+      log.info("Starting job: {}", jobName);
+      JobFactory.getSparkJob(jobName, sparkSession).start().join();
+      log.info("Job completed successfully");
+    } catch (Exception e) {
+      log.error("Fatal error in MainApplication", e);
+      System.exit(1);
+    }
   }
 
   private static void init(String[] args) {
