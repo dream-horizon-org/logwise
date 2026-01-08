@@ -1,6 +1,7 @@
 package com.logwise.orchestrator.config;
 
 import com.logwise.orchestrator.constant.ApplicationConstants;
+import com.logwise.orchestrator.enums.KafkaType;
 import com.typesafe.config.Optional;
 import java.util.List;
 import javax.validation.Valid;
@@ -61,13 +62,50 @@ public class ApplicationConfig {
 
   @Data
   public static class KafkaConfig {
-    @NonFinal @NotNull String kafkaBrokersHost;
+    // Feature flag for new partition scaling system
+    @NonFinal @Optional Boolean enablePartitionScaling = true;
 
+    // Kafka type selection
+    @NonFinal @Optional KafkaType kafkaType = KafkaType.EC2;
+
+    // Custom setter to handle string-to-enum conversion from config
+    public void setKafkaType(Object kafkaType) {
+      if (kafkaType == null) {
+        this.kafkaType = KafkaType.EC2;
+      } else if (kafkaType instanceof KafkaType) {
+        this.kafkaType = (KafkaType) kafkaType;
+      } else {
+        this.kafkaType = KafkaType.fromValue(kafkaType.toString());
+      }
+    }
+
+    // Common connection settings
+    @NonFinal @NotNull String kafkaBrokersHost;
+    @NonFinal @Optional Integer kafkaBrokerPort = ApplicationConstants.KAFKA_BROKER_PORT;
+
+    // Scaling thresholds
+    @NonFinal @Optional Long maxLagPerPartition = 50_000L;
+    @NonFinal @Optional Integer defaultPartitions = 3;
+
+    // MSK-specific fields
+    @NonFinal @Optional String mskClusterArn;
+    @NonFinal @Optional String mskRegion;
+
+    // Confluent-specific fields
+    @NonFinal @Optional String confluentApiKey;
+    @NonFinal @Optional String confluentApiSecret;
+    @NonFinal @Optional String confluentRestEndpoint;
+
+    // SSL/TLS configuration (common)
+    @NonFinal @Optional String sslTruststoreLocation;
+    @NonFinal @Optional String sslTruststorePassword;
+    @NonFinal @Optional String sslKeystoreLocation;
+    @NonFinal @Optional String sslKeystorePassword;
+
+    // Legacy (deprecated, for migration)
     @NonFinal @Optional
     Integer maxProducerRatePerPartition =
         ApplicationConstants.KAFKA_MAX_PRODUCER_RATE_PER_PARTITION;
-
-    @NonFinal @Optional Integer kafkaBrokerPort = ApplicationConstants.KAFKA_BROKER_PORT;
   }
 
   @Data

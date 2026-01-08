@@ -520,8 +520,17 @@ public class ServiceTest extends BaseTest {
     try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
             Mockito.mockStatic(ApplicationConfigUtil.class);
         MockedStatic<ObjectStoreFactory> mockedFactory =
-            Mockito.mockStatic(ObjectStoreFactory.class);
-        MockedStatic<ApplicationUtils> mockedUtils = Mockito.mockStatic(ApplicationUtils.class)) {
+            Mockito.mockStatic(ObjectStoreFactory.class)) {
+
+      // Ensure all required configs are mocked - set up in proper order
+      // Reset any previous mock behavior
+      reset(mockTenantConfig, mockSparkConfig, mockDelayMetricsConfig, mockAppDelayMetricsConfig);
+
+      when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+      when(mockSparkConfig.getLogsDir()).thenReturn("logs");
+      when(mockTenantConfig.getDelayMetrics()).thenReturn(mockDelayMetricsConfig);
+      when(mockDelayMetricsConfig.getApp()).thenReturn(mockAppDelayMetricsConfig);
+      when(mockAppDelayMetricsConfig.getSampleServiceName()).thenReturn("test-service");
 
       mockedConfigUtil
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
@@ -531,13 +540,9 @@ public class ServiceTest extends BaseTest {
           .when(() -> ObjectStoreFactory.getClient(tenant))
           .thenReturn(mockObjectStoreClient);
 
+      // Mock listObjects to return empty list for any prefix
       Single<List<String>> listObjectsSingle = Single.just(emptyList);
       when(mockObjectStoreClient.listObjects(anyString())).thenReturn(listObjectsSingle);
-
-      Maybe<Integer> maybeDelay = Maybe.just(ApplicationConstants.MAX_LOGS_SYNC_DELAY_HOURS * 60);
-      mockedUtils
-          .when(() -> ApplicationUtils.executeBlockingCallable(any()))
-          .thenReturn(maybeDelay);
 
       Single<LogSyncDelayResponse> result = metricsService.computeLogSyncDelay(tenant);
       LogSyncDelayResponse response = result.blockingGet();
