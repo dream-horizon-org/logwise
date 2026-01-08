@@ -21,12 +21,27 @@ The recommended way to deploy LogWise is using the unified `setup-k8s.sh` script
 
 For local development and testing:
 
+**Step 1: Create environment and sync configuration**
+
+```bash
+# From repository root
+cd deploy
+./scripts/create-env.sh --kubernetes
+
+# Edit deploy/kubernetes/.env with your configuration values
+
+# Sync .env to Kubernetes ConfigMaps/Secrets
+./kubernetes/scripts/sync-config.sh kubernetes/.env
+```
+
+**Step 2: Deploy to Kubernetes**
+
 ```bash
 cd deploy/kubernetes
 ./scripts/setup-k8s.sh local
 ```
 
-This single command will:
+This will:
 - ✅ Install required tools (if missing)
 - ✅ Create a kind cluster
 - ✅ Build all Docker images
@@ -42,6 +57,21 @@ This single command will:
 - Vector OTLP: http://localhost:30418
 
 ### Non-Production Environment
+
+**Step 1: Create environment and sync configuration**
+
+```bash
+# From repository root
+cd deploy
+./scripts/create-env.sh --kubernetes
+
+# Edit deploy/kubernetes/.env with your configuration values
+
+# Sync .env to Kubernetes ConfigMaps/Secrets
+./kubernetes/scripts/sync-config.sh kubernetes/.env
+```
+
+**Step 2: Deploy to Kubernetes**
 
 ```bash
 cd deploy/kubernetes
@@ -208,9 +238,14 @@ kubectl describe pod -n logwise <pod-name>
 **Recommended approach:**
 ```bash
 # From repository root
-cd deploy/kubernetes
+# Step 1: Create environment and sync configuration
+cd deploy
+./scripts/create-env.sh --kubernetes
+# Edit deploy/kubernetes/.env with your configuration values
+./kubernetes/scripts/sync-config.sh kubernetes/.env
 
-# One-command setup (handles everything)
+# Step 2: Deploy to Kubernetes
+cd kubernetes
 ./scripts/setup-k8s.sh local
 
 # Access services
@@ -219,10 +254,17 @@ kubectl port-forward -n logwise svc/orchestrator 8080:8080
 
 **Alternative (manual steps):**
 ```bash
-# 1. Build images
+# 1. Create environment and sync configuration
+cd deploy
+./scripts/create-env.sh --kubernetes
+# Edit deploy/kubernetes/.env with your configuration values
+./kubernetes/scripts/sync-config.sh kubernetes/.env
+
+# 2. Build images
+cd kubernetes
 ENV=local CLUSTER_TYPE=kind TAG=latest ./scripts/build-and-push.sh
 
-# 2. Deploy
+# 3. Deploy
 ENV=local ./scripts/deploy.sh
 ```
 
@@ -231,9 +273,14 @@ ENV=local ./scripts/deploy.sh
 **Recommended approach:**
 ```bash
 # From repository root
-cd deploy/kubernetes
+# Step 1: Create environment and sync configuration
+cd deploy
+./scripts/create-env.sh --kubernetes
+# Edit deploy/kubernetes/.env with your configuration values
+./kubernetes/scripts/sync-config.sh kubernetes/.env
 
-# One-command deployment
+# Step 2: Deploy to Kubernetes
+cd kubernetes
 ENV=nonprod \
   REGISTRY=ghcr.io/myorg \
   TAG=v1.0.0 \
@@ -246,13 +293,20 @@ kubectl get ingress -n logwise
 
 **Alternative (manual steps):**
 ```bash
-# 1. Build and push images
+# 1. Create environment and sync configuration
+cd deploy
+./scripts/create-env.sh --kubernetes
+# Edit deploy/kubernetes/.env with your configuration values
+./kubernetes/scripts/sync-config.sh kubernetes/.env
+
+# 2. Build and push images
+cd kubernetes
 ENV=nonprod \
   REGISTRY=ghcr.io/myorg \
   TAG=v1.0.0 \
   ./scripts/build-and-push.sh
 
-# 2. Deploy
+# 3. Deploy
 ENV=nonprod ./scripts/deploy.sh
 ```
 

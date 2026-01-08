@@ -45,3 +45,4 @@ echo "Verify with:"
 echo "  kubectl get pods -n logwise"
 echo "  kubectl get deployments -n logwise"
 
+

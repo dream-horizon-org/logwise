@@ -91,3 +91,4 @@ echo ""
 echo "Check pod status with:"
 echo "  kubectl get pods -n logwise -l app=vector-logs"
 
+

@@ -43,3 +43,4 @@ spec:
                   - vector-logs
               topologyKey: kubernetes.io/hostname
 
+

@@ -7,3 +7,4 @@ data:
   KAFKA_BROKERS: "kafka-bootstrap"
   KAFKA_BROKERS_HOST: "kafka-bootstrap"
 
+
