@@ -52,8 +52,8 @@ data:
     : \"asadsadf\"\n          },\n          \"format\": 1,\n          \"rawSQL\":\
     \ \"-- Dashboard: ${__dashboard.title}\\n-- User Email: ${__user.email}\\nSELECT\
     \ ${columns:raw}\\nFROM \\\"${ATHENA_DATABASE}\\\".\\\"application-logs\\\"\\\
-    nWHERE \\n  time BETWEEN date_format(TIMESTAMP $__rawTimeFrom(), '''year=''yyyy''/month=''MM''/day=''dd''/hour=''HH''/minute=''mm''')\
-    \ AND date_format(TIMESTAMP $__rawTimeTo(), '''year=''yyyy''/month=''MM''/day=''dd''/hour=''HH''/minute=''mm''')\\\
+    nWHERE \\n  time BETWEEN date_format(TIMESTAMP $__rawTimeFrom(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i')\
+    \ AND date_format(TIMESTAMP $__rawTimeTo(), 'year=%Y/month=%m/day=%d/hour=%H/minute=%i')\\\
     n  AND service_name IN (${service_name:singlequote})\\n  AND (length('$text_search')\
     \ = 0 OR REGEXP_LIKE(message, REGEXP_REPLACE('$text_search', ',', '|')))\\n  AND\
     \ (length('$exclude_text') = 0 OR NOT REGEXP_LIKE(message, REGEXP_REPLACE('$exclude_text',\
