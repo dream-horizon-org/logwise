@@ -26,7 +26,7 @@ cp ../shared/templates/env.template .env
 make setup
 ```
 
-See [Docker Setup Guide](docs/docker-setup.md) for detailed instructions.
+For Docker Compose setup, see the Docker Compose configuration in `docker/` directory.
 
 ### Kubernetes (Production)
 
@@ -69,7 +69,7 @@ Best for:
 - Quick testing
 - Single-machine deployments
 
-See [Docker Setup Guide](docs/docker-setup.md).
+For Docker Compose setup, see the Docker Compose configuration in `docker/` directory.
 
 ### Kubernetes
 
@@ -100,21 +100,20 @@ cp ../shared/templates/env.template .env
 # Edit .env with your configuration
 ```
 
-**For Kubernetes**: Use the same file or create a separate one:
+**For Kubernetes**: Create a separate `.env` file (Docker and Kubernetes configurations are independent):
 ```bash
-# Option 1: Use Docker's .env (for local dev)
-./shared/scripts/sync-config.sh docker/.env
-
-# Option 2: Create separate Kubernetes .env
+# Create Kubernetes-specific .env file
 cp shared/templates/env.template kubernetes/.env
-# Edit kubernetes/.env, then sync:
-./shared/scripts/sync-config.sh kubernetes/.env
+# Edit kubernetes/.env with your configuration
 
-# Option 3: Use helper script
-./scripts/create-env.sh --all
+# Sync to Kubernetes manifests
+./kubernetes/scripts/sync-config.sh kubernetes/.env
+
+# Or use helper script
+./scripts/create-env.sh --kubernetes
 ```
 
-See [Environment Files Guide](docs/environment-files.md) for detailed instructions.
+See the Configuration section in [Kubernetes Setup Guide](docs/kubernetes-setup.md) for environment file configuration.
 
 Required variables:
 - `AWS_ACCESS_KEY_ID`
@@ -170,18 +169,15 @@ Validate configurations before deployment:
 
 ## Troubleshooting
 
-See [Troubleshooting Guide](docs/troubleshooting.md) for common issues and solutions.
+See the Troubleshooting section in [Kubernetes Setup Guide](docs/kubernetes-setup.md) for common issues and solutions.
 
 ## Production Checklist
 
-Before deploying to production, review the [Production Checklist](docs/production-checklist.md).
+Before deploying to production, review the Production Checklist section in [Kubernetes Setup Guide](docs/kubernetes-setup.md).
 
 ## Additional Documentation
 
-- [Docker Setup Guide](docs/docker-setup.md)
-- [Kubernetes Setup Guide](docs/kubernetes-setup.md)
-- [Production Checklist](docs/production-checklist.md)
-- [Troubleshooting Guide](docs/troubleshooting.md)
+- [Kubernetes Setup Guide](docs/kubernetes-setup.md) - Complete Kubernetes deployment guide with troubleshooting, production checklist, and configuration
 
 ## Support
 

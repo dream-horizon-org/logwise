@@ -32,6 +32,8 @@ spec:
         app: orch-mysql
     spec:
       volumes:
+        - name: data
+          emptyDir: {}
         - name: init-sql
           configMap:
             name: orch-mysql-init-sql
@@ -73,13 +75,5 @@ spec:
             limits:
               cpu: "500m"
               memory: "512Mi"
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 10Gi
 
 

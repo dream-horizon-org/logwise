@@ -143,7 +143,7 @@ main() {
     fi
     if [ "$create_k8s" = true ]; then
       echo "  1. Edit deploy/kubernetes/.env with your configuration"
-      echo "  2. Sync to Kubernetes: ./deploy/shared/scripts/sync-config.sh deploy/kubernetes/.env"
+      echo "  2. Sync to Kubernetes: ./deploy/kubernetes/scripts/sync-config.sh deploy/kubernetes/.env"
     fi
   else
     log_error "Failed to create some environment files"

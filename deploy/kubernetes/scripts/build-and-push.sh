@@ -44,11 +44,22 @@ img() {
   local image_name
   image_name="$(get_image_name "$service")"
   
-  # Handle local docker registry (no registry prefix)
-  if [ -n "$REGISTRY" ] && [ "$REGISTRY" != "local" ] && [ "$REGISTRY" != "docker" ]; then
-    echo "$REGISTRY/$image_name:$TAG"
-  else
+  # Handle special registry cases
+  if [ -z "$REGISTRY" ] || [ "$REGISTRY" = "local" ] || [ "$REGISTRY" = "docker" ]; then
+    # Local Docker - no registry prefix
     echo "$image_name:$TAG"
+  elif [ "$REGISTRY" = "dockerhub" ]; then
+    # Docker Hub requires username
+    if [ -z "${DOCKERHUB_USERNAME:-}" ]; then
+      log_error "DOCKERHUB_USERNAME must be set when using REGISTRY=dockerhub"
+      log_error "Example: DOCKERHUB_USERNAME=myuser REGISTRY=dockerhub ./build-and-push.sh"
+      echo ""  # Return empty string to indicate error
+      return 1
+    fi
+    echo "${DOCKERHUB_USERNAME}/${image_name}:${TAG}"
+  else
+    # Other registries (ECR, GHCR, etc.)
+    echo "$REGISTRY/$image_name:$TAG"
   fi
 }
 
@@ -100,6 +111,56 @@ push_image() {
     return 0
   fi
   
+  # Handle Docker Hub authentication
+  if [ "$REGISTRY" = "dockerhub" ]; then
+    log_info "Checking Docker Hub authentication..."
+    
+    # Check if already logged in to Docker Hub by checking config file
+    local docker_config="${HOME}/.docker/config.json"
+    local is_logged_in=false
+    
+    if [ -f "$docker_config" ]; then
+      # Check if Docker Hub (index.docker.io) auth exists in config
+      if grep -q "index.docker.io" "$docker_config" 2>/dev/null || \
+         grep -q '"https://index.docker.io/v1/"' "$docker_config" 2>/dev/null; then
+        is_logged_in=true
+      fi
+    fi
+    
+    # If not logged in, attempt login
+    if [ "$is_logged_in" = "false" ]; then
+      log_warn "Not logged into Docker Hub. Attempting login..."
+      if [ -z "${DOCKERHUB_USERNAME:-}" ] || [ -z "${DOCKERHUB_PASSWORD:-}" ]; then
+        log_error "DOCKERHUB_USERNAME and DOCKERHUB_PASSWORD must be set for Docker Hub"
+        log_error "Example: DOCKERHUB_USERNAME=myuser DOCKERHUB_PASSWORD=mypass REGISTRY=dockerhub ./build-and-push.sh"
+        log_error "Or login manually first: docker login"
+        return 1
+      fi
+      echo "$DOCKERHUB_PASSWORD" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin || {
+        log_error "Failed to login to Docker Hub"
+        log_error "Please check your credentials or login manually: docker login"
+        return 1
+      }
+      log_success "Successfully logged into Docker Hub"
+    else
+      log_info "Already authenticated with Docker Hub"
+    fi
+  fi
+  
+  # Handle ECR authentication
+  if [[ "$REGISTRY" =~ \.dkr\.ecr\. ]]; then
+    log_info "Authenticating with ECR..."
+    local region
+    region=$(echo "$REGISTRY" | sed -n 's/.*\.dkr\.ecr\.\([^.]*\)\.amazonaws\.com.*/\1/p')
+    if [ -n "$region" ]; then
+      aws ecr get-login-password --region "$region" | \
+        docker login --username AWS --password-stdin "$REGISTRY" || {
+        log_error "Failed to login to ECR"
+        return 1
+      }
+    fi
+  fi
+  
   log_info "Pushing image: $image_tag"
   
   if docker push "$image_tag"; then
@@ -148,6 +209,12 @@ main() {
     IFS=':' read -r service dockerfile context <<< "$image_spec"
     local image_tag
     image_tag="$(img "$service")"
+    
+    # Check if img() returned an error (empty string)
+    if [ -z "$image_tag" ]; then
+      log_error "Failed to determine image tag for $service"
+      return 1
+    fi
     
     if [ "$PARALLEL_BUILD" = "true" ]; then
       log_info "Starting parallel build for $service"

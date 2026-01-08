@@ -15,5 +15,23 @@ patches:
   - path: resource-limits.yaml
   # Anti-affinity for high availability
   - path: anti-affinity.yaml
+  # Image pull policy and secrets for remote registries
+  - path: image-pull-policy-patch.yaml
+
+# Image replacement - set via REGISTRY and TAG env vars during deployment
+# Example: REGISTRY=ghcr.io/your-org TAG=1.0.0 kustomize build . | kubectl apply -f -
+images:
+  - name: logwise-vector
+    newName: logwise-vector  # Will be replaced by REGISTRY if set
+    newTag: latest           # Will be replaced by TAG if set
+  - name: logwise-orchestrator
+    newName: logwise-orchestrator  # Will be replaced by REGISTRY if set
+    newTag: latest                 # Will be replaced by TAG if set
+  - name: logwise-spark
+    newName: logwise-spark  # Will be replaced by REGISTRY if set
+    newTag: latest          # Will be replaced by TAG if set
+  - name: logwise-healthcheck-dummy
+    newName: logwise-healthcheck-dummy  # Will be replaced by REGISTRY if set
+    newTag: latest                      # Will be replaced by TAG if set
 
 

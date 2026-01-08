@@ -1,0 +1,135 @@
+# Image pull policy and secrets patch for all services
+# This patch ensures all containers use Docker Hub authentication and Always pull policy
+# to avoid rate limiting issues when pulling from remote registries
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-logs
+  namespace: logwise
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: vector
+        imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator
+  namespace: logwise
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: orchestrator
+        imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-master
+  namespace: logwise
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: spark-master
+        imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-worker
+  namespace: logwise
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: spark-worker
+        imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: healthcheck-dummy
+  namespace: logwise
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: healthcheck-dummy
+        imagePullPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: logwise
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: kafka
+        imagePullPolicy: Always
+        image: confluentinc/cp-kafka:7.6.0
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: grafana-mysql
+  namespace: logwise
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: mysql
+        imagePullPolicy: Always
+        image: mysql:8.0
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: orch-mysql
+  namespace: logwise
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
+      containers:
+      - name: mysql
+        imagePullPolicy: Always
+        image: mysql:8.0
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: orchestrator-sync
+  namespace: logwise
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+          - name: dockerhub-secret
+          containers:
+          - name: curl
+            imagePullPolicy: Always
+            image: curlimages/curl:8.8.0
