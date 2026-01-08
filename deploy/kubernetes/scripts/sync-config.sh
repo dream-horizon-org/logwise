@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Sync configuration between Docker and Kubernetes deployments
+# Sync Kubernetes configuration from .env file to ConfigMaps and Secrets
+# This script is Kubernetes-specific and should only be used for Kubernetes deployments
 
 set -euo pipefail
 
 # Source common functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=common.sh
-source "$SCRIPT_DIR/common.sh"
+# shellcheck source=../../shared/scripts/common.sh
+source "$SCRIPT_DIR/../../shared/scripts/common.sh"
 
 # Get repository root
 REPO_ROOT="$(get_repo_root)"
@@ -130,10 +131,19 @@ EOF
   log_success "Generated Secrets at $output_file"
 }
 
-# Sync configuration
+# Sync configuration from Kubernetes .env file to Kubernetes manifests
 sync_config() {
-  local env_file="${1:-$REPO_ROOT/deploy/docker/.env}"
+  local env_file="${1:-}"
   local k8s_config_dir="${2:-$REPO_ROOT/deploy/kubernetes/base}"
+  
+  # Require explicit env file path
+  if [ -z "$env_file" ]; then
+    log_error "Environment file path is required"
+    log_info "Usage: $0 <path-to-kubernetes-.env-file> [k8s-config-dir]"
+    log_info "Example: $0 deploy/kubernetes/.env"
+    log_info "Create it from deploy/shared/templates/env.template"
+    return 1
+  fi
   
   if [ ! -f "$env_file" ]; then
     log_error "Environment file not found: $env_file"
@@ -141,7 +151,7 @@ sync_config() {
     return 1
   fi
   
-  log_info "Syncing configuration from $env_file to Kubernetes manifests"
+  log_info "Syncing Kubernetes configuration from $env_file to Kubernetes manifests"
   
   # Generate ConfigMap
   generate_k8s_configmap "$env_file" "$k8s_config_dir/configmap-logwise-config.yaml"

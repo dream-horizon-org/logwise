@@ -127,6 +127,13 @@ spec:
                 secretKeyRef:
                   name: aws-credentials
                   key: AWS_SECRET_ACCESS_KEY
+            # Optional session token for temporary STS credentials
+            - name: AWS_SESSION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SESSION_TOKEN
+                  optional: true
             - name: ATHENA_WORKGROUP
               valueFrom:
                 configMapKeyRef:
