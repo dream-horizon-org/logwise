@@ -153,6 +153,9 @@ RUN echo "Setting up directories and permissions..." && \
     mkdir -p ${SPARK_HOME}/conf && \
     echo "spark.worker.memory 2048m" > ${SPARK_HOME}/conf/spark-defaults.conf && \
     echo "spark.worker.cores 2" >> ${SPARK_HOME}/conf/spark-defaults.conf && \
+    echo "spark.worker.cleanup.enabled true" >> ${SPARK_HOME}/conf/spark-defaults.conf && \
+    echo "spark.worker.cleanup.interval 3600" >> ${SPARK_HOME}/conf/spark-defaults.conf && \
+    echo "spark.worker.cleanup.appDataTtl 3600" >> ${SPARK_HOME}/conf/spark-defaults.conf && \
     chown -R spark:spark ${SPARK_HOME}/conf && \
     # Create app directory for JAR files
     mkdir -p /opt/app && \
