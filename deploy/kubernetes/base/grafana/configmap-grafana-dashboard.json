@@ -29,15 +29,7 @@ data:
     \         \"matcher\": {\n              \"id\": \"byName\",\n              \"\
     options\": \"message 1\"\n            },\n            \"properties\": [\n    \
     \          {\n                \"id\": \"custom.width\",\n                \"value\"\
-    : 901\n              }\n            ]\n          },\n          {\n           \
-    \ \"matcher\": {\n              \"id\": \"byName\",\n              \"options\"\
-    : \"HOSTNAME\"\n            },\n            \"properties\": [\n              {\n\
-    \                \"id\": \"custom.width\",\n                \"value\": 248\n \
-    \             }\n            ]\n          },\n          {\n            \"matcher\"\
-    : {\n              \"id\": \"byName\",\n              \"options\": \"hostname\"\
-    \n            },\n            \"properties\": [\n              {\n           \
-    \     \"id\": \"custom.width\",\n                \"value\": 172\n            \
-    \  }\n            ]\n          }\n        ]\n      },\n      \"gridPos\": {\n\
+    : 901\n              }\n            ]\n          }\n        ]\n      },\n      \"gridPos\": {\n\
     \        \"h\": 23,\n        \"w\": 24,\n        \"x\": 0,\n        \"y\": 0\n\
     \      },\n      \"id\": 2,\n      \"options\": {\n        \"cellHeight\": \"\
     sm\",\n        \"footer\": {\n          \"countRows\": false,\n          \"enablePagination\"\
@@ -58,8 +50,7 @@ data:
     \ = 0 OR REGEXP_LIKE(message, REGEXP_REPLACE('$text_search', ',', '|')))\\n  AND\
     \ (length('$exclude_text') = 0 OR NOT REGEXP_LIKE(message, REGEXP_REPLACE('$exclude_text',\
     \ ',', '|')))\\n  AND (length('$regex_search') = 0 OR REGEXP_LIKE(message, '$regex_search'))\\\
-    n  AND (length('$instanceIds') = 0 OR hostname IN (SELECT * FROM UNNEST(split('$instanceIds',\
-    \ ',')) AS t(value)))\\nORDER BY \\\"timestamp\\\" ${sortby:raw}\\nLIMIT $limit\"\
+    nORDER BY \\\"timestamp\\\" ${sortby:raw}\\nLIMIT $limit\"\
     ,\n          \"refId\": \"A\"\n        }\n      ],\n      \"title\": \"log-search\"\
     ,\n      \"transformations\": [\n        {\n          \"id\": \"extractFields\"\
     ,\n          \"options\": {\n            \"format\": \"json\",\n            \"\
@@ -124,13 +115,6 @@ data:
     : true,\n            \"text\": \"\",\n            \"value\": \"\"\n          }\n\
     \        ],\n        \"query\": \"\",\n        \"skipUrlSync\": false,\n     \
     \   \"type\": \"textbox\"\n      },\n      {\n        \"current\": {\n       \
-    \   \"selected\": true,\n          \"text\": \"\",\n          \"value\": \"\"\n\
-    \        },\n        \"description\": \"Comma separated aws instanceIds\",\n \
-    \       \"hide\": 0,\n        \"label\": \"Instance Ids\",\n        \"name\":\
-    \ \"instanceIds\",\n        \"options\": [\n          {\n            \"selected\"\
-    : true,\n            \"text\": \"\",\n            \"value\": \"\"\n          }\n\
-    \        ],\n        \"query\": \"\",\n        \"skipUrlSync\": false,\n     \
-    \   \"type\": \"textbox\"\n      },\n      {\n        \"current\": {\n       \
     \   \"selected\": true,\n          \"text\": [\n            \"message\"\n    \
     \      ],\n          \"value\": [\n            \"message\"\n          ]\n    \
     \    },\n        \"description\": \"Columns To Display In Search Results\",\n\
@@ -139,11 +123,9 @@ data:
     : [\n          {\n            \"selected\": false,\n            \"text\": \"service_name\"\
     ,\n            \"value\": \"service_name\"\n          },\n          {\n      \
     \      \"selected\": false,\n            \"text\": \"timestamp\",\n          \
-    \  \"value\": \"timestamp\"\n          },\n          {\n            \"selected\"\
-    : false,\n            \"text\": \"hostname\",\n            \"value\": \"hostname\"\
-    \n          },\n          {\n            \"selected\": true,\n            \"text\"\
+    \  \"value\": \"timestamp\"\n          },\n          {\n            \"selected\": true,\n            \"text\"\
     : \"message\",\n            \"value\": \"message\"\n          }\n        ],\n\
-    \        \"query\": \"service_name,timestamp,hostname,message\",\n        \"queryValue\"\
+    \        \"query\": \"service_name,timestamp,message\",\n        \"queryValue\"\
     : \"\",\n        \"skipUrlSync\": false,\n        \"type\": \"custom\"\n     \
     \ },\n      {\n        \"current\": {\n          \"selected\": true,\n       \
     \   \"text\": \"\",\n          \"value\": \"\"\n        },\n        \"description\"\
