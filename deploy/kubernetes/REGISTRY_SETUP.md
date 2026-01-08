@@ -132,3 +132,4 @@ cd deploy/kubernetes
 ENV="$ENV" REGISTRY="$REGISTRY" TAG="$TAG" ./scripts/setup-k8s.sh "$ENV"
 ```
 
+

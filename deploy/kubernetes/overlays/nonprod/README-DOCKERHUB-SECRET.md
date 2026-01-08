@@ -57,3 +57,4 @@ kubectl get secret dockerhub-secret -n logwise
 
 The deployments are already configured to use this secret. Once created, the pods should automatically retry pulling images with authentication, avoiding rate limits.
 
+

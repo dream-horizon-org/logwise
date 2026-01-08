@@ -106,3 +106,4 @@ jobs:
           kubectl rollout status deployment/orchestrator -n logwise --timeout=10m
           kubectl get pods -n logwise
 
+

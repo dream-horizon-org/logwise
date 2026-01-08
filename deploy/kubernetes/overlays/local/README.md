@@ -43,3 +43,4 @@ If pods remain pending:
 2. Consider increasing Docker Desktop memory allocation
 3. Some pods (like otel-collector) are optional for local development
 
+
