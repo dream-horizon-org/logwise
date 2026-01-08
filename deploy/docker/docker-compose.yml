@@ -167,7 +167,7 @@ services:
       vector:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "bash", "-lc", "curl -fsS http://localhost:8080/health | grep 'UP' >/dev/null"]
+      test: ["CMD", "bash", "-lc", "curl -fsS http://localhost:8080/healthcheck | grep 'UP' >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -220,8 +220,9 @@ services:
       - SPARK_MODE=worker
       - SPARK_WORKER_MEMORY=2g
       - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_OPTS=-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true -Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=3600 -Dspark.worker.cleanup.appDataTtl=3600
     command: ["bash", "-lc", 
-      "mkdir -p /opt/spark/logs && SPARK_WORKER_OPTS='-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true' /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8081 --memory 2048m --cores 2"]
+      "mkdir -p /opt/spark/logs && /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8081 --memory 2048m --cores 2"]
     networks:
       - lc_net
     volumes:
@@ -249,8 +250,9 @@ services:
       - SPARK_MODE=worker
       - SPARK_WORKER_MEMORY=2g
       - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_OPTS=-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true -Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=3600 -Dspark.worker.cleanup.appDataTtl=3600
     command: ["bash", "-lc",
-              "mkdir -p /opt/spark/logs && SPARK_WORKER_WEBUI_PORT=8082 && SPARK_WORKER_OPTS='-Dspark.worker.memory=2048m -Dspark.shuffle.service.enabled=true' /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8082 --memory 2048m --cores 2"]
+              "mkdir -p /opt/spark/logs && /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077 --webui-port 8082 --memory 2048m --cores 2"]
     networks:
       - lc_net
     volumes:
@@ -338,7 +340,12 @@ services:
         condition: service_healthy
     entrypoint: ["sh", "-c"]
     command: >
-      "mysql -h mysql -uroot -pgrafana_root_password -e
+      "until mysqladmin ping -h mysql -uroot -pgrafana_root_password --silent; do
+        echo 'Waiting for MySQL to be ready...';
+        sleep 2;
+      done;
+      echo 'MySQL is ready, initializing database...';
+      mysql -h mysql -uroot -pgrafana_root_password -e
       \"CREATE DATABASE IF NOT EXISTS grafana CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
       CREATE USER IF NOT EXISTS 'grafana'@'%' IDENTIFIED BY 'grafana_password';
       GRANT ALL PRIVILEGES ON grafana.* TO 'grafana'@'%';
