@@ -304,6 +304,13 @@
       <version>${aws.sdk.v2.version}</version>
     </dependency>
 
+    <!-- Kubernetes Java Client -->
+    <dependency>
+      <groupId>io.kubernetes</groupId>
+      <artifactId>client-java</artifactId>
+      <version>20.0.0</version>
+    </dependency>
+
     <!-- Google Cloud -->
     <dependency>
       <groupId>com.google.cloud</groupId>
@@ -721,35 +728,35 @@
             </goals>
           </execution>
           <execution>
-              <id>jacoco-check</id>
-              <phase>verify</phase>
-              <goals>
-                  <goal>check</goal>
-              </goals>
-              <configuration>
-                  <rules>
-                      <rule>
-                          <element>BUNDLE</element>
-                          <limits>
-                              <limit>
-                                  <counter>LINE</counter>
-                                  <value>COVEREDRATIO</value>
-                                  <minimum>0.70</minimum>
-                              </limit>
-                              <limit>
-                                  <counter>BRANCH</counter>
-                                  <value>COVEREDRATIO</value>
-                                  <minimum>0.70</minimum>
-                              </limit>
-                              <limit>
-                                  <counter>METHOD</counter>
-                                  <value>COVEREDRATIO</value>
-                                  <minimum>0.70</minimum>
-                              </limit>
-                          </limits>
-                      </rule>
-                  </rules>
-              </configuration>
+            <id>jacoco-check</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.70</minimum>
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.70</minimum>
+                    </limit>
+                    <limit>
+                      <counter>METHOD</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.70</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
           </execution>
         </executions>
       </plugin>
