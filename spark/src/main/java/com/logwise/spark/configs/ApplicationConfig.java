@@ -69,9 +69,9 @@ public class ApplicationConfig {
     }
 
     /**
-     * Parses a configuration string, handling both HOCON format (key: value) and
-     * properties format (key=value). For properties format, converts to HOCON format
-     * with proper quoting of values to handle special characters like colons.
+     * Parses a configuration string, handling both HOCON format (key: value) and properties format
+     * (key=value). For properties format, converts to HOCON format with proper quoting of values to
+     * handle special characters like colons.
      */
     private Config parseConfigString(String conf) {
       // Check if it's properties format (contains =)
