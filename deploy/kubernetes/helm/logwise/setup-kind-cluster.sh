@@ -133,9 +133,10 @@ kubectl get nodes
 echo ""
 
 echo -e "${GREEN}Next steps:${NC}"
-echo -e "1. Install the Helm chart:"
+echo -e "1. Install the Helm chart using quick-install.sh:"
 echo -e "   ${YELLOW}cd $SCRIPT_DIR${NC}"
-echo -e "   ${YELLOW}helm install logwise . --namespace logwise --create-namespace --values values-local.yaml${NC}"
+echo -e "   ${YELLOW}./quick-install.sh [AWS_ACCESS_KEY] [AWS_SECRET] [S3_BUCKET] [S3_ATHENA_OUTPUT] [AWS_SESSION_TOKEN]${NC}"
+echo -e "   ${YELLOW}Note: AWS_SESSION_TOKEN is optional (only needed for temporary credentials)${NC}"
 echo ""
 echo -e "2. Or use the test script (includes automatic port forwarding):"
 echo -e "   ${YELLOW}./test-local.sh${NC}"

@@ -127,6 +127,9 @@ fi
 if [ -n "$4" ]; then
     HELM_CMD="$HELM_CMD --set aws.s3AthenaOutput=$4"
 fi
+if [ -n "$5" ]; then
+    HELM_CMD="$HELM_CMD --set aws.sessionToken=$5"
+fi
 
 echo "Running: $HELM_CMD"
 eval $HELM_CMD

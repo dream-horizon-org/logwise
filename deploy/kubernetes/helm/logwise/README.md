@@ -70,8 +70,10 @@ Before installing the Logwise Helm chart, ensure you have:
 
 2. **Install using the quick install script**:
    ```bash
-   ./quick-install.sh [AWS_ACCESS_KEY] [AWS_SECRET] [S3_BUCKET] [S3_ATHENA_OUTPUT]
+   ./quick-install.sh [AWS_ACCESS_KEY] [AWS_SECRET] [S3_BUCKET] [S3_ATHENA_OUTPUT] [AWS_SESSION_TOKEN]
    ```
+   
+   Note: `AWS_SESSION_TOKEN` is optional and only needed for temporary credentials (e.g., STS tokens).
 
    Or install manually:
    ```bash
@@ -112,8 +114,10 @@ helm install logwise . \
 The `quick-install.sh` script automatically detects if a release exists and performs install or upgrade:
 
 ```bash
-./quick-install.sh [AWS_ACCESS_KEY] [AWS_SECRET] [S3_BUCKET] [S3_ATHENA_OUTPUT]
+./quick-install.sh [AWS_ACCESS_KEY] [AWS_SECRET] [S3_BUCKET] [S3_ATHENA_OUTPUT] [AWS_SESSION_TOKEN]
 ```
+
+Note: `AWS_SESSION_TOKEN` is optional and only needed for temporary credentials (e.g., STS tokens).
 
 **Features:**
 - Automatically creates namespace if needed
@@ -489,8 +493,10 @@ helm install logwise . \
 Fast installation script for local development.
 
 ```bash
-./quick-install.sh [AWS_KEY] [AWS_SECRET] [S3_BUCKET] [S3_ATHENA_OUTPUT]
+./quick-install.sh [AWS_KEY] [AWS_SECRET] [S3_BUCKET] [S3_ATHENA_OUTPUT] [AWS_SESSION_TOKEN]
 ```
+
+Note: `AWS_SESSION_TOKEN` is optional and only needed for temporary credentials (e.g., STS tokens).
 
 **Features:**
 - Auto-detects install vs upgrade
