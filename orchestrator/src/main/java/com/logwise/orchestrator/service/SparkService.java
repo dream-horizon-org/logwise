@@ -88,8 +88,8 @@ public class SparkService {
                     format("kafka.maxRatePerPartition=%s", sparkConf.getKafkaMaxRatePerPartition()),
                     format("kafka.startingOffsets=%s", sparkConf.getKafkaStartingOffsets()),
                     format("kafka.subscribePattern=\"%s\"", sparkConf.getSubscribePattern()),
-                    format("spark.master.host=\"http://%s:8080\"", sparkConf.getSparkMasterHost()),
-                    format("logCentral.orchestrator.url=\"%s\"", tenantConfig.getOrchestrator().getUrl()),
+                    format("spark.master.host=http://%s:8080", sparkConf.getSparkMasterHost()),
+                    format("logCentral.orchestrator.url=%s", tenantConfig.getOrchestrator().getUrl()),
                     format("s3.bucket=%s", bucketName));
 
     String extraJavaOptions =
