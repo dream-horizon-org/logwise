@@ -75,7 +75,8 @@ export default defineConfig({
                     { text: 'All Releases', link: 'https://github.com/dream-horizon-org/logwise/releases' }
                 ]
             },
-            { text: 'GitHub', link: 'https://github.com/dream-horizon-org/logwise' }
+            { text: 'GitHub', link: 'https://github.com/dream-horizon-org/logwise' },
+            { text: 'Discord', link: 'https://discord.gg/H8SAQ4b58a' }
         ],
 
         sidebar: {

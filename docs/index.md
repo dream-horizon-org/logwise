@@ -209,6 +209,7 @@ class: home-page
         </p>
         <div style="display: flex; gap: 15px;">
           <a href="https://www.linkedin.com/company/dream-horizon-org" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background-color: #1a1a1a; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #b0b0b0;">in</a>
+          <a href="https://discord.gg/H8SAQ4b58a" target="_blank" style="width: 36px; height: 36px; border-radius: 50%; background-color: #1a1a1a; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #b0b0b0; font-size: 18px;">💬</a>
         </div>
       </div>
       <div>
@@ -223,6 +224,7 @@ class: home-page
       <div>
         <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 20px;">Company</h4>
         <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="margin-bottom: 12px;"><a href="https://discord.gg/H8SAQ4b58a" style="color: #b0b0b0; text-decoration: none; font-size: 14px;">Join Discord</a></li>
           <li style="margin-bottom: 12px;"><a href="https://www.linkedin.com/company/dream-horizon-org" style="color: #b0b0b0; text-decoration: none; font-size: 14px;">Contact Us</a></li>
           <li style="margin-bottom: 12px;"><a href="https://www.linkedin.com/company/dream-horizon-org" style="color: #b0b0b0; text-decoration: none; font-size: 14px;">About</a></li>
         </ul>
