@@ -9,6 +9,3 @@ patchesStrategicMerge:
   - services-nodeport.yaml
   - otel-collector-resources.yaml
   - configmap-kafka-patch.yaml
-
-
-

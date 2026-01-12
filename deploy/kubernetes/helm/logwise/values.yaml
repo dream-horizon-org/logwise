@@ -1,30 +1,281 @@
 global:
   namespace: logwise
+  imageRegistry: ""  # Global image registry prefix (e.g., "ghcr.io/your-org")
+  imagePullPolicy: IfNotPresent
 
+# Component enable/disable flags
+components:
+  orchestrator:
+    enabled: true
+  spark:
+    enabled: true
+  kafka:
+    enabled: true
+  vector:
+    enabled: true
+  grafana:
+    enabled: true
+  mysql:
+    enabled: true
+  otel:
+    enabled: true
+  healthcheck:
+    enabled: true
+  cron:
+    enabled: true
+
+# AWS Configuration
 aws:
   region: us-east-1
-  accessKeyId: ""
-  secretAccessKey: ""
-  sessionToken: ""
-  s3BucketName: ""
-  s3AthenaOutput: ""
-  athenaWorkgroup: primary
+  accessKeyId: "ASIA54S6SGWZZJYJDBJ3"
+  secretAccessKey: "cplQ8UVSQVTnox2wJF+n0YQHsbnWa4T/Z78oGzYz"
+  sessionToken: "IQoJb3JpZ2luX2VjECMaCXVzLWVhc3QtMSJIMEYCIQCyR8O+eZnbgk9T05QW1evw9ESbT/eIzIjc9D/pVcv5WgIhAKA4/BOluWbDq/g1mpgrEJK9lkln8Gv0CFIF+jmAoa/wKpgDCOz//////////wEQBBoMOTU0NzU0ODA3MjE5Igz9M/4jUzTBKitMtlwq7AJgrJ5139EED82Q92s6hgDJqZ4eAohswRzqpjiQgNOIXWyEQdmCmpTl4rcAisX6t2bU/Qn7cR7gkq7v0xcmpPrfFWlIn+HfPNJW1uKIU2ik+RARaSFZfsjNva9FiavmCcrg8h+TDK18IATAQfmE7mdg2u4a8v6qIEGJIxBTmj7O5ckAJ63E1r9J8DjNn/K3Cx7LpeQsVf/ObiwE5jFxlvXlLXv4w8j6PJr4gjz4Ng1xGD/Vime6zmnzLAb8gHcrtLtYjChvlaMHf1Bee7LORg11snHY5NgsgEEo5ssj/Vq7fjE6lQP9YHnNWhM/4lSa6Y7TMAgAwseLJifthoUSHRoGl3QkqkZlN7q1oJ5k9qHRZS73pe2t81Oy0iz5Pvqc6M/dNK5WGJPeUle80NhwD9ZZUWLH6YkkGTcRsYWNZwTyX10qtj6hZg4VOR+wk6O1Y+WLrpW9gOUz60erZL7S/V1TdgfEUgtPzZ0zyezkMJ6jk8sGOqMB9fWDjcRkEevaGB4WO68vY1Y5VzCN0/+ZdQSD3rhU4laWfVWfZ1phNYqk55ZZqQayoGTcCnOZw279m+uLGSFXWWb7IdLpIM9VcCsYIcjOkQqQa39l10hHJ/vROhE6t8vee/ZuUkJmX6luoMbLopFtr8ZhfuuOOsyEAnpB1oXI92CicL/ZvdKvxtID/Y7Iqn/PMN8W7P2i7X2SGPKxyjc0GMqcEA=="
+  s3BucketName: "logwise-varun-test"
+  s3AthenaOutput: "s3://logwise-varun-test/athena-output/"
+  athenaWorkgroup: observability
   athenaCatalog: AwsDataCatalog
   athenaDatabase: logwise
 
+# Kafka Configuration
 kafka:
   # For external Kafka (e.g. MSK/Confluent), set this to the external bootstrap servers.
   # For in-cluster Kafka (default), leave as-is.
   bootstrapServers: "kafka-bootstrap.logwise.svc.cluster.local:9092"
+  enabled: true
+  image:
+    repository: confluentinc/cp-kafka
+    tag: "7.6.0"
+  clusterId: "9ZkYwXlQ2Tq8rBn5JcH0xA"
+  brokerId: "1"
+  nodeId: "1"
+  listeners: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093"
+  advertisedListeners: "PLAINTEXT://kafka-bootstrap.logwise.svc.cluster.local:9092"
+  listenerSecurityProtocolMap: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+  controllerQuorumVoters: "1@localhost:9093"
+  controllerListenerNames: "CONTROLLER"
+  interBrokerListenerName: "PLAINTEXT"
+  offsetsTopicReplicationFactor: "1"
+  transactionStateLogReplicationFactor: "1"
+  transactionStateLogMinIsr: "1"
+  autoCreateTopicsEnable: "true"
+  logRetentionHours: "1"
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+  storage:
+    type: emptyDir  # emptyDir or persistentVolumeClaim
+    size: "10Gi"
 
+# MySQL Configuration
 mysql:
   orchestrator:
+    enabled: true
     username: logwise_orch
     password: change-me
+    rootPassword: root_pass
+    database: logwise_orch
+    image:
+      repository: mysql
+      tag: "8.0"
+    replicas: 1
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+    storage:
+      type: emptyDir  # emptyDir or persistentVolumeClaim
+      size: "10Gi"
   grafana:
+    enabled: true
     username: grafana
     password: change-me
+    rootPassword: grafana_root_password
+    database: grafana
+    image:
+      repository: mysql
+      tag: "8.0"
+    replicas: 1
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+    storage:
+      type: emptyDir  # emptyDir or persistentVolumeClaim
+      size: "10Gi"
 
+# Spark Configuration
+spark:
+  master:
+    enabled: true
+    image:
+      repository: logwise-spark
+      tag: latest
+    replicas: 1
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+    masterOpts: "-Dspark.master.rest.enabled=true"
+    masterPort: "7077"
+    webuiPort: "8080"
+  worker:
+    enabled: true
+    image:
+      repository: logwise-spark
+      tag: latest
+    replicas: 2
+    memory: "2g"
+    cores: "2"
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2000m"
+        memory: "3Gi"
+    webuiPort: "8081"
+    rpcPort: "7078"
+
+# Vector Configuration
+vector:
+  enabled: true
+  image:
+    repository: logwise-vector
+    tag: latest
+  replicas: 1
+  apiVersion: "2"
+  apiAddress: "0.0.0.0:8686"
+  watchConfig: true
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilization: 70
+
+# Orchestrator Configuration
+orchestrator:
+  enabled: true
+  image:
+    repository: logwise-orchestrator
+    tag: latest
+  replicas: 1
+  internalBaseUrl: "http://orchestrator:8080"
+  spark:
+    masterHost: "spark-master"
+    jarPath: "/opt/app/app.jar"
+    log4jPropertiesPath: "file:/opt/spark/conf/log4j.properties"
+  vector:
+    host: "vector-logs"
+    apiPort: "8686"
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# Grafana Configuration
+grafana:
+  enabled: true
+  image:
+    repository: grafana/grafana
+    tag: "10.2.0"
+  replicas: 1
+  admin:
+    user: admin
+    password: admin
+  plugins: "grafana-athena-datasource,yesoreyeram-infinity-datasource"
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+# OTEL Collector Configuration
+otel:
+  enabled: true
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: "0.90.1"
+  serviceName: "your-service-name"
+  environment: "production"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  storage:
+    type: hostPath  # hostPath or emptyDir
+    hostPath: "/var/lib/otelcol"
+
+# Healthcheck Dummy Configuration
+healthcheck:
+  enabled: true
+  image:
+    repository: logwise-healthcheck-dummy
+    tag: latest
+  replicas: 1
+  serviceName: "healthcheck-dummy"
+  environment: "local"
+  type: "healthcheck"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+# CronJob Configuration
+cron:
+  enabled: true
+  orchestratorSync:
+    schedule: "*/1 * * * *"
+    tenant: "ABC"
+    image:
+      repository: curlimages/curl
+      tag: "8.8.0"
+
+# Service Configuration
+services:
+  type: ClusterIP  # ClusterIP, NodePort, or LoadBalancer
+  nodePorts:
+    orchestrator: 30081
+    grafana: 30080
+    sparkMaster: 30082
+    sparkWorker: 30083
+    vectorOtlp: 30418
+  # Automatically set up port forwarding after installation (for kind clusters)
+  # Set to false if using kind with port mappings (kind-config.yaml) or other cluster types
+  autoPortForward: false
+
+# Ingress Configuration
 ingress:
   enabled: false
   className: nginx
@@ -37,4 +288,22 @@ ingress:
   sparkWorker:
     host: spark-worker.example.com
 
-
+# ConfigMap values for logwise-config
+config:
+  kafkaBrokers: "kafka"
+  kafkaBrokersHost: "kafka"
+  kafkaClusterId: "9ZkYwXlQ2rBn5JcH0xA"
+  mysqlDatabase: "myapp"
+  mysqlUser: "myapp"
+  grafanaDbHost: "mysql"
+  grafanaDbName: "grafana"
+  grafanaDbUser: "grafana"
+  orchPort: "8080"
+  grafanaPort: "3000"
+  vectorApiPort: "8686"
+  vectorOtlpGrpcPort: "4317"
+  vectorOtlpHttpPort: "4318"
+  sparkMasterHost: "spark://spark-master:7077"
+  sparkJarPath: "/tmp/spark.jar"
+  log4jPropertiesFilePath: "/tmp/log4j.properties"
+  vectorHost: "vector"

@@ -1,0 +1,21 @@
+{{- if and .Values.components.vector.enabled .Values.vector.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vector-logs
+  namespace: {{ include "logwise.namespace" . }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vector-logs
+  minReplicas: {{ .Values.vector.hpa.minReplicas }}
+  maxReplicas: {{ .Values.vector.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.vector.hpa.targetCPUUtilization }}
+{{- end }}

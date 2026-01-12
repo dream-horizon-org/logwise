@@ -1,0 +1,82 @@
+{{- if .Values.components.otel.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: otel-collector
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app.kubernetes.io/name: otel-collector
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otel-collector
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: otel-collector
+    spec:
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+            type: Directory
+        - name: otel-storage
+          {{- if eq .Values.otel.storage.type "hostPath" }}
+          hostPath:
+            path: {{ .Values.otel.storage.hostPath }}
+            type: DirectoryOrCreate
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: otel-config
+          configMap:
+            name: otel-collector-config
+            items:
+              - key: otel-config.yaml
+                path: otel-config.yaml
+      containers:
+        - name: otel-collector
+          image: {{ include "logwise.image" (dict "root" . "repository" .Values.otel.image.repository "tag" .Values.otel.image.tag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args: ["--config=/conf/otel-config.yaml"]
+          env:
+            - name: SERVICE_NAME
+              value: {{ .Values.otel.serviceName | quote }}
+            - name: ENVIRONMENT
+              value: {{ .Values.otel.environment | quote }}
+          ports:
+            - name: healthz
+              containerPort: 13133
+          volumeMounts:
+            - name: otel-config
+              mountPath: /conf
+              readOnly: true
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: otel-storage
+              mountPath: /var/lib/otelcol
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.otel.resources | nindent 12 }}
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+{{- end }}
