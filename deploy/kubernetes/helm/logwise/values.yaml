@@ -172,6 +172,23 @@ vector:
     minReplicas: 1
     maxReplicas: 5
     targetCPUUtilization: 70
+    targetMemoryUtilization: 80
+
+# Metrics Server Configuration
+metricsServer:
+  enabled: true
+  image:
+    repository: registry.k8s.io/metrics-server/metrics-server
+    tag: "v0.6.4"
+    pullPolicy: IfNotPresent
+  kubeletInsecureTLS: false  # Set to true for kind/local clusters with self-signed certificates
+  resources:
+    requests:
+      cpu: 100m
+      memory: 200Mi
+    limits:
+      cpu: 100m
+      memory: 200Mi
 
 # Orchestrator Configuration
 orchestrator:
