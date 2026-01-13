@@ -105,10 +105,7 @@ public class ApplicationConfig {
     // Legacy (deprecated, for migration)
     @NonFinal @Optional
     Integer maxProducerRatePerPartition =
-            ApplicationConstants.KAFKA_MAX_PRODUCER_RATE_PER_PARTITION;
-
-    @NonFinal @Optional Integer kafkaBrokerPort = ApplicationConstants.KAFKA_BROKER_PORT;
-
+        ApplicationConstants.KAFKA_MAX_PRODUCER_RATE_PER_PARTITION;
   }
 
   @Data

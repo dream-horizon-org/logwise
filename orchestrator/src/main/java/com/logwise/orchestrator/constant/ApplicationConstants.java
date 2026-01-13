@@ -12,7 +12,7 @@ public class ApplicationConstants {
   public final int AWS_SDK_MAX_BACK_OFF_TIME_SECONDS = 8;
 
   public final UnaryOperator<String> OBJECT_STORE_INJECTOR_NAME =
-          tenantName -> "objectStore-" + tenantName;
+      tenantName -> "objectStore-" + tenantName;
 
   public final int DEFAULT_RETRY_DELAY_SECONDS = 2;
   public final int DEFAULT_MAX_RETRIES = 3;
@@ -39,11 +39,11 @@ public class ApplicationConstants {
   public final int SPARK_HISTORY_MONITOR_COUNT = 5;
   public final String GET_SPARK_MASTER_JSON_RESPONSE_CACHE = "get-spark_master-json-response-cache";
   public final UnaryOperator<String> SPARK_ASG_INJECTOR_NAME =
-          tenantName -> "spark-asg-" + tenantName;
+      tenantName -> "spark-asg-" + tenantName;
 
   public final UnaryOperator<String> SPARK_VM_INJECTOR_NAME =
-          tenantName -> "spark-vm-" + tenantName;
+      tenantName -> "spark-vm-" + tenantName;
 
   public final UnaryOperator<String> SPARK_KUBERNETES_INJECTOR_NAME =
-          tenantName -> "spark-kubernetes-" + tenantName;
+      tenantName -> "spark-kubernetes-" + tenantName;
 }

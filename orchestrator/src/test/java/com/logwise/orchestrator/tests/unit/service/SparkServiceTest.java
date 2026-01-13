@@ -5,6 +5,10 @@ import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logwise.orchestrator.config.ApplicationConfig;
+import com.logwise.orchestrator.dao.SparkScaleOverrideDao;
+import com.logwise.orchestrator.dao.SparkStageHistoryDao;
+import com.logwise.orchestrator.dto.entity.SparkScaleOverride;
+import com.logwise.orchestrator.dto.entity.SparkStageHistory;
 import com.logwise.orchestrator.dto.request.SubmitSparkJobRequest;
 import com.logwise.orchestrator.dto.response.SparkMasterJsonResponse;
 import com.logwise.orchestrator.dto.response.SparkMasterJsonResponse.Driver;
@@ -33,13 +37,24 @@ public class SparkServiceTest extends BaseTest {
   private SparkService sparkService;
   private WebClient mockWebClient;
   private ObjectMapper mockObjectMapper;
+  private SparkStageHistoryDao mockSparkStageHistoryDao;
+  private SparkScaleOverrideDao mockSparkScaleOverrideDao;
 
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
     mockWebClient = mock(WebClient.class);
     mockObjectMapper = mock(ObjectMapper.class);
-    sparkService = new SparkService(mockWebClient, mockObjectMapper);
+    mockSparkStageHistoryDao = mock(SparkStageHistoryDao.class);
+    mockSparkScaleOverrideDao = mock(SparkScaleOverrideDao.class);
+    io.vertx.reactivex.core.Vertx reactiveVertx = BaseTest.getReactiveVertx();
+    sparkService =
+        new SparkService(
+            reactiveVertx,
+            mockWebClient,
+            mockObjectMapper,
+            mockSparkStageHistoryDao,
+            mockSparkScaleOverrideDao);
     io.vertx.reactivex.ext.web.client.WebClient reactiveWebClient =
         mock(io.vertx.reactivex.ext.web.client.WebClient.class);
     when(mockWebClient.getWebClient()).thenReturn(reactiveWebClient);
@@ -126,7 +141,8 @@ public class SparkServiceTest extends BaseTest {
           .thenReturn(mockObjectStoreClient);
 
       // Mock web client for submitSparkJob
-      io.vertx.reactivex.ext.web.client.WebClient reactiveWebClient = mockWebClient.getWebClient();
+      io.vertx.reactivex.ext.web.client.WebClient reactiveWebClient =
+          mock(io.vertx.reactivex.ext.web.client.WebClient.class);
       io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
           mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
       io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
@@ -135,6 +151,7 @@ public class SparkServiceTest extends BaseTest {
       when(mockHttpResponse.bodyAsString()).thenReturn("{\"submissionId\":\"test-id\"}");
       when(reactiveWebClient.postAbs(anyString())).thenReturn(mockHttpRequest);
       when(mockHttpRequest.rxSendJson(any())).thenReturn(Single.just(mockHttpResponse));
+      when(mockWebClient.getWebClient()).thenReturn(reactiveWebClient);
 
       // Test the method
       Single<Boolean> result = sparkService.validateAndSubmitSparkJob(tenant, response, null, null);
@@ -418,7 +435,8 @@ public class SparkServiceTest extends BaseTest {
     ApplicationConfig.TenantConfig tenantConfig =
         ApplicationTestConfig.createMockTenantConfig("ABC");
 
-    io.vertx.reactivex.ext.web.client.WebClient reactiveWebClient = mockWebClient.getWebClient();
+    io.vertx.reactivex.ext.web.client.WebClient reactiveWebClient =
+        mock(io.vertx.reactivex.ext.web.client.WebClient.class);
     io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
         mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
     io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
@@ -427,6 +445,7 @@ public class SparkServiceTest extends BaseTest {
     when(mockHttpResponse.bodyAsString()).thenReturn("{\"submissionId\":\"test-id\"}");
     when(reactiveWebClient.postAbs(anyString())).thenReturn(mockHttpRequest);
     when(mockHttpRequest.rxSendJson(any())).thenReturn(Single.just(mockHttpResponse));
+    when(mockWebClient.getWebClient()).thenReturn(reactiveWebClient);
 
     Completable result = sparkService.submitSparkJob(tenantConfig, null, null);
 
@@ -490,5 +509,144 @@ public class SparkServiceTest extends BaseTest {
       Assert.assertNotNull(result);
       // This is a long-running operation, just verify it doesn't throw immediately
     }
+  }
+
+  @Test
+  public void testInsertSparkStageHistory_WithValidHistory_InsertsSuccessfully() {
+    SparkStageHistory stageHistory = new SparkStageHistory();
+    stageHistory.setOutputBytes(100000L);
+    stageHistory.setInputRecords(1000L);
+    stageHistory.setSubmissionTime(System.currentTimeMillis());
+    stageHistory.setCompletionTime(System.currentTimeMillis() + 5000);
+    stageHistory.setCoresUsed(4);
+    stageHistory.setStatus("SUCCESS");
+    stageHistory.setTenant("ABC");
+
+    when(mockSparkStageHistoryDao.insertSparkStageHistory(any(SparkStageHistory.class)))
+        .thenReturn(Completable.complete());
+
+    Completable result = sparkService.insertSparkStageHistory(stageHistory);
+    result.blockingAwait();
+
+    verify(mockSparkStageHistoryDao, times(1)).insertSparkStageHistory(eq(stageHistory));
+  }
+
+  @Test
+  public void testInsertSparkStageHistory_WithDaoError_PropagatesError() {
+    SparkStageHistory stageHistory = new SparkStageHistory();
+    RuntimeException daoError = new RuntimeException("DAO error");
+
+    when(mockSparkStageHistoryDao.insertSparkStageHistory(any(SparkStageHistory.class)))
+        .thenReturn(Completable.error(daoError));
+
+    Completable result = sparkService.insertSparkStageHistory(stageHistory);
+
+    try {
+      result.blockingAwait();
+      Assert.fail("Should have thrown exception");
+    } catch (RuntimeException e) {
+      Assert.assertEquals(e, daoError);
+    }
+  }
+
+  @Test
+  public void testScaleSpark_WithBothScalingEnabled_CallsProcessSparkScaling() {
+    Tenant tenant = Tenant.ABC;
+    boolean enableUpScale = true;
+    boolean enableDownScale = true;
+
+    SparkScaleOverride scaleOverride = SparkScaleOverride.builder().tenant("ABC").build();
+    when(mockSparkScaleOverrideDao.getSparkScaleOverride(eq(tenant)))
+        .thenReturn(Single.just(scaleOverride));
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
+        Mockito.mockStatic(ApplicationConfigUtil.class)) {
+      ApplicationConfig.TenantConfig tenantConfig =
+          ApplicationTestConfig.createMockTenantConfig("ABC");
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(tenantConfig);
+
+      when(mockSparkStageHistoryDao.getSparkStageHistory(any(Tenant.class), anyInt(), anyBoolean()))
+          .thenReturn(Single.just(Collections.emptyList()));
+
+      Completable result = sparkService.scaleSpark(tenant, enableUpScale, enableDownScale);
+
+      Assert.assertNotNull(result);
+      verify(mockSparkScaleOverrideDao, times(1)).getSparkScaleOverride(eq(tenant));
+    }
+  }
+
+  @Test
+  public void testScaleSpark_WithOverrideValues_UsesOverrideValues() {
+    Tenant tenant = Tenant.ABC;
+    boolean enableUpScale = true;
+    boolean enableDownScale = true;
+
+    SparkScaleOverride scaleOverride =
+        SparkScaleOverride.builder().tenant("ABC").upscale(false).downscale(false).build();
+    when(mockSparkScaleOverrideDao.getSparkScaleOverride(eq(tenant)))
+        .thenReturn(Single.just(scaleOverride));
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
+        Mockito.mockStatic(ApplicationConfigUtil.class)) {
+      ApplicationConfig.TenantConfig tenantConfig =
+          ApplicationTestConfig.createMockTenantConfig("ABC");
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(tenantConfig);
+
+      when(mockSparkStageHistoryDao.getSparkStageHistory(any(Tenant.class), anyInt(), anyBoolean()))
+          .thenReturn(Single.just(Collections.emptyList()));
+
+      Completable result = sparkService.scaleSpark(tenant, enableUpScale, enableDownScale);
+
+      Assert.assertNotNull(result);
+      verify(mockSparkScaleOverrideDao, times(1)).getSparkScaleOverride(eq(tenant));
+    }
+  }
+
+  @Test
+  public void testScaleSpark_WithNullOverrideValues_UsesProvidedValues() {
+    Tenant tenant = Tenant.ABC;
+    boolean enableUpScale = true;
+    boolean enableDownScale = false;
+
+    SparkScaleOverride scaleOverride = SparkScaleOverride.builder().tenant("ABC").build();
+    when(mockSparkScaleOverrideDao.getSparkScaleOverride(eq(tenant)))
+        .thenReturn(Single.just(scaleOverride));
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
+        Mockito.mockStatic(ApplicationConfigUtil.class)) {
+      ApplicationConfig.TenantConfig tenantConfig =
+          ApplicationTestConfig.createMockTenantConfig("ABC");
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(tenantConfig);
+
+      when(mockSparkStageHistoryDao.getSparkStageHistory(any(Tenant.class), anyInt(), anyBoolean()))
+          .thenReturn(Single.just(Collections.emptyList()));
+
+      Completable result = sparkService.scaleSpark(tenant, enableUpScale, enableDownScale);
+
+      Assert.assertNotNull(result);
+      verify(mockSparkScaleOverrideDao, times(1)).getSparkScaleOverride(eq(tenant));
+    }
+  }
+
+  @Test
+  public void testScaleSpark_WithBothScalingDisabled_CompletesWithoutScaling() {
+    Tenant tenant = Tenant.ABC;
+    boolean enableUpScale = false;
+    boolean enableDownScale = false;
+
+    SparkScaleOverride scaleOverride = SparkScaleOverride.builder().tenant("ABC").build();
+    when(mockSparkScaleOverrideDao.getSparkScaleOverride(eq(tenant)))
+        .thenReturn(Single.just(scaleOverride));
+
+    Completable result = sparkService.scaleSpark(tenant, enableUpScale, enableDownScale);
+    result.blockingAwait();
+
+    verify(mockSparkScaleOverrideDao, times(1)).getSparkScaleOverride(eq(tenant));
   }
 }

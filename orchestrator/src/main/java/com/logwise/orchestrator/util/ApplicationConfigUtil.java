@@ -14,9 +14,9 @@ public class ApplicationConfigUtil {
 
   public TenantConfig getTenantConfig(Tenant tenant) {
     return ApplicationConfigProvider.getApplicationConfig().getTenants().stream()
-            .filter(tenantConfig -> tenantConfig.getName().equals(tenant.getValue()))
-            .findFirst()
-            .orElse(null);
+        .filter(tenantConfig -> tenantConfig.getName().equals(tenant.getValue()))
+        .findFirst()
+        .orElse(null);
   }
 
   public boolean isAwsObjectStore(TenantConfig tenantConfig) {
@@ -30,7 +30,7 @@ public class ApplicationConfigUtil {
     }
     // Fallback to checking if ASG config exists (for backward compatibility)
     return tenantConfig.getSpark().getCluster().getAsg() != null
-            && tenantConfig.getSpark().getCluster().getAsg().getAws() != null;
+        && tenantConfig.getSpark().getCluster().getAsg().getAws() != null;
   }
 
   public boolean isKubernetesSparkCluster(TenantConfig tenantConfig) {
@@ -43,11 +43,11 @@ public class ApplicationConfigUtil {
   }
 
   public ApplicationConfig.VMConfig getVmConfigFromAsgConfig(
-          ApplicationConfig.AsgConfig asgConfig) {
+      ApplicationConfig.AsgConfig asgConfig) {
     ApplicationConfig.VMConfig.VMConfigBuilder vmConfig = ApplicationConfig.VMConfig.builder();
     if (asgConfig.getAws() != null) {
       vmConfig.aws(
-              ApplicationConfig.EC2Config.builder().region(asgConfig.getAws().getRegion()).build());
+          ApplicationConfig.EC2Config.builder().region(asgConfig.getAws().getRegion()).build());
     }
     return vmConfig.build();
   }

@@ -11,4 +11,3 @@ public interface KubernetesClient {
 
   Single<Integer> getCurrentReplicas(String deploymentName, String namespace);
 }
-

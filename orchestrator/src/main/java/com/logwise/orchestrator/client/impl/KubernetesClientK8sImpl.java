@@ -60,7 +60,8 @@ public class KubernetesClientK8sImpl implements KubernetesClient {
       log.error("Invalid replica count: {}. Replica count must be non-negative.", replicas);
       return Completable.error(
           new IllegalArgumentException(
-              String.format("Invalid replica count: %d. Replica count must be non-negative.", replicas)));
+              String.format(
+                  "Invalid replica count: %d. Replica count must be non-negative.", replicas)));
     }
 
     String finalDeploymentName =
@@ -68,9 +69,7 @@ public class KubernetesClientK8sImpl implements KubernetesClient {
             ? deploymentName.trim()
             : DEFAULT_DEPLOYMENT_NAME;
     String finalNamespace =
-        namespace != null && !namespace.trim().isEmpty()
-            ? namespace.trim()
-            : DEFAULT_NAMESPACE;
+        namespace != null && !namespace.trim().isEmpty() ? namespace.trim() : DEFAULT_NAMESPACE;
 
     log.info(
         "Scaling deployment '{}' in namespace '{}' to {} replicas",
@@ -81,7 +80,8 @@ public class KubernetesClientK8sImpl implements KubernetesClient {
     if (appsV1Api == null) {
       log.error("Kubernetes API client is not initialized. Call rxConnect() first.");
       return Completable.error(
-          new IllegalStateException("Kubernetes API client is not initialized. Call rxConnect() first."));
+          new IllegalStateException(
+              "Kubernetes API client is not initialized. Call rxConnect() first."));
     }
 
     return Completable.fromFuture(
@@ -94,8 +94,8 @@ public class KubernetesClientK8sImpl implements KubernetesClient {
                     finalDeploymentName,
                     finalNamespace);
                 V1Scale currentScale =
-                    appsV1Api.readNamespacedDeploymentScale(
-                        finalDeploymentName, finalNamespace)
+                    appsV1Api
+                        .readNamespacedDeploymentScale(finalDeploymentName, finalNamespace)
                         .execute();
 
                 if (currentScale == null) {
@@ -137,10 +137,9 @@ public class KubernetesClientK8sImpl implements KubernetesClient {
                     "Applying scale update for deployment '{}' in namespace '{}'",
                     finalDeploymentName,
                     finalNamespace);
-                appsV1Api.replaceNamespacedDeploymentScale(
-                    finalDeploymentName,
-                    finalNamespace,
-                    currentScale)
+                appsV1Api
+                    .replaceNamespacedDeploymentScale(
+                        finalDeploymentName, finalNamespace, currentScale)
                     .execute();
 
                 log.info(
@@ -198,9 +197,7 @@ public class KubernetesClientK8sImpl implements KubernetesClient {
             ? deploymentName.trim()
             : DEFAULT_DEPLOYMENT_NAME;
     String finalNamespace =
-        namespace != null && !namespace.trim().isEmpty()
-            ? namespace.trim()
-            : DEFAULT_NAMESPACE;
+        namespace != null && !namespace.trim().isEmpty() ? namespace.trim() : DEFAULT_NAMESPACE;
 
     log.debug(
         "Getting current replicas for deployment '{}' in namespace '{}'",
@@ -210,7 +207,8 @@ public class KubernetesClientK8sImpl implements KubernetesClient {
     if (appsV1Api == null) {
       log.error("Kubernetes API client is not initialized. Call rxConnect() first.");
       return Single.error(
-          new IllegalStateException("Kubernetes API client is not initialized. Call rxConnect() first."));
+          new IllegalStateException(
+              "Kubernetes API client is not initialized. Call rxConnect() first."));
     }
 
     return CompletableFutureUtils.toSingle(
@@ -222,8 +220,8 @@ public class KubernetesClientK8sImpl implements KubernetesClient {
                     finalDeploymentName,
                     finalNamespace);
                 V1Deployment deployment =
-                    appsV1Api.readNamespacedDeployment(
-                        finalDeploymentName, finalNamespace)
+                    appsV1Api
+                        .readNamespacedDeployment(finalDeploymentName, finalNamespace)
                         .execute();
 
                 if (deployment == null) {
@@ -248,10 +246,7 @@ public class KubernetesClientK8sImpl implements KubernetesClient {
                 String errorMessage =
                     String.format(
                         "Failed to get replicas for deployment '%s' in namespace '%s'. HTTP status: %d, Response body: %s",
-                        finalDeploymentName,
-                        finalNamespace,
-                        e.getCode(),
-                        e.getResponseBody());
+                        finalDeploymentName, finalNamespace, e.getCode(), e.getResponseBody());
                 log.error(errorMessage, e);
 
                 // Provide more specific error messages based on HTTP status codes

@@ -11,7 +11,7 @@ public class KubernetesFactory {
 
   public KubernetesClient getSparkClient(Tenant tenant) {
     return ApplicationUtils.getGuiceInstance(
-        KubernetesClient.class, ApplicationConstants.SPARK_KUBERNETES_INJECTOR_NAME.apply(tenant.getValue()));
+        KubernetesClient.class,
+        ApplicationConstants.SPARK_KUBERNETES_INJECTOR_NAME.apply(tenant.getValue()));
   }
 }
-

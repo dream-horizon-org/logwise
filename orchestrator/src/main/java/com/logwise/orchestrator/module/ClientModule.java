@@ -22,101 +22,105 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ClientModule extends VertxAbstractModule {
-    public ClientModule(Vertx vertx) {
-        super(vertx);
-    }
+  public ClientModule(Vertx vertx) {
+    super(vertx);
+  }
 
-    @Override
-    protected void bindConfiguration() {
-        log.info("Binding Client Modules Configuration...");
-        bindObjectStoreClients();
-        bindKafkaClients();
-        bindSparkVMClients();
-        bindSparkAsgClients();
-        bindSparkKubernetesClients();
-    }
+  @Override
+  protected void bindConfiguration() {
+    log.info("Binding Client Modules Configuration...");
+    bindObjectStoreClients();
+    bindKafkaClients();
+    bindSparkVMClients();
+    bindSparkAsgClients();
+    bindSparkKubernetesClients();
+  }
 
-    private void bindObjectStoreClients() {
-        log.info("Binding Object Stores Clients...");
-        ApplicationConfigProvider.getApplicationConfig()
-                .getTenants()
-                .forEach(
-                        tenantConfig -> {
-                            String injectorName =
-                                    ApplicationConstants.OBJECT_STORE_INJECTOR_NAME.apply(tenantConfig.getName());
-                            if (ApplicationConfigUtil.isAwsObjectStore(tenantConfig)) {
-                                bind(ObjectStoreClient.class)
-                                        .annotatedWith(Names.named(injectorName))
-                                        .toInstance(new ObjectStoreAwsImpl());
-                            } else {
-                                log.warn(
-                                        "Only AWS object store is supported. Skipping tenant: {}",
-                                        tenantConfig.getName());
-                            }
-                        });
-    }
+  private void bindObjectStoreClients() {
+    log.info("Binding Object Stores Clients...");
+    ApplicationConfigProvider.getApplicationConfig()
+        .getTenants()
+        .forEach(
+            tenantConfig -> {
+              String injectorName =
+                  ApplicationConstants.OBJECT_STORE_INJECTOR_NAME.apply(tenantConfig.getName());
+              if (ApplicationConfigUtil.isAwsObjectStore(tenantConfig)) {
+                bind(ObjectStoreClient.class)
+                    .annotatedWith(Names.named(injectorName))
+                    .toInstance(new ObjectStoreAwsImpl());
+              } else {
+                log.warn(
+                    "Only AWS object store is supported. Skipping tenant: {}",
+                    tenantConfig.getName());
+              }
+            });
+  }
 
-    private void bindSparkAsgClients() {
-        log.info("Binding Spark ASG Clients...");
-        ApplicationConfigProvider.getApplicationConfig()
-                .getTenants()
-                .forEach(
-                        tenantConfig -> {
-                            if (ApplicationConfigUtil.isAwsSparkCluster(tenantConfig)) {
-                                String injectorName =
-                                        ApplicationConstants.SPARK_ASG_INJECTOR_NAME.apply(tenantConfig.getName());
-                                bind(AsgClient.class)
-                                        .annotatedWith(Names.named(injectorName))
-                                        .toInstance(new AsgClientAwsImpl());
-                            }
-                        });
-    }
+  private void bindSparkAsgClients() {
+    log.info("Binding Spark ASG Clients...");
+    ApplicationConfigProvider.getApplicationConfig()
+        .getTenants()
+        .forEach(
+            tenantConfig -> {
+              if (ApplicationConfigUtil.isAwsSparkCluster(tenantConfig)) {
+                String injectorName =
+                    ApplicationConstants.SPARK_ASG_INJECTOR_NAME.apply(tenantConfig.getName());
+                bind(AsgClient.class)
+                    .annotatedWith(Names.named(injectorName))
+                    .toInstance(new AsgClientAwsImpl());
+              }
+            });
+  }
 
-    private void bindSparkVMClients() {
-        log.info("Binding Spark VM Clients...");
-        ApplicationConfigProvider.getApplicationConfig()
-                .getTenants()
-                .forEach(
-                        tenantConfig -> {
-                            if (ApplicationConfigUtil.isAwsSparkCluster(tenantConfig)) {
-                                String sparkVMInjectorName =
-                                        ApplicationConstants.SPARK_VM_INJECTOR_NAME.apply(tenantConfig.getName());
-                                bind(VMClient.class)
-                                        .annotatedWith(Names.named(sparkVMInjectorName))
-                                        .toInstance(new VMClientAwsImpl());
-                            }
-                        });
-    }
+  private void bindSparkVMClients() {
+    log.info("Binding Spark VM Clients...");
+    ApplicationConfigProvider.getApplicationConfig()
+        .getTenants()
+        .forEach(
+            tenantConfig -> {
+              if (ApplicationConfigUtil.isAwsSparkCluster(tenantConfig)) {
+                String sparkVMInjectorName =
+                    ApplicationConstants.SPARK_VM_INJECTOR_NAME.apply(tenantConfig.getName());
+                bind(VMClient.class)
+                    .annotatedWith(Names.named(sparkVMInjectorName))
+                    .toInstance(new VMClientAwsImpl());
+              }
+            });
+  }
 
-    private void bindSparkKubernetesClients() {
-        log.info("Binding Spark Kubernetes Clients...");
-        ApplicationConfigProvider.getApplicationConfig()
-                .getTenants()
-                .forEach(
-                        tenantConfig -> {
-                            String clusterType = tenantConfig.getSpark().getCluster().getClusterType();
-                            boolean isKubernetes = ApplicationConfigUtil.isKubernetesSparkCluster(tenantConfig);
-                            log.info(
-                                    "Tenant: {}, clusterType: {}, isKubernetesSparkCluster: {}, kubernetes config: {}",
-                                    tenantConfig.getName(),
-                                    clusterType,
-                                    isKubernetes,
-                                    tenantConfig.getSpark().getCluster().getKubernetes() != null);
-                            if (isKubernetes) {
-                                String injectorName =
-                                        ApplicationConstants.SPARK_KUBERNETES_INJECTOR_NAME.apply(tenantConfig.getName());
-                                log.info("Binding KubernetesClient for tenant: {} with injector name: {}", tenantConfig.getName(), injectorName);
-                                bind(KubernetesClient.class)
-                                        .annotatedWith(Names.named(injectorName))
-                                        .toInstance(new KubernetesClientK8sImpl());
-                            } else {
-                                log.warn(
-                                        "Skipping Kubernetes client binding for tenant: {} - not a Kubernetes cluster",
-                                        tenantConfig.getName());
-                            }
-                        });
-    }
-  
+  private void bindSparkKubernetesClients() {
+    log.info("Binding Spark Kubernetes Clients...");
+    ApplicationConfigProvider.getApplicationConfig()
+        .getTenants()
+        .forEach(
+            tenantConfig -> {
+              String clusterType = tenantConfig.getSpark().getCluster().getClusterType();
+              boolean isKubernetes = ApplicationConfigUtil.isKubernetesSparkCluster(tenantConfig);
+              log.info(
+                  "Tenant: {}, clusterType: {}, isKubernetesSparkCluster: {}, kubernetes config: {}",
+                  tenantConfig.getName(),
+                  clusterType,
+                  isKubernetes,
+                  tenantConfig.getSpark().getCluster().getKubernetes() != null);
+              if (isKubernetes) {
+                String injectorName =
+                    ApplicationConstants.SPARK_KUBERNETES_INJECTOR_NAME.apply(
+                        tenantConfig.getName());
+                log.info(
+                    "Binding KubernetesClient for tenant: {} with injector name: {}",
+                    tenantConfig.getName(),
+                    injectorName);
+                bind(KubernetesClient.class)
+                    .annotatedWith(Names.named(injectorName))
+                    .toInstance(new KubernetesClientK8sImpl());
+              } else {
+                log.warn(
+                    "Skipping Kubernetes client binding for tenant: {} - not a Kubernetes cluster",
+                    tenantConfig.getName());
+              }
+            });
+  }
+
   private void bindKafkaClients() {
     log.info("Binding Kafka Clients...");
     // Bind factory interfaces for each Kafka client type
