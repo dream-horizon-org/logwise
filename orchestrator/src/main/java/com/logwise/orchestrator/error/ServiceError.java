@@ -20,7 +20,8 @@ public enum ServiceError implements RestError {
       "LogCentralOrchestrator:IGNORE_SPARK_SCALING", "Ignoring spark scaling: %s", 500),
   QUERY_EXECUTION_FAILED(
       "LogCentralOrchestrator:QUERY_EXECUTION_FAILED", "Failed to execute query: %s", 500),
-  INVALID_REQUEST_ERROR("LogCentralOrchestrator:INVALID_REQUEST_ERROR", "Invalid Request: %s", 400);
+  INVALID_REQUEST_ERROR("LogCentralOrchestrator:INVALID_REQUEST_ERROR", "Invalid Request: %s", 400),
+  INVALID_KAFKA_TYPE("LogCentralOrchestrator:INVALID_KAFKA_TYPE", "Invalid Kafka type: %s", 400);
 
   String errorCode;
   String errorMessage;

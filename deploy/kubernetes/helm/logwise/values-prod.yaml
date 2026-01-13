@@ -1,0 +1,100 @@
+# Production environment values
+# This file overrides values.yaml for production deployments
+
+# Use ClusterIP services (or LoadBalancer if needed)
+services:
+  type: ClusterIP
+
+# Production resources - higher limits
+orchestrator:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+spark:
+  master:
+    resources:
+      requests:
+        cpu: "1000m"
+        memory: "2Gi"
+      limits:
+        cpu: "2000m"
+        memory: "4Gi"
+  worker:
+    replicas: 3
+    resources:
+      requests:
+        cpu: "1000m"
+        memory: "4Gi"
+      limits:
+        cpu: "4000m"
+        memory: "8Gi"
+
+vector:
+  replicas: 2
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+grafana:
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+# Production environment settings
+otel:
+  serviceName: "production-service"
+  environment: "production"
+
+healthcheck:
+  environment: "production"
+
+# Enable ingress for production
+ingress:
+  enabled: true
+  className: nginx
+  orchestrator:
+    host: orchestrator.prod.example.com
+  grafana:
+    host: grafana.prod.example.com
+  sparkMaster:
+    host: spark-master.prod.example.com
+  sparkWorker:
+    host: spark-worker.prod.example.com
+
+# Use persistent volumes for production
+kafka:
+  storage:
+    type: persistentVolumeClaim
+    size: "50Gi"
+
+mysql:
+  orchestrator:
+    storage:
+      type: persistentVolumeClaim
+      size: "20Gi"
+  grafana:
+    storage:
+      type: persistentVolumeClaim
+      size: "20Gi"
+
+# Image pull policy for remote registry
+global:
+  imagePullPolicy: Always
+
+# Production Kafka settings
+kafka:
+  logRetentionHours: "168"  # 7 days
+  replicas: 3  # For high availability

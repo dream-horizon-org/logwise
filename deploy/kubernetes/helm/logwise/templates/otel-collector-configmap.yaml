@@ -1,0 +1,66 @@
+{{- if .Values.components.otel.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: {{ include "logwise.namespace" . }}
+data:
+  otel-config.yaml: |
+    extensions:
+      file_storage:
+        directory: /var/lib/otelcol
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    receivers:
+      filelog/app:
+        include: [ /var/log/app/*.log, /var/log/app/*.log.gz ]
+        start_at: beginning
+        storage: file_storage
+
+    processors:
+      resource:
+        attributes:
+          - key: service_name
+            value: ${env:SERVICE_NAME}
+            action: upsert
+
+      memory_limiter:
+        limit_mib: 1500
+        spike_limit_mib: 500
+        check_interval: 5s
+
+      batch:
+        timeout: 10s
+        send_batch_size: 1024
+        send_batch_max_size: 2048
+
+    exporters:
+      otlphttp:
+        # Send logs to Vector inside the logwise namespace
+        endpoint: "http://vector-logs.{{ include "logwise.namespace" . }}.svc.cluster.local:4318"
+        compression: gzip
+        timeout: 30s
+        retry_on_failure:
+          enabled: true
+          initial_interval: 1s
+          max_interval: 30s
+          max_elapsed_time: 300s
+          multiplier: 2.0
+        sending_queue:
+          enabled: true
+          storage: file_storage
+          num_consumers: 10
+          queue_size: 1000
+
+      debug:
+        verbosity: detailed
+
+    service:
+      extensions: [file_storage, health_check]
+      pipelines:
+        logs:
+          receivers: [filelog/app]
+          processors: [resource, memory_limiter, batch]
+          exporters: [otlphttp, debug]
+{{- end }}

@@ -1,5 +1,6 @@
 package com.logwise.orchestrator.module;
 
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import com.logwise.orchestrator.client.AsgClient;
 import com.logwise.orchestrator.client.KubernetesClient;
@@ -9,6 +10,9 @@ import com.logwise.orchestrator.client.impl.AsgClientAwsImpl;
 import com.logwise.orchestrator.client.impl.KubernetesClientK8sImpl;
 import com.logwise.orchestrator.client.impl.ObjectStoreAwsImpl;
 import com.logwise.orchestrator.client.impl.VMClientAwsImpl;
+import com.logwise.orchestrator.client.kafka.ConfluentKafkaClient;
+import com.logwise.orchestrator.client.kafka.Ec2KafkaClient;
+import com.logwise.orchestrator.client.kafka.MskKafkaClient;
 import com.logwise.orchestrator.common.guice.VertxAbstractModule;
 import com.logwise.orchestrator.config.ApplicationConfigProvider;
 import com.logwise.orchestrator.constant.ApplicationConstants;
@@ -26,6 +30,7 @@ public class ClientModule extends VertxAbstractModule {
     protected void bindConfiguration() {
         log.info("Binding Client Modules Configuration...");
         bindObjectStoreClients();
+        bindKafkaClients();
         bindSparkVMClients();
         bindSparkAsgClients();
         bindSparkKubernetesClients();
@@ -111,4 +116,25 @@ public class ClientModule extends VertxAbstractModule {
                             }
                         });
     }
+  
+  private void bindKafkaClients() {
+    log.info("Binding Kafka Clients...");
+    // Bind factory interfaces for each Kafka client type
+    install(
+        new FactoryModuleBuilder()
+            .implement(Ec2KafkaClient.class, Ec2KafkaClient.class)
+            .build(Ec2KafkaClient.Factory.class));
+
+    install(
+        new FactoryModuleBuilder()
+            .implement(MskKafkaClient.class, MskKafkaClient.class)
+            .build(MskKafkaClient.Factory.class));
+
+    install(
+        new FactoryModuleBuilder()
+            .implement(ConfluentKafkaClient.class, ConfluentKafkaClient.class)
+            .build(ConfluentKafkaClient.Factory.class));
+
+    // KafkaClientFactory will be automatically bound by Guice
+  }
 }
