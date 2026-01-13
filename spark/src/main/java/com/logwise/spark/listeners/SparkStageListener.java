@@ -2,7 +2,9 @@ package com.logwise.spark.listeners;
 
 import com.google.inject.Inject;
 import com.logwise.spark.constants.Constants;
+import com.logwise.spark.dto.entity.SparkStageHistory;
 import com.logwise.spark.jobs.impl.PushLogsToS3SparkJob;
+import com.logwise.spark.services.SparkScaleService;
 import com.logwise.spark.singleton.CurrentSparkSession;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +25,7 @@ import scala.Option;
 @Slf4j
 @RequiredArgsConstructor(onConstructor = @__({@Inject}))
 public class SparkStageListener extends SparkListener {
+  private final SparkScaleService sparkScaleService;
 
   private static class StageMetrics {
     Long inputRecords = 0L;
@@ -150,6 +153,21 @@ public class SparkStageListener extends SparkListener {
         break;
       }
     }
+
+    if (sparkScaleService == null) {
+      log.info("it is null");
+    } else {
+      log.info("it is not null");
+    }
+
+    SparkStageHistory sparkStageHistory = sparkScaleService.getCurrentSparkStageHistory();
+    sparkStageHistory.setInputRecords(stageMetrics.inputRecords);
+    sparkStageHistory.setOutputBytes(stageMetrics.outputBytes);
+    sparkStageHistory.setSubmissionTime(stageMetrics.submissionTime);
+    sparkStageHistory.setCompletionTime(stageMetrics.completionTime);
+    sparkStageHistory.setStatus("succeeded");
+
+    sparkScaleService.updateStageHistory(sparkStageHistory);
     PushLogsToS3SparkJob.stopAllRunningJobs();
   }
 

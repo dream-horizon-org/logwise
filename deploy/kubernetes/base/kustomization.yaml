@@ -16,6 +16,7 @@ resources:
   - mysql/orch-mysql-init-configmap.yaml
   - mysql/orch-mysql.yaml
   - orchestrator/orchestrator.yaml
+  - orchestrator/rbac.yaml
   - mysql/grafana-mysql.yaml
   - grafana/configmap-grafana-datasources.yaml
   - grafana/configmap-grafana-dashboards-config.yaml

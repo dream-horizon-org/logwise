@@ -4,7 +4,9 @@ import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
 import com.logwise.spark.constants.Constants;
+import com.logwise.spark.dto.entity.SparkStageHistory;
 import com.logwise.spark.jobs.impl.PushLogsToS3SparkJob;
+import com.logwise.spark.services.SparkScaleService;
 import com.logwise.spark.singleton.CurrentSparkSession;
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -36,13 +38,15 @@ import scala.Option;
 public class SparkStageListenerTest {
 
   private SparkStageListener listener;
+  private SparkScaleService mockSparkScaleService;
   private Map<String, Integer> stageCompletionMap;
   private Map<String, Integer> stageSubmittedMap;
   private Set<Integer> pendingStopStageIds;
 
   @BeforeMethod
   public void setUp() throws Exception {
-    listener = new SparkStageListener();
+    mockSparkScaleService = mock(SparkScaleService.class);
+    listener = new SparkStageListener(mockSparkScaleService);
 
     // Reset static state using reflection
     stageCompletionMap = getStaticField("STAGE_COMPLETION_MAP");
@@ -168,6 +172,9 @@ public class SparkStageListenerTest {
     stageCompletionMap.put("stage2", 1);
     stageSubmittedMap.put("stage1", 1);
     stageSubmittedMap.put("stage2", 1);
+
+    SparkStageHistory mockHistory = new SparkStageHistory();
+    when(mockSparkScaleService.getCurrentSparkStageHistory()).thenReturn(mockHistory);
 
     try (MockedStatic<PushLogsToS3SparkJob> mockedJob = mockStatic(PushLogsToS3SparkJob.class)) {
       mockedJob.when(PushLogsToS3SparkJob::getStreamingQueriesCount).thenReturn(2);
