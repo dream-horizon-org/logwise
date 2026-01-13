@@ -105,13 +105,19 @@ export default defineConfig({
                     text: 'Setup Guides',
                     items: [
                         {
-                            text: 'Docker Logwise',
+                            text: 'Docker',
                             items: [
                                 { text: 'Docker Setup Guide', link: '/setup-guides/docker/index' }
                             ]
                         },
                         {
-                            text: 'Self-Host Logwise',
+                            text: 'Kubernetes',
+                            items: [
+                                { text: 'Kubernetes Setup Guide', link: '/setup-guides/kubernetes/index' }
+                            ]
+                        },
+                        {
+                            text: 'Self-Host',
                             items: [
                                 { text: 'Kafka', link: '/setup-guides/self-host/kafka-setup' },
                                 { text: 'Vector', link: '/setup-guides/self-host/vector-setup' },

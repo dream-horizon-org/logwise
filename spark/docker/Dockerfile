@@ -139,6 +139,10 @@ COPY --from=jar-downloader /tmp/jars/*.jar ${SPARK_HOME}/jars/
 RUN mkdir -p /opt/app
 COPY --from=spark-app-builder /app/target/logwise-spark-*.jar /opt/app/app.jar
 
+# Copy log4j configuration into the Spark conf directory so the driver/executors
+# can load it via file:/opt/spark/conf/log4j.properties
+COPY log4j.properties ${SPARK_HOME}/conf/log4j.properties
+
 # Setup directories and permissions in a single layer
 RUN echo "Setting up directories and permissions..." && \
     # Ensure proper permissions
@@ -149,6 +153,9 @@ RUN echo "Setting up directories and permissions..." && \
     mkdir -p ${SPARK_HOME}/conf && \
     echo "spark.worker.memory 2048m" > ${SPARK_HOME}/conf/spark-defaults.conf && \
     echo "spark.worker.cores 2" >> ${SPARK_HOME}/conf/spark-defaults.conf && \
+    echo "spark.worker.cleanup.enabled true" >> ${SPARK_HOME}/conf/spark-defaults.conf && \
+    echo "spark.worker.cleanup.interval 3600" >> ${SPARK_HOME}/conf/spark-defaults.conf && \
+    echo "spark.worker.cleanup.appDataTtl 3600" >> ${SPARK_HOME}/conf/spark-defaults.conf && \
     chown -R spark:spark ${SPARK_HOME}/conf && \
     # Create app directory for JAR files
     mkdir -p /opt/app && \

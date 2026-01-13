@@ -1,0 +1,18 @@
+# Patch to reduce otel-collector resources for local development
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: otel-collector
+  namespace: logwise
+spec:
+  template:
+    spec:
+      containers:
+      - name: otel-collector
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi

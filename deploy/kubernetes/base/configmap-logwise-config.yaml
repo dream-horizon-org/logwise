@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logwise-config
+  namespace: logwise
+data:
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_NAME: "logwise-varun-test"
+  S3_ATHENA_OUTPUT: "s3://logwise-varun-test/athena-output/"
+  ATHENA_WORKGROUP: "observability"
+  ATHENA_CATALOG: "AwsDataCatalog"
+  ATHENA_DATABASE: "logwise"
+  KAFKA_BROKERS: "kafka"
+  KAFKA_BROKERS_HOST: "kafka"
+  KAFKA_CLUSTER_ID: "9ZkYwXlQ2rBn5JcH0xA"
+  MYSQL_DATABASE: "myapp"
+  MYSQL_USER: "myapp"
+  GRAFANA_DB_HOST: "mysql"
+  GRAFANA_DB_NAME: "grafana"
+  GRAFANA_DB_USER: "grafana"
+  ORCH_PORT: "8080"
+  GRAFANA_PORT: "3000"
+  VECTOR_API_PORT: "8686"
+  VECTOR_OTLP_GRPC_PORT: "4317"
+  VECTOR_OTLP_HTTP_PORT: "4318"
+  SPARK_MASTER_HOST: "spark://spark-master:7077"
+  SPARK_JAR_PATH: "/tmp/spark.jar"
+  LOG4J_PROPERTIES_FILE_PATH: "/tmp/log4j.properties"
+  VECTOR_HOST: "vector"

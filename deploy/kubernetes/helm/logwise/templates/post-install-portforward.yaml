@@ -1,0 +1,38 @@
+{{- if .Values.services.autoPortForward }}
+---
+# Post-install hook: Instructions for port forwarding
+# This ConfigMap contains instructions that can be displayed after installation
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logwise-portforward-instructions
+  namespace: {{ include "logwise.namespace" . }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  instructions.md: |
+    # Port Forwarding Setup
+    
+    To access services on localhost (required for kind clusters), run:
+    
+    ```bash
+    # Option 1: Use the automated script
+    ./access-services.sh
+    
+    # Option 2: Manual port forwarding
+    kubectl port-forward -n {{ include "logwise.namespace" . }} svc/orchestrator 30081:8080 &
+    kubectl port-forward -n {{ include "logwise.namespace" . }} svc/grafana 30080:3000 &
+    kubectl port-forward -n {{ include "logwise.namespace" . }} svc/spark-master 30082:8080 &
+    kubectl port-forward -n {{ include "logwise.namespace" . }} svc/spark-worker-ui 30083:8081 &
+    kubectl port-forward -n {{ include "logwise.namespace" . }} svc/vector-logs 30418:4318 &
+    ```
+    
+    Access URLs:
+    - Orchestrator: http://localhost:30081
+    - Grafana: http://localhost:30080 (admin/admin)
+    - Spark Master: http://localhost:30082
+    - Spark Worker UI: http://localhost:30083
+    - Vector OTLP: http://localhost:30418
+{{- end }}

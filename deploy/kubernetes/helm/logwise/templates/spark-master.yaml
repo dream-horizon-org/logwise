@@ -1,0 +1,97 @@
+{{- if and .Values.components.spark.enabled .Values.spark.master.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app: spark-master
+spec:
+  {{- if eq .Values.services.type "NodePort" }}
+  type: NodePort
+  ports:
+    - name: job
+      port: 6066
+      targetPort: 6066
+    - name: rpc
+      port: 7077
+      targetPort: 7077
+    - name: ui
+      port: 8080
+      targetPort: 8080
+      {{- if .Values.services.nodePorts.sparkMaster }}
+      nodePort: {{ .Values.services.nodePorts.sparkMaster }}
+      {{- end }}
+  {{- else }}
+  ports:
+    - name: job
+      port: 6066
+      targetPort: 6066
+    - name: rpc
+      port: 7077
+      targetPort: 7077
+    - name: ui
+      port: 8080
+      targetPort: 8080
+  {{- end }}
+  selector:
+    app: spark-master
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-master
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app: spark-master
+spec:
+  replicas: {{ .Values.spark.master.replicas }}
+  selector:
+    matchLabels:
+      app: spark-master
+  template:
+    metadata:
+      labels:
+        app: spark-master
+    spec:
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Kafka at kafka-bootstrap:9092..."
+              until nc -z kafka-bootstrap 9092; do
+                echo "Kafka not ready, sleeping..."
+                sleep 3
+              done
+              echo "Kafka is up."
+      containers:
+        - name: spark-master
+          image: {{ include "logwise.image" (dict "root" . "repository" .Values.spark.master.image.repository "tag" .Values.spark.master.image.tag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: SPARK_MODE
+              value: "master"
+            - name: SPARK_MASTER_OPTS
+              value: {{ .Values.spark.master.masterOpts | quote }}
+            - name: SPARK_MASTER_PORT
+              value: {{ .Values.spark.master.masterPort | quote }}
+          command:
+            - bash
+            - -lc
+            - >
+              mkdir -p /opt/spark/logs &&
+              /opt/spark/bin/spark-class
+              org.apache.spark.deploy.master.Master
+              --host 0.0.0.0
+              --port {{ .Values.spark.master.masterPort }}
+              --webui-port {{ .Values.spark.master.webuiPort }}
+          ports:
+            - containerPort: {{ .Values.spark.master.masterPort | int }}
+            - containerPort: {{ .Values.spark.master.webuiPort | int }}
+          resources:
+            {{- toYaml .Values.spark.master.resources | nindent 12 }}
+{{- end }}

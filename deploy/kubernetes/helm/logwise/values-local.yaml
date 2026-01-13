@@ -1,0 +1,44 @@
+# Local development environment values
+# This file overrides values.yaml for local development (e.g., kind clusters)
+
+# Use NodePort services for easy local access
+services:
+  type: NodePort
+  nodePorts:
+    orchestrator: 30081
+    grafana: 30080
+    sparkMaster: 30082
+    sparkWorker: 30083
+    vectorOtlp: 30418
+  # Automatically set up port forwarding after installation (for kind clusters)
+  # Set to false if using kind with port mappings (kind-config.yaml)
+  # With kind-config.yaml, NodePort services work directly on localhost
+  autoPortForward: false
+
+# Reduced resources for local development
+otel:
+  serviceName: "local-service"
+  environment: "local"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+healthcheck:
+  environment: "local"
+
+# Use local image tags
+global:
+  imagePullPolicy: IfNotPresent
+
+# Disable ingress for local (using NodePort instead)
+ingress:
+  enabled: false
+
+# Override kafka config to match kustomization patch
+config:
+  kafkaBrokers: "kafka-bootstrap"
+  kafkaBrokersHost: "kafka-bootstrap"

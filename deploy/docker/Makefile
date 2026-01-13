@@ -6,28 +6,28 @@ COMPOSE := docker compose
 .PHONY: bootstrap setup up down logs ps topics list-topics spark-submit spark-rest-submit init-db teardown reset-kafka
 
 bootstrap:
-	@chmod +x ./start.sh || true
-	./start.sh
+	@chmod +x ./scripts/start.sh || true
+	./scripts/start.sh
 
 # One-click setup: bootstrap, create .env, start services, create topics
 setup:
-	@chmod +x ./setup.sh || true
-	./setup.sh
+	@chmod +x ./scripts/setup.sh || true
+	./scripts/setup.sh
 
 up:
-	$(COMPOSE) up -d --build
+	$(COMPOSE) -f docker-compose.yml up -d --build
 
 down:
-	$(COMPOSE) down
+	$(COMPOSE) -f docker-compose.yml down
 
 logs:
-	$(COMPOSE) logs -f --tail=200
+	$(COMPOSE) -f docker-compose.yml logs -f --tail=200
 
 ps:
-	$(COMPOSE) ps
+	$(COMPOSE) -f docker-compose.yml ps
 # List all Kafka topics
 list-topics:
-	$(COMPOSE) exec kafka bash -lc "kafka-topics --bootstrap-server kafka:9092 --list"
+	$(COMPOSE) -f docker-compose.yml exec kafka bash -lc "kafka-topics --bootstrap-server kafka:9092 --list"
 
 # Placeholder for DB init/migrations if needed
 init-db:
@@ -35,16 +35,16 @@ init-db:
 
 # Submit Spark job on-demand
 spark-submit:
-	$(COMPOSE) exec spark-client bash -lc \
+	$(COMPOSE) -f docker-compose.yml exec spark-client bash -lc \
 		"/opt/submit.sh"
 
 spark-rest-submit:
-	$(COMPOSE) exec spark-client bash -lc \
+	$(COMPOSE) -f docker-compose.yml exec spark-client bash -lc \
 		"/opt/rest-submit.sh"
 
 .PHONY: spark-build spark-run-jar
 
 
 teardown:
-	$(COMPOSE) down --volumes --remove-orphans
+	$(COMPOSE) -f docker-compose.yml down --volumes --remove-orphans
 
