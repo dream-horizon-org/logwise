@@ -23,12 +23,13 @@ public class CurrentSparkSessionTest {
 
   @BeforeMethod
   public void setUp() {
-    // Reset singleton instance using reflection
     resetSingleton();
+    resetApplicationInjector();
 
-    // Setup mock config for ApplicationInjector
     Map<String, Object> configMap = new HashMap<>();
     configMap.put("app.job.name", "TEST_JOB");
+    configMap.put("logCentral.orchestrator.url", "http://localhost:8080");
+    configMap.put("spark.master.host", "localhost:7077");
     Config mockConfig = ConfigFactory.parseMap(configMap);
     ApplicationInjector.initInjection(new MainModule(mockConfig));
   }

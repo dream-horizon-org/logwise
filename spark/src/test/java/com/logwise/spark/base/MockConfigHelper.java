@@ -58,6 +58,7 @@ public class MockConfigHelper {
     Map<String, Object> configMap = new HashMap<>();
     configMap.put("app.job.name", "PUSH_LOGS_TO_S3");
     configMap.put("logCentral.orchestrator.url", "http://localhost:8081");
+    configMap.put("spark.master.host", "localhost:7077");
     configMap.put("kafka.bootstrap.servers.port", "9092");
     configMap.put("tenant.name", "test-tenant");
     configMap.put("spark.streamingquery.timeout.minutes", 60);

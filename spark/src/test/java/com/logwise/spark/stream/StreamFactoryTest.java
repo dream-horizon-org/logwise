@@ -4,9 +4,13 @@ import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
 import com.google.inject.AbstractModule;
+import com.logwise.spark.clients.LogCentralOrchestratorClient;
+import com.logwise.spark.clients.SparkMasterClient;
 import com.logwise.spark.constants.StreamName;
 import com.logwise.spark.guice.injectors.ApplicationInjector;
 import com.logwise.spark.services.KafkaService;
+import com.logwise.spark.services.SparkMasterService;
+import com.logwise.spark.services.SparkScaleService;
 import com.logwise.spark.stream.impl.ApplicationLogsStreamToS3;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -39,12 +43,21 @@ public class StreamFactoryTest {
                         + "s3.path.checkpoint.application = \"/test/checkpoint\"\n"
                         + "s3.path.logs.application = \"/test/logs\"");
 
-            // Create a mock KafkaService
+            // Create mock services
             KafkaService mockKafkaService = mock(KafkaService.class);
+            SparkMasterClient mockSparkMasterClient = mock(SparkMasterClient.class);
+            LogCentralOrchestratorClient mockOrchestratorClient =
+                mock(LogCentralOrchestratorClient.class);
+            SparkMasterService mockSparkMasterService =
+                new SparkMasterService(mockSparkMasterClient);
+            SparkScaleService mockSparkScaleService =
+                new SparkScaleService(mockConfig, mockOrchestratorClient);
 
             // Bind the mocked dependencies
             bind(Config.class).toInstance(mockConfig);
             bind(KafkaService.class).toInstance(mockKafkaService);
+            bind(SparkMasterService.class).toInstance(mockSparkMasterService);
+            bind(SparkScaleService.class).toInstance(mockSparkScaleService);
           }
         };
 
