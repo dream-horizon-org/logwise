@@ -63,4 +63,10 @@ public class Constants {
   public final Map<String, String> QUERY_NAME_TO_STAGE_MAP =
       ImmutableMap.of(
           APPLICATION_LOGS_TO_S3_QUERY_NAME, "start at ApplicationLogsStreamToS3.java:57");
+
+  public final int FEIGN_DEFAULT_CONNECTION_TIMEOUT_IN_SECONDS = 5;
+  public final int FEIGN_DEFAULT_READ_TIMEOUT_IN_SECONDS = 10;
+  public final int FEIGN_DEFAULT_RETRY_COUNT = 3;
+  public final int FEIGN_DEFAULT_RETRY_MAX_PERIOD_IN_MILLIS = 3000;
+  public final int FEIGN_DEFAULT_RETRY_PERIOD_IN_MILLIS = 1000;
 }

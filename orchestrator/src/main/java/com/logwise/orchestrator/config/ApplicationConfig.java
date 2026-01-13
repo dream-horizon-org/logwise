@@ -6,6 +6,7 @@ import com.typesafe.config.Optional;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.experimental.NonFinal;
@@ -23,6 +24,7 @@ public class ApplicationConfig {
     // defaultLogsRetentionDays is used to set default retention days for service
     // logs in db while
     // onboarding
+    @NonFinal @Optional Orchestrator orchestrator;
     @NonFinal @NotNull Integer defaultLogsRetentionDays;
     // envLogsRetentionDays is used to override default retention days for service
     // logs in db
@@ -48,8 +50,6 @@ public class ApplicationConfig {
   public static class S3Config {
     @NonFinal String region;
     @NonFinal String bucket;
-    // roleArn is used for cross account access
-    @NonFinal @Optional String roleArn;
     // endpointOverride is used for localstack
     @NonFinal @Optional String endpointOverride;
   }
@@ -109,6 +109,11 @@ public class ApplicationConfig {
   }
 
   @Data
+  public static class Orchestrator {
+    @NonFinal @Optional String url;
+  }
+
+  @Data
   public static class SparkConfig {
     @NonFinal @NotNull String sparkMasterHost;
     @NonFinal @NotNull String kafkaMaxRatePerPartition;
@@ -133,6 +138,48 @@ public class ApplicationConfig {
     @NonFinal @Optional String awsSecretAccessKey;
     @NonFinal @Optional String awsSessionToken;
     @NonFinal @Optional String awsRegion;
+    @NonFinal @NotNull Integer executorCoresPerMachine;
+    @NonFinal @NotNull Integer perCoreLogsProcess;
+    @NonFinal @NotNull Integer minWorkerCount;
+    @NonFinal @NotNull Integer maxWorkerCount;
+    @NonFinal @NotNull @Valid SparkClusterConfig cluster;
+  }
+
+  @Data
+  public static class SparkClusterConfig {
+    @NonFinal @Optional String clusterType;
+    @NonFinal @Optional ApplicationConfig.AsgConfig asg;
+    @NonFinal @Optional ApplicationConfig.KubernetesConfig kubernetes;
+  }
+
+  @Data
+  public static class AsgConfig {
+    @NonFinal @Optional AsgAwsConfig aws;
+  }
+
+  @Data
+  public static class AsgAwsConfig {
+    @NonFinal @Optional String region;
+    @NonFinal @Optional String name;
+    @NonFinal @Optional String endpointOverride;
+  }
+
+  @Data
+  public static class KubernetesConfig {
+    @NonFinal @Optional String namespace;
+    @NonFinal @Optional String deploymentName;
+  }
+
+  @Data
+  @Builder
+  public static class VMConfig {
+    @NonFinal @Optional EC2Config aws;
+  }
+
+  @Data
+  @Builder
+  public static class EC2Config {
+    @NonFinal String region;
   }
 
   @Data

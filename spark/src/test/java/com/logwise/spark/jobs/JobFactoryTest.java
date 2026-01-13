@@ -28,6 +28,7 @@ public class JobFactoryTest {
 
   @BeforeMethod
   public void setUp() {
+    resetApplicationInjector();
     mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
     mockConfig = MockConfigHelper.createMinimalSparkConfig();
     ApplicationInjector.initInjection(new MainModule(mockConfig));

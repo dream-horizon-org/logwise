@@ -71,6 +71,10 @@ public class ApplicationTestConfig {
     sparkConfig.setExecutorMemory("4G");
     tenantConfig.setSpark(sparkConfig);
 
+    ApplicationConfig.Orchestrator orchestrator = new ApplicationConfig.Orchestrator();
+    orchestrator.setUrl("http://localhost:8080");
+    tenantConfig.setOrchestrator(orchestrator);
+
     ApplicationConfig.DelayMetricsConfig delayMetricsConfig =
         new ApplicationConfig.DelayMetricsConfig();
     ApplicationConfig.ApplicationDelayMetricsConfig appDelayMetricsConfig =
