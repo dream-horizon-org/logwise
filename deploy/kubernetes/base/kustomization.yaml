@@ -23,5 +23,6 @@ resources:
   - grafana/grafana.yaml
   - cron/cron-orchestrator-sync.yaml
   - healthcheck/healthcheck-dummy.yaml
+  - metrics-server/metrics-server.yaml
 
 

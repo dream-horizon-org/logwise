@@ -49,6 +49,68 @@ Before deploying Logwise on Kubernetes, ensure you have:
    - S3 Bucket Name
    - S3 Athena Output location
 
+6. **Metrics Server** (required for HPA): Automatically included in both Kustomize and Helm deployments
+   - Provides CPU and memory metrics for Horizontal Pod Autoscaler (HPA)
+   - Deployed to `kube-system` namespace
+   - For kind/local clusters: Automatically configured with `--kubelet-insecure-tls` flag
+   - For managed clusters (EKS, GKE, AKS): May already be installed; our deployment is idempotent
+
+## Metrics Server and HPA
+
+Logwise includes **Metrics Server** in both Kustomize and Helm deployments to enable Horizontal Pod Autoscaler (HPA) functionality for the Vector component.
+
+### What is Metrics Server?
+
+Metrics Server collects resource usage metrics (CPU and memory) from Kubernetes nodes and pods, and exposes them via the Metrics API. This enables:
+- **HPA** to make scaling decisions based on CPU and memory utilization
+- **kubectl top** commands to display resource usage
+- **Resource-based autoscaling** for better resource management
+
+### Automatic Installation
+
+Metrics Server is **automatically deployed** with Logwise:
+
+- **Kustomize**: Included in `base/metrics-server/` and automatically applied
+- **Helm**: Included as a template and enabled by default via `metricsServer.enabled: true`
+
+### Cluster-Specific Configuration
+
+**For kind/local clusters:**
+- Kustomize: Automatically patched with `--kubelet-insecure-tls` flag in `overlays/local/`
+- Helm: Set `metricsServer.kubeletInsecureTLS: true` in values.yaml
+
+**For managed clusters (EKS, GKE, AKS):**
+- Standard installation (no insecure-tls flag needed)
+- If Metrics Server already exists, Kubernetes handles conflicts gracefully
+
+### Verifying Metrics Server
+
+After deployment, verify Metrics Server is working:
+
+```bash
+# Check Metrics Server pod
+kubectl get pods -n kube-system | grep metrics-server
+
+# Test Metrics API
+kubectl top nodes
+kubectl top pods -n logwise
+
+# Check HPA status (should show CPU and memory metrics)
+kubectl get hpa -n logwise
+kubectl describe hpa vector-logs -n logwise
+```
+
+### Vector HPA Configuration
+
+The Vector component uses HPA with both CPU and memory metrics:
+
+- **CPU target**: 70% utilization (configurable)
+- **Memory target**: 80% utilization (configurable)
+- **Min replicas**: 1
+- **Max replicas**: 5 (configurable)
+
+HPA automatically scales Vector pods based on resource usage, ensuring optimal performance under varying load conditions.
+
 ## Choosing a Deployment Method
 
 ### Kustomize
@@ -820,10 +882,15 @@ Set up monitoring for production:
 
 The deployments support horizontal scaling:
 
-1. **Vector**: HPA enabled by default (Helm) or can be added (Kustomize)
+1. **Vector**: HPA enabled by default with CPU and memory metrics (requires Metrics Server)
+   - Automatically scales based on CPU (70% target) and memory (80% target) utilization
+   - Min replicas: 1, Max replicas: 5 (configurable)
+   - Metrics Server is automatically included in deployments
 2. **Spark Workers**: Increase replicas
 3. **Kafka**: Increase replicas (requires proper configuration)
 4. **Orchestrator**: Increase replicas (ensure shared state handling)
+
+**Note**: Vector HPA requires Metrics Server to function. Metrics Server is automatically deployed with Logwise, but if you're using a managed cluster that already has Metrics Server, ensure it's properly configured and accessible.
 
 ### Security
 
