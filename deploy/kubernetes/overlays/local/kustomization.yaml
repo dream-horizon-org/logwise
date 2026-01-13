@@ -5,8 +5,8 @@ resources:
   - ../../base
   - spark-worker-ui-service.yaml
 
-patchesStrategicMerge:
-  - services-nodeport.yaml
-  - otel-collector-resources.yaml
-  - configmap-kafka-patch.yaml
-  - metrics-server-patch.yaml
+patches:
+  - path: services-nodeport.yaml
+  - path: otel-collector-resources.yaml
+  - path: configmap-kafka-patch.yaml
+  - path: metrics-server-patch.yaml
