@@ -72,4 +72,19 @@ public class ApplicationUtils {
       return null;
     }
   }
+
+  public io.reactivex.Single<List<String>> getIpAddresses(String hostname) {
+    return executeBlockingCallable(
+            () -> {
+              try {
+                return java.util.Arrays.stream(java.net.InetAddress.getAllByName(hostname))
+                    .map(java.net.InetAddress::getHostAddress)
+                    .collect(java.util.stream.Collectors.toList());
+              } catch (java.net.UnknownHostException e) {
+                log.error("Failed to resolve hostname: {}", hostname, e);
+                throw new RuntimeException("Failed to resolve hostname: " + hostname, e);
+              }
+            })
+        .toSingle();
+  }
 }

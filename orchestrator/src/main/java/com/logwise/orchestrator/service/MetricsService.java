@@ -8,7 +8,8 @@ import com.logwise.orchestrator.dto.response.LogSyncDelayResponse;
 import com.logwise.orchestrator.enums.Tenant;
 import com.logwise.orchestrator.factory.ObjectStoreFactory;
 import com.logwise.orchestrator.util.ApplicationConfigUtil;
-import com.logwise.orchestrator.util.ApplicationUtils;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -45,32 +46,32 @@ public class MetricsService {
             config.getSpark().getLogsDir(),
             delayMetricsConfig.getApp().getSampleServiceName());
 
-    return ApplicationUtils.executeBlockingCallable(
-            () -> {
-              Integer computed = null;
-              for (String prefix : prefixList) {
-                List<String> objNames =
-                    ObjectStoreFactory.getClient(tenant).listObjects(prefix).blockingGet();
-                if (!objNames.isEmpty()) {
-                  objNames.sort(Collections.reverseOrder());
-                  Matcher matcher =
-                      Pattern.compile("hour=(\\d{2})/minute=(\\d{2})").matcher(objNames.get(0));
-                  if (matcher.find()) {
-                    int objHour = Integer.parseInt(matcher.group(1));
-                    int objMinute = Integer.parseInt(matcher.group(2));
-                    int nowHour = nowTime.getHour();
-                    int nowMinute = nowTime.getMinute();
-                    int timeDiff = (nowHour * 60 + nowMinute) - (objHour * 60 + objMinute);
-                    computed = Math.max(1, timeDiff);
-                    break;
-                  }
-                }
-              }
-              if (computed == null) {
-                computed = ApplicationConstants.MAX_LOGS_SYNC_DELAY_HOURS * 60;
-              }
-              return computed;
-            })
+    return Observable.fromIterable(prefixList)
+        .flatMapMaybe(
+            prefix ->
+                ObjectStoreFactory.getClient(tenant)
+                    .listObjects(prefix)
+                    .flatMapMaybe(
+                        objNames -> {
+                          if (!objNames.isEmpty()) {
+                            objNames.sort(Collections.reverseOrder());
+                            Matcher matcher =
+                                Pattern.compile("hour=(\\d{2})/minute=(\\d{2})")
+                                    .matcher(objNames.get(0));
+                            if (matcher.find()) {
+                              int objHour = Integer.parseInt(matcher.group(1));
+                              int objMinute = Integer.parseInt(matcher.group(2));
+                              int nowHour = nowTime.getHour();
+                              int nowMinute = nowTime.getMinute();
+                              int timeDiff =
+                                  (nowHour * 60 + nowMinute) - (objHour * 60 + objMinute);
+                              return Maybe.just(Math.max(1, timeDiff));
+                            }
+                          }
+                          return Maybe.empty();
+                        }))
+        .firstElement()
+        .defaultIfEmpty(ApplicationConstants.MAX_LOGS_SYNC_DELAY_HOURS * 60)
         .toSingle();
   }
 
