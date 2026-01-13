@@ -71,4 +71,17 @@ public class S3Utils {
         .doOnError(e -> log.error("Error occurred while copying object: {}", srcObjectKey, e))
         .ignoreElement();
   }
+
+  public Single<String> readFileContent(
+      S3AsyncClient s3AsyncClient, S3Config s3Config, String objectKey) {
+    log.debug("Reading file content from S3: {}", objectKey);
+    GetObjectRequest getObjectRequest =
+        GetObjectRequest.builder().bucket(s3Config.getBucket()).key(objectKey).build();
+    return CompletableFutureUtils.toSingle(
+            s3AsyncClient.getObject(
+                getObjectRequest,
+                software.amazon.awssdk.core.async.AsyncResponseTransformer.toBytes()))
+        .map(response -> response.asUtf8String())
+        .doOnError(e -> log.error("Error occurred while reading file: {}", objectKey, e));
+  }
 }
