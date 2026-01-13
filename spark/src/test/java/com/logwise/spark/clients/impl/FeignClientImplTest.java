@@ -3,9 +3,7 @@ package com.logwise.spark.clients.impl;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
-import com.logwise.spark.clients.FeignClient;
 import com.logwise.spark.clients.LogCentralOrchestratorClient;
-import feign.Feign;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -76,4 +74,3 @@ public class FeignClientImplTest {
     assertNotNull(client);
   }
 }
-

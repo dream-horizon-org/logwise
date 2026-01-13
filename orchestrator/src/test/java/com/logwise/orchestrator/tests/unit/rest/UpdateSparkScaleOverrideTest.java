@@ -175,4 +175,3 @@ public class UpdateSparkScaleOverrideTest extends BaseTest {
     }
   }
 }
-

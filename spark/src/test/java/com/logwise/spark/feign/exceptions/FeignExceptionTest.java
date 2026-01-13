@@ -55,7 +55,8 @@ public class FeignExceptionTest {
 
   @Test
   public void testServerErrorException_WithValidParams_CreatesException() {
-    ServerErrorException exception = new ServerErrorException(500, "Server error", "Internal error");
+    ServerErrorException exception =
+        new ServerErrorException(500, "Server error", "Internal error");
 
     assertNotNull(exception);
     assertTrue(exception.getMessage().contains("500"));
@@ -90,4 +91,3 @@ public class FeignExceptionTest {
     assertTrue(exception504.getMessage().contains("504"));
   }
 }
-

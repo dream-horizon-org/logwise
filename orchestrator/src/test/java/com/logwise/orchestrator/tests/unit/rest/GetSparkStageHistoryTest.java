@@ -54,9 +54,8 @@ public class GetSparkStageHistoryTest extends BaseTest {
     history1.setInputRecords(1000L);
     historyList.add(history1);
 
-    GetSparkStageHistoryResponse response = GetSparkStageHistoryResponse.builder()
-        .sparkStageHistory(historyList)
-        .build();
+    GetSparkStageHistoryResponse response =
+        GetSparkStageHistoryResponse.builder().sparkStageHistory(historyList).build();
 
     when(mockSparkService.getSparkStageHistory(eq(tenant), eq(limit)))
         .thenReturn(Single.just(response));
@@ -92,9 +91,8 @@ public class GetSparkStageHistoryTest extends BaseTest {
     String tenantName = tenant.getValue();
     int limit = 10;
 
-    GetSparkStageHistoryResponse response = GetSparkStageHistoryResponse.builder()
-        .sparkStageHistory(new ArrayList<>())
-        .build();
+    GetSparkStageHistoryResponse response =
+        GetSparkStageHistoryResponse.builder().sparkStageHistory(new ArrayList<>()).build();
 
     when(mockSparkService.getSparkStageHistory(eq(tenant), eq(limit)))
         .thenReturn(Single.just(response));
@@ -156,4 +154,3 @@ public class GetSparkStageHistoryTest extends BaseTest {
     }
   }
 }
-

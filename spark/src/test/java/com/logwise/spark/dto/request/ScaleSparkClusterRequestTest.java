@@ -10,10 +10,10 @@ public class ScaleSparkClusterRequestTest {
   @Test
   public void testSettersAndGetters_WorkCorrectly() {
     ScaleSparkClusterRequest request = new ScaleSparkClusterRequest();
-    
+
     request.setEnableUpScale(true);
     request.setEnableDownScale(false);
-    
+
     SparkStageHistory history = new SparkStageHistory();
     history.setTenant("ABC");
     history.setInputRecords(1000L);
@@ -28,7 +28,7 @@ public class ScaleSparkClusterRequestTest {
   @Test
   public void testSettersAndGetters_WithNullValues_HandlesGracefully() {
     ScaleSparkClusterRequest request = new ScaleSparkClusterRequest();
-    
+
     request.setEnableUpScale(null);
     request.setEnableDownScale(null);
     request.setSparkStageHistory(null);
@@ -41,7 +41,7 @@ public class ScaleSparkClusterRequestTest {
   @Test
   public void testSettersAndGetters_WithBothFlagsEnabled() {
     ScaleSparkClusterRequest request = new ScaleSparkClusterRequest();
-    
+
     request.setEnableUpScale(true);
     request.setEnableDownScale(true);
 
@@ -52,7 +52,7 @@ public class ScaleSparkClusterRequestTest {
   @Test
   public void testSettersAndGetters_WithBothFlagsDisabled() {
     ScaleSparkClusterRequest request = new ScaleSparkClusterRequest();
-    
+
     request.setEnableUpScale(false);
     request.setEnableDownScale(false);
 
@@ -60,4 +60,3 @@ public class ScaleSparkClusterRequestTest {
     assertFalse(request.getEnableDownScale());
   }
 }
-

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logwise.orchestrator.config.ApplicationConfig;
 import com.logwise.orchestrator.dao.SparkScaleOverrideDao;
 import com.logwise.orchestrator.dao.SparkStageHistoryDao;
-import com.logwise.orchestrator.dto.entity.SparkScaleArgs;
 import com.logwise.orchestrator.dto.entity.SparkScaleOverride;
 import com.logwise.orchestrator.dto.entity.SparkStageHistory;
 import com.logwise.orchestrator.dto.request.SubmitSparkJobRequest;
@@ -15,7 +14,6 @@ import com.logwise.orchestrator.dto.request.UpdateSparkScaleOverrideRequest;
 import com.logwise.orchestrator.dto.response.GetSparkStageHistoryResponse;
 import com.logwise.orchestrator.dto.response.SparkMasterJsonResponse;
 import com.logwise.orchestrator.dto.response.SparkMasterJsonResponse.Driver;
-import com.logwise.orchestrator.dto.response.SparkMasterJsonResponse.Worker;
 import com.logwise.orchestrator.enums.Tenant;
 import com.logwise.orchestrator.service.SparkService;
 import com.logwise.orchestrator.setup.BaseTest;
@@ -673,7 +671,8 @@ public class SparkServiceTest extends BaseTest {
     Assert.assertNotNull(response);
     Assert.assertNotNull(response.getSparkStageHistory());
     Assert.assertEquals(response.getSparkStageHistory().size(), 1);
-    verify(mockSparkStageHistoryDao, times(1)).getSparkStageHistory(eq(tenant), eq(limit), eq(false));
+    verify(mockSparkStageHistoryDao, times(1))
+        .getSparkStageHistory(eq(tenant), eq(limit), eq(false));
   }
 
   @Test
@@ -689,7 +688,8 @@ public class SparkServiceTest extends BaseTest {
     Completable result = sparkService.updateSparkScaleOverride(tenant, request);
     result.blockingAwait();
 
-    verify(mockSparkScaleOverrideDao, times(1)).updateSparkScaleOverride(any(SparkScaleOverride.class));
+    verify(mockSparkScaleOverrideDao, times(1))
+        .updateSparkScaleOverride(any(SparkScaleOverride.class));
   }
 
   @Test
@@ -793,7 +793,6 @@ public class SparkServiceTest extends BaseTest {
     Assert.assertNull(result);
   }
 
-
   @Test
   public void testProcessSparkScaling_WithInsufficientHistory_CompletesWithoutScaling() {
     Tenant tenant = Tenant.ABC;
@@ -848,7 +847,7 @@ public class SparkServiceTest extends BaseTest {
       }
 
       Completable result = sparkService.scaleSpark(tenant, true, true);
-      
+
       try {
         result.blockingAwait();
       } catch (Exception e) {

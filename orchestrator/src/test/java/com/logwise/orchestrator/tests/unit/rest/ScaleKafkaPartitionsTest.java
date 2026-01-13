@@ -36,18 +36,18 @@ public class ScaleKafkaPartitionsTest {
     String tenantName = tenant.getValue();
     ScaleKafkaPartitionsRequest request = new ScaleKafkaPartitionsRequest();
 
-    ScalingDecision decision = ScalingDecision.builder()
-        .topic("test-topic")
-        .currentPartitions(3)
-        .newPartitions(6)
-        .reason("lag threshold exceeded")
-        .factors(Collections.singletonList("lag"))
-        .build();
+    ScalingDecision decision =
+        ScalingDecision.builder()
+            .topic("test-topic")
+            .currentPartitions(3)
+            .newPartitions(6)
+            .reason("lag threshold exceeded")
+            .factors(Collections.singletonList("lag"))
+            .build();
 
     List<ScalingDecision> decisions = Collections.singletonList(decision);
 
-    when(mockKafkaService.scaleKafkaPartitions(eq(tenant)))
-        .thenReturn(Single.just(decisions));
+    when(mockKafkaService.scaleKafkaPartitions(eq(tenant))).thenReturn(Single.just(decisions));
 
     CompletionStage<Response<ScaleKafkaPartitionsResponse>> future =
         scaleKafkaPartitions.scalePartitions(tenantName, request);
@@ -111,8 +111,7 @@ public class ScaleKafkaPartitionsTest {
     ScaleKafkaPartitionsRequest request = new ScaleKafkaPartitionsRequest();
 
     RuntimeException serviceError = new RuntimeException("Kafka service error");
-    when(mockKafkaService.scaleKafkaPartitions(eq(tenant)))
-        .thenReturn(Single.error(serviceError));
+    when(mockKafkaService.scaleKafkaPartitions(eq(tenant))).thenReturn(Single.error(serviceError));
 
     CompletionStage<Response<ScaleKafkaPartitionsResponse>> future =
         scaleKafkaPartitions.scalePartitions(tenantName, request);
@@ -150,23 +149,24 @@ public class ScaleKafkaPartitionsTest {
     ScaleKafkaPartitionsRequest request = new ScaleKafkaPartitionsRequest();
 
     List<ScalingDecision> decisions = new ArrayList<>();
-    decisions.add(ScalingDecision.builder()
-        .topic("topic1")
-        .currentPartitions(3)
-        .newPartitions(6)
-        .reason("lag")
-        .factors(Collections.singletonList("lag"))
-        .build());
-    decisions.add(ScalingDecision.builder()
-        .topic("topic2")
-        .currentPartitions(5)
-        .newPartitions(10)
-        .reason("size")
-        .factors(Collections.singletonList("size"))
-        .build());
+    decisions.add(
+        ScalingDecision.builder()
+            .topic("topic1")
+            .currentPartitions(3)
+            .newPartitions(6)
+            .reason("lag")
+            .factors(Collections.singletonList("lag"))
+            .build());
+    decisions.add(
+        ScalingDecision.builder()
+            .topic("topic2")
+            .currentPartitions(5)
+            .newPartitions(10)
+            .reason("size")
+            .factors(Collections.singletonList("size"))
+            .build());
 
-    when(mockKafkaService.scaleKafkaPartitions(eq(tenant)))
-        .thenReturn(Single.just(decisions));
+    when(mockKafkaService.scaleKafkaPartitions(eq(tenant))).thenReturn(Single.just(decisions));
 
     CompletionStage<Response<ScaleKafkaPartitionsResponse>> future =
         scaleKafkaPartitions.scalePartitions(tenantName, request);
@@ -181,4 +181,3 @@ public class ScaleKafkaPartitionsTest {
     Assert.assertEquals(response.getHttpStatusCode(), 200);
   }
 }
-

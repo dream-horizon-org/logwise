@@ -10,7 +10,7 @@ public class SparkStageHistoryTest {
   public void testCompareTo_WithEarlierSubmissionTime_ReturnsNegative() {
     SparkStageHistory history1 = new SparkStageHistory();
     history1.setSubmissionTime(1000L);
-    
+
     SparkStageHistory history2 = new SparkStageHistory();
     history2.setSubmissionTime(2000L);
 
@@ -23,7 +23,7 @@ public class SparkStageHistoryTest {
   public void testCompareTo_WithLaterSubmissionTime_ReturnsPositive() {
     SparkStageHistory history1 = new SparkStageHistory();
     history1.setSubmissionTime(2000L);
-    
+
     SparkStageHistory history2 = new SparkStageHistory();
     history2.setSubmissionTime(1000L);
 
@@ -36,7 +36,7 @@ public class SparkStageHistoryTest {
   public void testCompareTo_WithSameSubmissionTime_ReturnsZero() {
     SparkStageHistory history1 = new SparkStageHistory();
     history1.setSubmissionTime(1000L);
-    
+
     SparkStageHistory history2 = new SparkStageHistory();
     history2.setSubmissionTime(1000L);
 
@@ -49,7 +49,7 @@ public class SparkStageHistoryTest {
   public void testCompareTo_WithNullSubmissionTime_HandlesGracefully() {
     SparkStageHistory history1 = new SparkStageHistory();
     history1.setSubmissionTime(null);
-    
+
     SparkStageHistory history2 = new SparkStageHistory();
     history2.setSubmissionTime(1000L);
 
@@ -66,7 +66,7 @@ public class SparkStageHistoryTest {
   @Test
   public void testSettersAndGetters_WorkCorrectly() {
     SparkStageHistory history = new SparkStageHistory();
-    
+
     history.setOutputBytes(1000L);
     history.setInputRecords(500L);
     history.setSubmissionTime(1000000L);
@@ -84,4 +84,3 @@ public class SparkStageHistoryTest {
     assertEquals(history.getTenant(), "ABC");
   }
 }
-

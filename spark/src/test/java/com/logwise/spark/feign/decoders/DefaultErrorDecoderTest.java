@@ -124,8 +124,9 @@ public class DefaultErrorDecoderTest {
         .reason(reason != null ? reason : "")
         .headers(new HashMap<>())
         .body(body != null ? body.getBytes() : new byte[0])
-        .request(Request.create(Request.HttpMethod.GET, "http://example.com", new HashMap<>(), null, null, null))
+        .request(
+            Request.create(
+                Request.HttpMethod.GET, "http://example.com", new HashMap<>(), null, null, null))
         .build();
   }
 }
-
