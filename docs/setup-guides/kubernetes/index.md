@@ -49,67 +49,21 @@ Before deploying Logwise on Kubernetes, ensure you have:
    - S3 Bucket Name
    - S3 Athena Output location
 
-6. **Metrics Server** (required for HPA): Automatically included in both Kustomize and Helm deployments
+6. **Docker** (required for non-prod/prod): For building and pushing images to container registry
+   - Docker Engine or Docker Desktop installed
+   - Authenticated access to your container registry (ECR, Docker Hub, GHCR, GCR, etc.)
+   - For local development with kind: Docker is required to build and load images
+
+7. **Container Registry Access** (required for non-prod/prod): Access to push images
+   - **Non-production/Production**: Must build and push images to registry before deployment
+   - **Local development**: Can use local images or load directly into kind (no registry needed)
+   - Supported registries: AWS ECR, Docker Hub, GitHub Container Registry (GHCR), Google Container Registry (GCR), Azure Container Registry (ACR)
+
+8. **Metrics Server** (required for HPA): Automatically included in both Kustomize and Helm deployments
    - Provides CPU and memory metrics for Horizontal Pod Autoscaler (HPA)
    - Deployed to `kube-system` namespace
    - For kind/local clusters: Automatically configured with `--kubelet-insecure-tls` flag
    - For managed clusters (EKS, GKE, AKS): May already be installed; our deployment is idempotent
-
-## Metrics Server and HPA
-
-Logwise includes **Metrics Server** in both Kustomize and Helm deployments to enable Horizontal Pod Autoscaler (HPA) functionality for the Vector component.
-
-### What is Metrics Server?
-
-Metrics Server collects resource usage metrics (CPU and memory) from Kubernetes nodes and pods, and exposes them via the Metrics API. This enables:
-- **HPA** to make scaling decisions based on CPU and memory utilization
-- **kubectl top** commands to display resource usage
-- **Resource-based autoscaling** for better resource management
-
-### Automatic Installation
-
-Metrics Server is **automatically deployed** with Logwise:
-
-- **Kustomize**: Included in `base/metrics-server/` and automatically applied
-- **Helm**: Included as a template and enabled by default via `metricsServer.enabled: true`
-
-### Cluster-Specific Configuration
-
-**For kind/local clusters:**
-- Kustomize: Automatically patched with `--kubelet-insecure-tls` flag in `overlays/local/`
-- Helm: Set `metricsServer.kubeletInsecureTLS: true` in values.yaml
-
-**For managed clusters (EKS, GKE, AKS):**
-- Standard installation (no insecure-tls flag needed)
-- If Metrics Server already exists, Kubernetes handles conflicts gracefully
-
-### Verifying Metrics Server
-
-After deployment, verify Metrics Server is working:
-
-```bash
-# Check Metrics Server pod
-kubectl get pods -n kube-system | grep metrics-server
-
-# Test Metrics API
-kubectl top nodes
-kubectl top pods -n logwise
-
-# Check HPA status (should show CPU and memory metrics)
-kubectl get hpa -n logwise
-kubectl describe hpa vector-logs -n logwise
-```
-
-### Vector HPA Configuration
-
-The Vector component uses HPA with both CPU and memory metrics:
-
-- **CPU target**: 70% utilization (configurable)
-- **Memory target**: 80% utilization (configurable)
-- **Min replicas**: 1
-- **Max replicas**: 5 (configurable)
-
-HPA automatically scales Vector pods based on resource usage, ensuring optimal performance under varying load conditions.
 
 ## Choosing a Deployment Method
 
@@ -193,6 +147,133 @@ deploy/kubernetes/
    kubectl get services -n logwise
    ```
 
+### Building and Pushing Images
+
+**Important:** For **non-production** and **production** environments, you must build and push Docker images to a container registry before deployment. Local development with kind can load images directly without a registry.
+
+#### For Non-Production and Production
+
+**Step 1: Authenticate with Container Registry**
+
+Choose your registry and authenticate:
+
+**AWS ECR:**
+```bash
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin \
+  123456789012.dkr.ecr.us-east-1.amazonaws.com
+```
+
+**Docker Hub:**
+```bash
+docker login --username your-username
+# Or with password
+echo "your-password" | docker login --username your-username --password-stdin
+```
+
+**GitHub Container Registry (GHCR):**
+```bash
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u your-username --password-stdin
+```
+
+**Google Container Registry (GCR):**
+```bash
+gcloud auth configure-docker
+```
+
+**Step 2: Build and Push Images**
+
+Use the build-and-push script to build all required images and push them to your registry:
+
+```bash
+cd deploy/kubernetes/scripts
+
+# For non-production
+ENV=nonprod \
+  REGISTRY=ghcr.io/your-org \
+  TAG=1.0.0 \
+  ./build-and-push.sh
+
+# For production (use semantic versioning)
+ENV=prod \
+  REGISTRY=ghcr.io/your-org \
+  TAG=v1.2.3 \
+  ./build-and-push.sh
+```
+
+**What gets built:**
+- `logwise-orchestrator`
+- `logwise-spark`
+- `logwise-vector`
+- `logwise-healthcheck-dummy`
+
+**Registry Formats:**
+- **ECR**: `123456789012.dkr.ecr.us-east-1.amazonaws.com`
+- **Docker Hub**: `dockerhub` (requires `DOCKERHUB_USERNAME` environment variable)
+- **GHCR**: `ghcr.io/your-org`
+- **GCR**: `gcr.io/project-id`
+- **ACR**: `your-registry.azurecr.io`
+
+**Step 3: Configure Image Pull Secrets (if using private registry)**
+
+Create Kubernetes secrets for your registry:
+
+**For ECR:**
+```bash
+kubectl create secret docker-registry ecr-secret \
+  --docker-server=123456789012.dkr.ecr.us-east-1.amazonaws.com \
+  --docker-username=AWS \
+  --docker-password=$(aws ecr get-login-password --region us-east-1) \
+  -n logwise
+```
+
+**For Docker Hub:**
+```bash
+kubectl create secret docker-registry dockerhub-secret \
+  --docker-server=docker.io \
+  --docker-username=your-username \
+  --docker-password=your-password \
+  --docker-email=your-email@example.com \
+  -n logwise
+```
+
+**For GHCR:**
+```bash
+kubectl create secret docker-registry ghcr-secret \
+  --docker-server=ghcr.io \
+  --docker-username=your-username \
+  --docker-password=$GITHUB_TOKEN \
+  --docker-email=your-email@example.com \
+  -n logwise
+```
+
+**Step 4: Update Kustomize Overlay with Image References**
+
+After pushing images, update your overlay to use the registry images:
+
+```bash
+cd deploy/kubernetes/overlays/nonprod  # or prod
+
+# Update images in kustomization.yaml
+kustomize edit set image logwise-orchestrator=ghcr.io/your-org/logwise-orchestrator:1.0.0
+kustomize edit set image logwise-spark=ghcr.io/your-org/logwise-spark:1.0.0
+kustomize edit set image logwise-vector=ghcr.io/your-org/logwise-vector:1.0.0
+kustomize edit set image logwise-healthcheck-dummy=ghcr.io/your-org/logwise-healthcheck-dummy:1.0.0
+```
+
+**Note:** The nonprod and prod overlays include patches that set `imagePullPolicy: Always` and reference image pull secrets. Ensure your secret name matches the one configured in the overlay patches.
+
+#### For Local Development (kind)
+
+For local development with kind, images are loaded directly into the cluster (no registry needed):
+
+```bash
+cd deploy/kubernetes/scripts
+ENV=local CLUSTER_TYPE=kind TAG=latest ./build-and-push.sh
+```
+
+This builds images locally and loads them into the kind cluster automatically.
+
 ### Environment-Specific Deployments
 
 #### Local Development
@@ -201,6 +282,7 @@ The `local` overlay includes:
 - NodePort services for easy access
 - Reduced resource limits
 - Ephemeral storage (emptyDir)
+- Images loaded directly into kind (no registry)
 
 ```bash
 cd deploy/kubernetes/overlays/local
@@ -213,6 +295,13 @@ The `nonprod` overlay includes:
 - Standard resource configurations
 - ClusterIP services (use ingress or port-forward)
 - Example ingress configurations
+- **Requires images to be pushed to registry first** (see Building and Pushing Images above)
+
+**Deployment steps:**
+1. Build and push images to registry (see above)
+2. Create image pull secrets (if private registry)
+3. Update overlay with image references
+4. Deploy:
 
 ```bash
 cd deploy/kubernetes/overlays/nonprod
@@ -226,12 +315,20 @@ The `prod` overlay includes:
 - Persistent volumes for data
 - Anti-affinity rules for high availability
 - Pod disruption budgets
-- Image registry configuration
+- **Requires images to be pushed to registry first** (see Building and Pushing Images above)
+
+**Deployment steps:**
+1. Build and push images to registry with version tag (see above)
+2. Create image pull secrets (if private registry)
+3. Update overlay with image references
+4. Deploy:
 
 ```bash
 cd deploy/kubernetes/overlays/prod
 kubectl apply -k .
 ```
+
+**Important:** Always use semantic versioning tags (e.g., `v1.2.3`) for production. Never use `latest` tag in production.
 
 ### Customizing with Kustomize
 
@@ -364,10 +461,10 @@ Helm provides a templated approach to deploying Logwise with parameterized value
    ```
 
 4. **Access services**:
-   - Orchestrator: http://localhost:30081
-   - Grafana: http://localhost:30080 (admin/admin)
-   - Spark Master: http://localhost:30082
-   - Spark Worker UI: http://localhost:30083
+   - Orchestrator: `http://localhost:30081`
+   - Grafana: `http://localhost:30080` (admin/admin)
+   - Spark Master: `http://localhost:30082`
+   - Spark Worker UI: `http://localhost:30083`
 
 ### Installation Methods
 
@@ -438,12 +535,26 @@ Configuration for staging/development:
 - Ingress enabled with example hosts
 - Standard resource configuration
 - Image pull policy: Always
+- **Requires images to be pushed to registry first** (see Building and Pushing Images above)
+
+**Deployment steps:**
+1. Build and push images to registry (see Building and Pushing Images above)
+2. Create image pull secrets (if private registry)
+3. Configure image registry in values file or via --set flags
+4. Deploy:
 
 ```bash
 helm install logwise . \
   --namespace logwise \
   --create-namespace \
-  --values values-nonprod.yaml
+  --values values-nonprod.yaml \
+  --set global.imageRegistry=ghcr.io/your-org \
+  --set global.imagePullSecrets[0].name=ghcr-secret \
+  --set images.orchestrator.tag=1.0.0 \
+  --set images.spark.tag=1.0.0 \
+  --set images.vector.tag=1.0.0 \
+  --set aws.accessKeyId=KEY \
+  --set aws.secretAccessKey=SECRET
 ```
 
 #### Production (`values-prod.yaml`)
@@ -454,15 +565,29 @@ Production-ready configuration:
 - Persistent volumes for data persistence
 - Kafka: 3 replicas, 7-day log retention
 - Ingress enabled with production hosts
+- **Requires images to be pushed to registry first** (see Building and Pushing Images above)
+
+**Deployment steps:**
+1. Build and push images to registry with version tag (see Building and Pushing Images above)
+2. Create image pull secrets (if private registry)
+3. Configure image registry in values file or via --set flags
+4. Deploy:
 
 ```bash
 helm install logwise . \
   --namespace logwise \
   --create-namespace \
   --values values-prod.yaml \
+  --set global.imageRegistry=ghcr.io/your-org \
+  --set global.imagePullSecrets[0].name=ghcr-secret \
+  --set images.orchestrator.tag=v1.2.3 \
+  --set images.spark.tag=v1.2.3 \
+  --set images.vector.tag=v1.2.3 \
   --set aws.accessKeyId=KEY \
   --set aws.secretAccessKey=SECRET
 ```
+
+**Important:** Always use semantic versioning tags (e.g., `v1.2.3`) for production. Never use `latest` tag in production.
 
 ### Key Configuration Sections
 
@@ -554,7 +679,162 @@ You can override values in multiple ways:
    helm install logwise . --set-file aws.secretAccessKey=./secret.txt
    ```
 
-For detailed Helm configuration options, see the [Helm Chart README](../../deploy/kubernetes/helm/logwise/README.md).
+
+### Building and Pushing Images
+
+**Important:** For **non-production** and **production** environments, you must build and push Docker images to a container registry before deployment. Local development can use local images or load into kind.
+
+#### For Non-Production and Production
+
+**Step 1: Authenticate with Container Registry**
+
+Choose your registry and authenticate:
+
+**AWS ECR:**
+```bash
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin \
+  123456789012.dkr.ecr.us-east-1.amazonaws.com
+```
+
+**Docker Hub:**
+```bash
+docker login --username your-username
+# Or with password
+echo "your-password" | docker login --username your-username --password-stdin
+```
+
+**GitHub Container Registry (GHCR):**
+```bash
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u your-username --password-stdin
+```
+
+**Google Container Registry (GCR):**
+```bash
+gcloud auth configure-docker
+```
+
+**Step 2: Build and Push Images**
+
+Use the build-and-push script to build all required images and push them to your registry:
+
+```bash
+cd deploy/kubernetes/scripts
+
+# For non-production
+ENV=nonprod \
+  REGISTRY=ghcr.io/your-org \
+  TAG=1.0.0 \
+  ./build-and-push.sh
+
+# For production (use semantic versioning)
+ENV=prod \
+  REGISTRY=ghcr.io/your-org \
+  TAG=v1.2.3 \
+  ./build-and-push.sh
+```
+
+**What gets built:**
+- `logwise-orchestrator`
+- `logwise-spark`
+- `logwise-vector`
+- `logwise-healthcheck-dummy`
+
+**Registry Formats:**
+- **ECR**: `123456789012.dkr.ecr.us-east-1.amazonaws.com`
+- **Docker Hub**: `dockerhub` (requires `DOCKERHUB_USERNAME` environment variable)
+- **GHCR**: `ghcr.io/your-org`
+- **GCR**: `gcr.io/project-id`
+- **ACR**: `your-registry.azurecr.io`
+
+**Step 3: Configure Image Pull Secrets (if using private registry)**
+
+Create Kubernetes secrets for your registry:
+
+**For ECR:**
+```bash
+kubectl create secret docker-registry ecr-secret \
+  --docker-server=123456789012.dkr.ecr.us-east-1.amazonaws.com \
+  --docker-username=AWS \
+  --docker-password=$(aws ecr get-login-password --region us-east-1) \
+  -n logwise
+```
+
+**For Docker Hub:**
+```bash
+kubectl create secret docker-registry dockerhub-secret \
+  --docker-server=docker.io \
+  --docker-username=your-username \
+  --docker-password=your-password \
+  --docker-email=your-email@example.com \
+  -n logwise
+```
+
+**For GHCR:**
+```bash
+kubectl create secret docker-registry ghcr-secret \
+  --docker-server=ghcr.io \
+  --docker-username=your-username \
+  --docker-password=$GITHUB_TOKEN \
+  --docker-email=your-email@example.com \
+  -n logwise
+```
+
+**Step 4: Configure Helm Values with Image Registry**
+
+Update your Helm values file (`values-nonprod.yaml` or `values-prod.yaml`) with the registry and image pull secrets:
+
+```yaml
+global:
+  imageRegistry: ghcr.io/your-org
+  imagePullSecrets:
+    - name: ghcr-secret  # or ecr-secret, dockerhub-secret, etc.
+  imagePullPolicy: Always
+
+images:
+  orchestrator:
+    repository: logwise-orchestrator
+    tag: "1.0.0"  # Use semantic versioning for production
+  spark:
+    repository: logwise-spark
+    tag: "1.0.0"
+  vector:
+    repository: logwise-vector
+    tag: "1.0.0"
+  healthcheck:
+    repository: logwise-healthcheck-dummy
+    tag: "1.0.0"
+```
+
+Or set via command line:
+
+```bash
+helm install logwise . \
+  --namespace logwise \
+  --create-namespace \
+  --values values-nonprod.yaml \
+  --set global.imageRegistry=ghcr.io/your-org \
+  --set global.imagePullSecrets[0].name=ghcr-secret \
+  --set images.orchestrator.tag=1.0.0 \
+  --set images.spark.tag=1.0.0 \
+  --set images.vector.tag=1.0.0 \
+  --set images.healthcheck.tag=1.0.0
+```
+
+**Note:** The `values-nonprod.yaml` and `values-prod.yaml` files already configure `imagePullPolicy: Always`. Ensure your image pull secret name matches what's configured in the values file.
+
+#### For Local Development
+
+For local development, you can use local images or load into kind:
+
+```bash
+# Option 1: Build and load into kind
+cd deploy/kubernetes/scripts
+ENV=local CLUSTER_TYPE=kind TAG=latest ./build-and-push.sh
+
+# Option 2: Use local images (imagePullPolicy: IfNotPresent)
+# No build-and-push needed, just deploy with values-local.yaml
+```
 
 ---
 
@@ -647,10 +927,10 @@ Both can be configured with custom usernames, passwords, and storage options.
 #### Using NodePort (kind/minikube)
 
 If you created the cluster with NodePort mappings:
-- http://localhost:30080 (Grafana)
-- http://localhost:30081 (Orchestrator)
-- http://localhost:30082 (Spark Master)
-- http://localhost:30083 (Spark Worker UI)
+- `http://localhost:30080` (Grafana)
+- `http://localhost:30081` (Orchestrator)
+- `http://localhost:30082` (Spark Master)
+- `http://localhost:30083` (Spark Worker UI)
 
 #### Using Port Forwarding
 
@@ -679,8 +959,8 @@ cd deploy/kubernetes/helm/logwise
 #### Using Ingress
 
 Configure ingress hosts in your values/overlay and access via domain names:
-- https://grafana.prod.example.com
-- https://orchestrator.prod.example.com
+- `https://grafana.prod.example.com`
+- `https://orchestrator.prod.example.com`
 
 #### Using LoadBalancer
 
@@ -691,6 +971,63 @@ Set `services.type: LoadBalancer` (Helm) or configure LoadBalancer services (Kus
 Same as local development, but connect to your remote cluster.
 
 ---
+
+## Metrics Server and HPA
+
+Logwise includes **Metrics Server** in both Kustomize and Helm deployments to enable Horizontal Pod Autoscaler (HPA) functionality for the Vector component.
+
+### What is Metrics Server?
+
+Metrics Server collects resource usage metrics (CPU and memory) from Kubernetes nodes and pods, and exposes them via the Metrics API. This enables:
+- **HPA** to make scaling decisions based on CPU and memory utilization
+- **kubectl top** commands to display resource usage
+- **Resource-based autoscaling** for better resource management
+
+### Automatic Installation
+
+Metrics Server is **automatically deployed** with Logwise:
+
+- **Kustomize**: Included in `base/metrics-server/` and automatically applied
+- **Helm**: Included as a template and enabled by default via `metricsServer.enabled: true`
+
+### Cluster-Specific Configuration
+
+**For kind/local clusters:**
+- Kustomize: Automatically patched with `--kubelet-insecure-tls` flag in `overlays/local/`
+- Helm: Set `metricsServer.kubeletInsecureTLS: true` in values.yaml
+
+**For managed clusters (EKS, GKE, AKS):**
+- Standard installation (no insecure-tls flag needed)
+- If Metrics Server already exists, Kubernetes handles conflicts gracefully
+
+### Verifying Metrics Server
+
+After deployment, verify Metrics Server is working:
+
+```bash
+# Check Metrics Server pod
+kubectl get pods -n kube-system | grep metrics-server
+
+# Test Metrics API
+kubectl top nodes
+kubectl top pods -n logwise
+
+# Check HPA status (should show CPU and memory metrics)
+kubectl get hpa -n logwise
+kubectl describe hpa vector-logs -n logwise
+```
+
+### Vector HPA Configuration
+
+The Vector component uses HPA with both CPU and memory metrics:
+
+- **CPU target**: 70% utilization (configurable)
+- **Memory target**: 80% utilization (configurable)
+- **Min replicas**: 1
+- **Max replicas**: 5 (configurable)
+
+HPA automatically scales Vector pods based on resource usage, ensuring optimal performance under varying load conditions.
+
 
 ## Upgrading
 
@@ -913,10 +1250,9 @@ The deployments support horizontal scaling:
 
 ## Additional Resources
 
-- [Production Setup Guide](./production-setup.md)
-- [Component Documentation](../components/)
-- [Architecture Overview](../architecture-overview.md)
-- [Helm Chart README](../../deploy/kubernetes/helm/logwise/README.md)
+- [Production Setup Guide](../production-setup.md)
+- [Component Documentation](../../components/)
+- [Architecture Overview](../../architecture-overview.md)
 
 ## Support
 

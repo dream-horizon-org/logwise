@@ -66,7 +66,7 @@ Key points:
 
 Replace `<VECTOR_HOST>` with the hostname or IP where Vector is reachable.
 
-For a more complete OTEL Collector installation and configuration walkthrough, also see the [OpenTelemetry – EC2 guide](/send-logs/ec2/opentelemetry).
+For a more complete OTEL Collector installation and configuration walkthrough, also see the [OpenTelemetry – EC2 guide](/send-logs/collectors/otel/ec2/opentelemetry).
 
 ---
 

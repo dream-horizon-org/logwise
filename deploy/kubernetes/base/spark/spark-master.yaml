@@ -63,6 +63,8 @@ spec:
             # Override any injected SPARK_MASTER_PORT env from the Service to a plain numeric port
             - name: SPARK_MASTER_PORT
               value: "7077"
+            - name: SPARK_PUBLIC_DNS
+              value: "spark-master"
           command:
             - bash
             - -lc

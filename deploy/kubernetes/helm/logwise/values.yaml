@@ -1,7 +1,8 @@
 global:
   namespace: logwise
-  imageRegistry: ""  # Global image registry prefix (e.g., "ghcr.io/your-org")
+  imageRegistry: ""  # Global image registry prefix (e.g., "ghcr.io/your-org" or "dockerhub-username")
   imagePullPolicy: IfNotPresent
+  imagePullSecrets: []  # List of image pull secret names (e.g., ["dockerhub-secret"])
 
 # Component enable/disable flags
 components:
@@ -27,9 +28,9 @@ components:
 # AWS Configuration
 aws:
   region: us-east-1
-  accessKeyId: "ASIA54S6SGWZZJYJDBJ3"
-  secretAccessKey: "cplQ8UVSQVTnox2wJF+n0YQHsbnWa4T/Z78oGzYz"
-  sessionToken: "IQoJb3JpZ2luX2VjECMaCXVzLWVhc3QtMSJIMEYCIQCyR8O+eZnbgk9T05QW1evw9ESbT/eIzIjc9D/pVcv5WgIhAKA4/BOluWbDq/g1mpgrEJK9lkln8Gv0CFIF+jmAoa/wKpgDCOz//////////wEQBBoMOTU0NzU0ODA3MjE5Igz9M/4jUzTBKitMtlwq7AJgrJ5139EED82Q92s6hgDJqZ4eAohswRzqpjiQgNOIXWyEQdmCmpTl4rcAisX6t2bU/Qn7cR7gkq7v0xcmpPrfFWlIn+HfPNJW1uKIU2ik+RARaSFZfsjNva9FiavmCcrg8h+TDK18IATAQfmE7mdg2u4a8v6qIEGJIxBTmj7O5ckAJ63E1r9J8DjNn/K3Cx7LpeQsVf/ObiwE5jFxlvXlLXv4w8j6PJr4gjz4Ng1xGD/Vime6zmnzLAb8gHcrtLtYjChvlaMHf1Bee7LORg11snHY5NgsgEEo5ssj/Vq7fjE6lQP9YHnNWhM/4lSa6Y7TMAgAwseLJifthoUSHRoGl3QkqkZlN7q1oJ5k9qHRZS73pe2t81Oy0iz5Pvqc6M/dNK5WGJPeUle80NhwD9ZZUWLH6YkkGTcRsYWNZwTyX10qtj6hZg4VOR+wk6O1Y+WLrpW9gOUz60erZL7S/V1TdgfEUgtPzZ0zyezkMJ6jk8sGOqMB9fWDjcRkEevaGB4WO68vY1Y5VzCN0/+ZdQSD3rhU4laWfVWfZ1phNYqk55ZZqQayoGTcCnOZw279m+uLGSFXWWb7IdLpIM9VcCsYIcjOkQqQa39l10hHJ/vROhE6t8vee/ZuUkJmX6luoMbLopFtr8ZhfuuOOsyEAnpB1oXI92CicL/ZvdKvxtID/Y7Iqn/PMN8W7P2i7X2SGPKxyjc0GMqcEA=="
+  accessKeyId: "ACCESS_KEY_ID"
+  secretAccessKey: "SECRET_ACCESS_KEY"
+  sessionToken: "SESSION_TOKEN"
   s3BucketName: "logwise-varun-test"
   s3AthenaOutput: "s3://logwise-varun-test/athena-output/"
   athenaWorkgroup: observability
@@ -80,7 +81,7 @@ mysql:
     rootPassword: root_pass
     database: logwise_orch
     image:
-      repository: mysql
+      repository: library/mysql
       tag: "8.0"
     replicas: 1
     resources:
@@ -100,7 +101,7 @@ mysql:
     rootPassword: grafana_root_password
     database: grafana
     image:
-      repository: mysql
+      repository: library/mysql
       tag: "8.0"
     replicas: 1
     resources:
@@ -307,8 +308,8 @@ ingress:
 
 # ConfigMap values for logwise-config
 config:
-  kafkaBrokers: "kafka"
-  kafkaBrokersHost: "kafka"
+  kafkaBrokers: "kafka-bootstrap"
+  kafkaBrokersHost: "kafka-bootstrap"
   kafkaClusterId: "9ZkYwXlQ2rBn5JcH0xA"
   mysqlDatabase: "myapp"
   mysqlUser: "myapp"
