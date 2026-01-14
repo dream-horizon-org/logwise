@@ -166,12 +166,13 @@ wait_for_namespace_pods() {
 
 create_kind_cluster_local() {
   local name="logwise-local"
-  if kind get clusters 2>/dev/null | grep -q "^${name}\$"; then
-    note "kind cluster '${name}' already exists, reusing."
-    return 0
-  fi
-  note "Creating kind cluster '${name}' using deploy/kubernetes/scripts/kind-config-local.yaml..."
-  kind create cluster --name "${name}" --config deploy/kubernetes/scripts/kind-config-local.yaml
+  local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  
+  note "Setting up kind cluster '${name}' using common setup script..."
+  KIND_CLUSTER_NAME="${name}" \
+    BUILD_IMAGES=true \
+    LOAD_IMAGES=true \
+    "${script_dir}/setup-kind-cluster.sh" --skip-existing
 }
 
 run_local() {
@@ -181,9 +182,12 @@ run_local() {
   ROOT="$(script_root)"
   cd "$ROOT"
 
+  # Setup kind cluster (will build and load images)
   create_kind_cluster_local
 
-  note "Building images and applying kubernetes/overlays/local overlay to kind cluster..."
+  # Note: Images are already built and loaded by setup-kind-cluster.sh
+  # We still run build-and-push.sh to ensure consistency, but it will skip if images exist
+  note "Applying kubernetes/overlays/local overlay to kind cluster..."
   ENV=local CLUSTER_TYPE=kind REGISTRY="" TAG=latest KIND_CLUSTER_NAME=logwise-local \
     ./deploy/kubernetes/scripts/build-and-push.sh && \
   ENV=local ./deploy/kubernetes/scripts/deploy.sh

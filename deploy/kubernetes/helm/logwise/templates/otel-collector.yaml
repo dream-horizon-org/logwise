@@ -17,6 +17,12 @@ spec:
       labels:
         app.kubernetes.io/name: otel-collector
     spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       volumes:
         - name: varlog
           hostPath:

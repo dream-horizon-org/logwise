@@ -1,7 +1,8 @@
 global:
   namespace: logwise
-  imageRegistry: ""  # Global image registry prefix (e.g., "ghcr.io/your-org")
+  imageRegistry: ""  # Global image registry prefix (e.g., "ghcr.io/your-org" or "dockerhub-username")
   imagePullPolicy: IfNotPresent
+  imagePullSecrets: []  # List of image pull secret names (e.g., ["dockerhub-secret"])
 
 # Component enable/disable flags
 components:
@@ -27,9 +28,9 @@ components:
 # AWS Configuration
 aws:
   region: us-east-1
-  accessKeyId: ""
-  secretAccessKey: ""
-  sessionToken: ""
+  accessKeyId: "ACCESS_KEY_ID"
+  secretAccessKey: "SECRET_ACCESS_KEY"
+  sessionToken: "SESSION_TOKEN"
   s3BucketName: "logwise-varun-test"
   s3AthenaOutput: "s3://logwise-varun-test/athena-output/"
   athenaWorkgroup: observability
@@ -80,7 +81,7 @@ mysql:
     rootPassword: root_pass
     database: logwise_orch
     image:
-      repository: mysql
+      repository: library/mysql
       tag: "8.0"
     replicas: 1
     resources:
@@ -100,7 +101,7 @@ mysql:
     rootPassword: grafana_root_password
     database: grafana
     image:
-      repository: mysql
+      repository: library/mysql
       tag: "8.0"
     replicas: 1
     resources:
@@ -307,8 +308,8 @@ ingress:
 
 # ConfigMap values for logwise-config
 config:
-  kafkaBrokers: "kafka"
-  kafkaBrokersHost: "kafka"
+  kafkaBrokers: "kafka-bootstrap"
+  kafkaBrokersHost: "kafka-bootstrap"
   kafkaClusterId: "9ZkYwXlQ2rBn5JcH0xA"
   mysqlDatabase: "myapp"
   mysqlUser: "myapp"
