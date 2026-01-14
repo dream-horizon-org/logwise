@@ -118,6 +118,45 @@ public class DefaultErrorDecoderTest {
     assertTrue(exception instanceof ServerErrorException);
   }
 
+  @Test
+  public void testDecode_WithServerError501_ReturnsServerErrorException() {
+    Response response = createResponse(501, "Not Implemented", "Not implemented");
+    Exception exception = errorDecoder.decode("testMethod", response);
+
+    assertNotNull(exception);
+    assertTrue(exception instanceof ServerErrorException);
+    assertTrue(exception.getMessage().contains("501"));
+  }
+
+  @Test
+  public void testDecode_WithServerError504_ReturnsServerErrorException() {
+    Response response = createResponse(504, "Gateway Timeout", "Timeout");
+    Exception exception = errorDecoder.decode("testMethod", response);
+
+    assertNotNull(exception);
+    assertTrue(exception instanceof ServerErrorException);
+    assertTrue(exception.getMessage().contains("504"));
+  }
+
+  @Test
+  public void testDecode_WithOtherStatusCode_ReturnsFeignClientException() {
+    Response response = createResponse(300, "Multiple Choices", "Redirect");
+    Exception exception = errorDecoder.decode("testMethod", response);
+
+    assertNotNull(exception);
+    assertTrue(exception instanceof FeignClientException);
+    assertTrue(exception.getMessage().contains("300"));
+  }
+
+  @Test
+  public void testDecode_WithEmptyBody_HandlesGracefully() {
+    Response response = createResponse(400, "Bad Request", "");
+    Exception exception = errorDecoder.decode("testMethod", response);
+
+    assertNotNull(exception);
+    assertTrue(exception instanceof ClientErrorException);
+  }
+
   private Response createResponse(int status, String reason, String body) {
     return Response.builder()
         .status(status)

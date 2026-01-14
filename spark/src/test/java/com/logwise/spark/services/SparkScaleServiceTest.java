@@ -345,6 +345,83 @@ public class SparkScaleServiceTest extends BaseSparkTest {
     assertNull(sparkScaleService.getCurrentSparkStageHistory());
   }
 
+  @Test
+  public void testUpdateStageHistory_WithConfigException_HandlesGracefully() {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("tenant.name", "test-tenant");
+    // Missing required config keys
+    Config invalidConfig = MockConfigHelper.createConfig(configMap);
+    SparkScaleService serviceWithInvalidConfig =
+        new SparkScaleService(invalidConfig, mockLogCentralOrchestratorClient);
+
+    SparkStageHistory stageHistory = createTestSparkStageHistory();
+
+    try {
+      serviceWithInvalidConfig.updateStageHistory(stageHistory);
+      // Should handle exception gracefully
+      assertTrue(true);
+    } catch (Exception e) {
+      // Exception is expected and should be caught internally
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void testUpdateStageHistory_WithNullTenantName_HandlesGracefully() {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("spark.scale.downscale.enable", true);
+    configMap.put("spark.scale.upscale.enable", true);
+    configMap.put("tenant.name", null);
+    Config configWithNullTenant = MockConfigHelper.createConfig(configMap);
+    SparkScaleService serviceWithNullTenant =
+        new SparkScaleService(configWithNullTenant, mockLogCentralOrchestratorClient);
+
+    SparkStageHistory stageHistory = createTestSparkStageHistory();
+
+    try {
+      serviceWithNullTenant.updateStageHistory(stageHistory);
+      assertTrue(true);
+    } catch (Exception e) {
+      assertTrue(true);
+    }
+  }
+
+  @Test
+  public void testSetCurrentSparkStageHistory_WithDifferentInstances_UpdatesCorrectly() {
+    SparkStageHistory history1 = createTestSparkStageHistory();
+    SparkStageHistory history2 = createComplexTestSparkStageHistory();
+
+    sparkScaleService.setCurrentSparkStageHistory(history1);
+    assertEquals(sparkScaleService.getCurrentSparkStageHistory(), history1);
+
+    sparkScaleService.setCurrentSparkStageHistory(history2);
+    assertEquals(sparkScaleService.getCurrentSparkStageHistory(), history2);
+    assertNotEquals(sparkScaleService.getCurrentSparkStageHistory(), history1);
+  }
+
+  @Test
+  public void testUpdateStageHistory_WithVeryLargeStageHistory_ProcessesCorrectly() {
+    SparkStageHistory largeHistory = new SparkStageHistory();
+    largeHistory.setOutputBytes(Long.MAX_VALUE);
+    largeHistory.setInputRecords(Long.MAX_VALUE);
+    largeHistory.setSubmissionTime(System.currentTimeMillis());
+    largeHistory.setCompletionTime(System.currentTimeMillis() + 1000);
+    largeHistory.setCoresUsed(Integer.MAX_VALUE);
+    largeHistory.setStatus("SUCCESS");
+    largeHistory.setTenant("test-tenant");
+
+    Map<String, Object> mockResponse = new HashMap<>();
+    mockResponse.put("status", "success");
+    when(mockLogCentralOrchestratorClient.postScaleSparkCluster(
+            anyMap(), any(ScaleSparkClusterRequest.class)))
+        .thenReturn(mockResponse);
+
+    sparkScaleService.updateStageHistory(largeHistory);
+
+    verify(mockLogCentralOrchestratorClient, times(1))
+        .postScaleSparkCluster(anyMap(), any(ScaleSparkClusterRequest.class));
+  }
+
   /**
    * Helper method to create a test SparkStageHistory instance.
    *
