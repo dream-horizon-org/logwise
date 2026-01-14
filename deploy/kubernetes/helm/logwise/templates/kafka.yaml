@@ -31,6 +31,12 @@ spec:
       labels:
         app: kafka
     spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       containers:
         - name: kafka
           image: {{ include "logwise.image" (dict "root" . "repository" .Values.kafka.image.repository "tag" .Values.kafka.image.tag) }}

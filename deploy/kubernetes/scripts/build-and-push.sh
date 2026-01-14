@@ -21,6 +21,7 @@ ENV="${ENV:-local}"
 CLUSTER_TYPE="${CLUSTER_TYPE:-docker-desktop}"
 PARALLEL_BUILD="${PARALLEL_BUILD:-true}"
 PUSH_IMAGES="${PUSH_IMAGES:-true}"
+PLATFORM="${PLATFORM:-linux/amd64}"  # Default to linux/amd64 for Kubernetes
 
 # Image registry config
 IMAGE_REGISTRY_CONFIG="$REPO_ROOT/deploy/shared/config/image-registry.yaml"
@@ -29,9 +30,17 @@ IMAGE_REGISTRY_CONFIG="$REPO_ROOT/deploy/shared/config/image-registry.yaml"
 get_image_name() {
   local service="$1"
   local name
-  name=$(grep -A 5 "^  ${service}:" "$IMAGE_REGISTRY_CONFIG" 2>/dev/null | grep "name:" | sed 's/.*name:[[:space:]]*//' | tr -d '"' || echo "")
+  # Try to read from config file, with better error handling
+  if [ ! -f "$IMAGE_REGISTRY_CONFIG" ]; then
+    log_warn "Image registry config not found at $IMAGE_REGISTRY_CONFIG, using default naming"
+    echo "logwise-${service}"
+    return 0
+  fi
+  
+  name=$(grep -A 10 "^  ${service}:" "$IMAGE_REGISTRY_CONFIG" 2>/dev/null | grep -m 1 "name:" | sed 's/.*name:[[:space:]]*//' | sed 's/^"//' | sed 's/"$//' | tr -d '"' || echo "")
   if [ -z "$name" ]; then
     # Fallback to default naming
+    log_warn "Could not find image name for service '$service' in config, using default: logwise-${service}"
     echo "logwise-${service}"
   else
     echo "$name"
@@ -73,12 +82,15 @@ build_image() {
   log_info "Building $service image: $image_tag"
   
   # Build docker command - use conditional expansion for empty arrays
-  if [ -n "${DOCKER_BUILDKIT:-}" ]; then
-    if docker build \
+  # Use buildx for multi-platform support if platform is specified
+  if [ -n "${PLATFORM:-}" ] && command -v docker buildx &> /dev/null; then
+    log_info "Building for platform: $PLATFORM"
+    if docker buildx build \
+      --platform "$PLATFORM" \
       --tag "$image_tag" \
       --file "$dockerfile_path" \
       --progress=plain \
-      --build-arg DOCKER_BUILDKIT=1 \
+      --load \
       "$context_path"; then
       log_success "Built $service image: $image_tag"
       return 0
@@ -86,12 +98,35 @@ build_image() {
       log_error "Failed to build $service image: $image_tag"
       return 1
     fi
+  elif [ -n "${DOCKER_BUILDKIT:-}" ]; then
+    local build_args=(
+      --tag "$image_tag"
+      --file "$dockerfile_path"
+      --progress=plain
+      --build-arg DOCKER_BUILDKIT=1
+    )
+    if [ -n "${PLATFORM:-}" ]; then
+      build_args+=(--platform "$PLATFORM")
+    fi
+    build_args+=("$context_path")
+    if docker build "${build_args[@]}"; then
+      log_success "Built $service image: $image_tag"
+      return 0
+    else
+      log_error "Failed to build $service image: $image_tag"
+      return 1
+    fi
   else
-    if docker build \
-      --tag "$image_tag" \
-      --file "$dockerfile_path" \
-      --progress=plain \
-      "$context_path"; then
+    local build_args=(
+      --tag "$image_tag"
+      --file "$dockerfile_path"
+      --progress=plain
+    )
+    if [ -n "${PLATFORM:-}" ]; then
+      build_args+=(--platform "$PLATFORM")
+    fi
+    build_args+=("$context_path")
+    if docker build "${build_args[@]}"; then
       log_success "Built $service image: $image_tag"
       return 0
     else
@@ -109,6 +144,13 @@ push_image() {
   if [ -z "$REGISTRY" ] || [ "$REGISTRY" = "local" ] || [ "$REGISTRY" = "docker" ]; then
     log_info "Using local Docker registry, skipping push for $image_tag"
     return 0
+  fi
+  
+  # Check if image exists locally before pushing
+  if ! docker image inspect "$image_tag" >/dev/null 2>&1; then
+    log_error "Image $image_tag does not exist locally. Cannot push."
+    log_error "This usually means the build failed. Please check the build logs above."
+    return 1
   fi
   
   # Handle Docker Hub authentication
@@ -232,16 +274,24 @@ main() {
     local failed=0
     local i=0
     for pid in "${pids[@]}"; do
+      local service_name="${services[$i]:-unknown}"
       if ! wait "$pid"; then
-        local service_name="${services[$i]:-unknown}"
         log_error "Build failed for $service_name"
         failed=1
+      else
+        log_success "Build completed successfully for $service_name"
+        # Verify the image actually exists
+        IFS=':' read -r svc img_tag <<< "$service_name"
+        if ! docker image inspect "$img_tag" >/dev/null 2>&1; then
+          log_error "Build reported success but image $img_tag does not exist!"
+          failed=1
+        fi
       fi
       i=$((i + 1))
     done
     
     if [ $failed -eq 1 ]; then
-      log_error "One or more builds failed"
+      log_error "One or more builds failed. Cannot proceed with push."
       return 1
     fi
   fi

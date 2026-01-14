@@ -43,11 +43,15 @@ cd deploy/kubernetes
 
 This will:
 - ✅ Install required tools (if missing)
-- ✅ Create a kind cluster
-- ✅ Build all Docker images
-- ✅ Load images into kind
+- ✅ Create a kind cluster (using common `setup-kind-cluster.sh` script)
+- ✅ Build all Docker images locally
+- ✅ **Load images directly into kind cluster** (no registry needed)
 - ✅ Deploy all services
 - ✅ Wait for pods to be ready
+
+**Important:** For kind clusters, images are **loaded** directly into the cluster (not pulled from a registry). This is handled automatically by `setup-kind-cluster.sh`.
+
+**Note:** The kind cluster setup uses a common script (`scripts/setup-kind-cluster.sh`) that works for both Kustomize and Helm deployments, ensuring consistency across deployment methods.
 
 **Access services:**
 - Orchestrator: http://localhost:30081
@@ -82,10 +86,20 @@ ENV=nonprod \
 ```
 
 This will:
-- ✅ Build all Docker images
-- ✅ Push images to the specified registry
+- ✅ **Build all Docker images** locally
+- ✅ **Push images to the specified registry** (ECR, Docker Hub, GHCR, etc.)
+- ✅ Configure image pull secrets (if needed for private registry)
 - ✅ Deploy all services to your Kubernetes cluster
+- ✅ **Cluster pulls images from registry** during deployment
 - ✅ Wait for pods to be ready
+
+**Important:** For nonprod/prod, images must be:
+1. **Pushed to a registry** (handled by `build-and-push.sh`)
+2. **Pulled by the cluster** (requires registry authentication via image pull secrets)
+
+**Prerequisites:**
+- Registry access and authentication configured
+- See [Image Management Guide](../kubernetes/IMAGE_MANAGEMENT.md) for registry-specific setup
 
 ### Production Environment
 
@@ -100,8 +114,13 @@ ENV=prod \
 **Environment Variables:**
 - `ENV`: Environment (`local`, `nonprod`, `prod`) - **required**
 - `REGISTRY`: Container registry (e.g., `ghcr.io/your-org`, `123456789012.dkr.ecr.us-east-1.amazonaws.com`) - **required for nonprod/prod**
-- `TAG`: Image tag (default: `latest`)
+- `TAG`: Image tag (default: `latest` for local, should use version tags for nonprod/prod)
 - `CLUSTER_TYPE`: `kind`, `docker-desktop`, or `other` (default: `docker-desktop`)
+
+**Image Handling:**
+- **Local (kind)**: Images are built and **loaded** directly into kind (no registry)
+- **Nonprod/Prod**: Images are built, **pushed** to registry, and **pulled** by cluster
+- See [Image Management Guide](../kubernetes/IMAGE_MANAGEMENT.md) for detailed information
 
 ## Directory Structure
 
@@ -113,8 +132,82 @@ kubernetes/
 │   ├── nonprod/      # Non-production
 │   └── prod/         # Production
 ├── scripts/          # Deployment scripts
+│   └── setup-kind-cluster.sh  # Common kind cluster setup (Kustomize & Helm)
+├── helm/             # Helm chart (alternative deployment method)
+│   └── logwise/
+│       └── setup-kind-cluster.sh  # Helm wrapper (calls common script)
 └── config/           # Configuration files
 ```
+
+## Image Management Overview
+
+LogWise uses different image handling strategies depending on the environment:
+
+| Environment | Image Handling | Registry Required |
+|------------|----------------|-------------------|
+| **Local (kind)** | Build → **Load into kind** | ❌ No |
+| **Nonprod/Prod** | Build → **Push to registry** → **Cluster pulls** | ✅ Yes |
+
+### Key Differences
+
+**Local (kind):**
+- Images are built locally and loaded directly into kind cluster
+- No registry authentication needed
+- Faster iteration for development
+- Handled automatically by `setup-kind-cluster.sh`
+
+**Nonprod/Prod:**
+- Images must be pushed to a container registry
+- Registry authentication required (via image pull secrets)
+- Cluster pulls images from registry during deployment
+- Standard Kubernetes workflow
+
+**For detailed information, see:** [Image Management Guide](../kubernetes/IMAGE_MANAGEMENT.md)
+
+## Common Kind Cluster Setup Script
+
+For local development, both **Kustomize** and **Helm** deployments use the same common script to set up kind clusters:
+
+### Using the Common Script
+
+**For Kustomize deployments:**
+```bash
+cd deploy/kubernetes
+./scripts/setup-kind-cluster.sh
+```
+
+**For Helm deployments:**
+```bash
+# Option 1: Use Helm wrapper (recommended)
+cd deploy/kubernetes/helm/logwise
+./setup-kind-cluster.sh
+
+# Option 2: Use common script directly
+cd deploy/kubernetes
+KIND_CLUSTER_NAME=logwise ./scripts/setup-kind-cluster.sh
+```
+
+**Features:**
+- Creates kind cluster with port mappings
+- Builds Docker images (orchestrator, spark, vector, healthcheck)
+- Loads images into kind cluster
+- Works for both Kustomize and Helm
+- Configurable via command-line options and environment variables
+
+**Options:**
+```bash
+./scripts/setup-kind-cluster.sh [OPTIONS]
+
+Options:
+  -n, --name NAME          Cluster name (default: logwise-local)
+  -c, --config PATH        Path to kind config file
+  --no-build              Skip building images (only load existing ones)
+  --no-load               Skip loading images into kind
+  --skip-existing         Skip if cluster already exists (don't prompt)
+  -h, --help              Show help message
+```
+
+**Note:** The `setup-k8s.sh` script automatically calls `setup-kind-cluster.sh` when deploying to local, so you typically don't need to run it manually. See `kubernetes/COMMON_SETUP_SCRIPT.md` for detailed documentation.
 
 ## Advanced: Manual Step-by-Step Deployment
 
@@ -149,7 +242,7 @@ See `kubernetes/config/secrets.example.yaml` for examples.
 
 ### Step 2: Build and Push Images
 
-#### Local (kind) - No registry needed:
+#### Local (kind) - Images Loaded Directly:
 
 ```bash
 cd deploy/kubernetes
@@ -157,7 +250,35 @@ ENV=local CLUSTER_TYPE=kind TAG=latest \
   ./scripts/build-and-push.sh
 ```
 
-#### Non-Production:
+**What happens:**
+- ✅ Builds all Docker images locally
+- ✅ **Loads images directly into kind cluster** (no registry push)
+- ❌ Does NOT push to registry (not needed for kind)
+
+**Verification:**
+```bash
+# Check images are loaded in kind
+docker exec -it logwise-local-control-plane crictl images | grep logwise
+```
+
+#### Non-Production - Push to Registry:
+
+**Step 2a: Authenticate with Registry**
+
+```bash
+# For ECR
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin \
+  123456789012.dkr.ecr.us-east-1.amazonaws.com
+
+# For Docker Hub
+docker login --username your-username
+
+# For GHCR
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u your-username --password-stdin
+```
+
+**Step 2b: Build and Push Images**
 
 ```bash
 cd deploy/kubernetes
@@ -167,23 +288,49 @@ ENV=nonprod \
   ./scripts/build-and-push.sh
 ```
 
-#### Production:
+**What happens:**
+- ✅ Builds all Docker images with registry prefix
+- ✅ **Pushes images to registry** (e.g., `ghcr.io/your-org/logwise-orchestrator:1.0.0`)
+- ✅ Images are now available for cluster to pull
+
+**Verification:**
+```bash
+# Verify images are in registry
+docker pull ghcr.io/your-org/logwise-orchestrator:1.0.0
+```
+
+#### Production - Push to Registry:
+
+**Step 2a: Authenticate with Registry** (same as nonprod)
+
+**Step 2b: Build and Push with Version Tag**
 
 ```bash
 cd deploy/kubernetes
 ENV=prod \
   REGISTRY=ghcr.io/your-org \
-  TAG=1.0.0 \
+  TAG=v1.2.3 \
   ./scripts/build-and-push.sh
 ```
 
+**What happens:**
+- ✅ Builds all Docker images with registry prefix
+- ✅ **Pushes images to registry** with version tag
+- ✅ Use semantic versioning (never use `latest` in production)
+
 **Environment Variables:**
-- `REGISTRY`: Container registry (e.g., `ghcr.io/your-org`, `123456789012.dkr.ecr.us-east-1.amazonaws.com`)
-- `TAG`: Image tag (default: `1.0.0`)
+- `REGISTRY`: Container registry (e.g., `ghcr.io/your-org`, `123456789012.dkr.ecr.us-east-1.amazonaws.com`) - **required for nonprod/prod**
+- `TAG`: Image tag (default: `1.0.0`, use semantic versioning for prod)
 - `CLUSTER_TYPE`: `kind`, `docker-desktop`, or `other` (default: `docker-desktop`)
 - `PARALLEL_BUILD`: `true` or `false` (default: `true`)
 
-**Note**: When `REGISTRY` is set to `local` or `docker`, images will be built but not pushed to a remote registry. This is useful for local development with Docker Desktop or kind clusters.
+**Important Notes:**
+- **Local (kind)**: Images are loaded directly, no registry needed
+- **Nonprod/Prod**: Images must be pushed to registry and cluster will pull them
+- **Registry Authentication**: Required before pushing (see examples above)
+- **Image Pull Secrets**: Configured automatically by `deploy.sh` for Docker Hub, or manually for other registries
+
+**For detailed registry setup, see:** [Image Management Guide](../kubernetes/IMAGE_MANAGEMENT.md) and [Registry Setup Guide](../kubernetes/REGISTRY_SETUP.md)
 
 ### Step 3: Deploy to Kubernetes
 
@@ -260,13 +407,18 @@ cd deploy
 # Edit deploy/kubernetes/.env with your configuration values
 ./kubernetes/scripts/sync-config.sh kubernetes/.env
 
-# 2. Build images
+# 2. Set up kind cluster (optional - setup-k8s.sh does this automatically)
 cd kubernetes
+./scripts/setup-kind-cluster.sh
+
+# 3. Build images (if not already built by setup-kind-cluster.sh)
 ENV=local CLUSTER_TYPE=kind TAG=latest ./scripts/build-and-push.sh
 
-# 3. Deploy
+# 4. Deploy
 ENV=local ./scripts/deploy.sh
 ```
+
+**Note:** The `setup-kind-cluster.sh` script builds and loads images automatically, so step 3 may be skipped if you ran the setup script.
 
 ### Example 2: Non-Production Deployment
 
@@ -628,25 +780,89 @@ kubectl scale deployment/orchestrator -n logwise --replicas=3
 
 **Symptoms**: `ErrImagePull` or `ImagePullBackOff`
 
-**Solutions**:
-1. Verify image exists:
+**Solutions by Environment:**
+
+#### For Local (kind) Clusters:
+
+1. **Verify images are loaded in kind:**
    ```bash
-   docker pull <registry>/logwise-orchestrator:<tag>
+   docker exec -it logwise-local-control-plane crictl images | grep logwise
    ```
 
-2. Check registry credentials:
+2. **Load images if missing:**
    ```bash
-   kubectl get secrets -n logwise
+   # Use the common setup script (recommended)
+   cd deploy/kubernetes
+   ./scripts/setup-kind-cluster.sh
+   
+   # Or manually load specific images
+   kind load docker-image logwise-orchestrator:latest --name logwise-local
    ```
 
-3. For kind clusters, load images:
+3. **Verify imagePullPolicy is IfNotPresent:**
    ```bash
-   kind load docker-image <image-name> --name <cluster-name>
+   kubectl get deployment orchestrator -n logwise -o yaml | grep imagePullPolicy
    ```
 
-4. Verify image pull policy in deployment
+#### For Nonprod/Prod Clusters:
 
-5. Check network connectivity to registry
+1. **Verify image exists in registry:**
+   ```bash
+   docker pull $REGISTRY/logwise-orchestrator:$TAG
+   ```
+
+2. **Check image pull secret exists:**
+   ```bash
+   kubectl get secrets -n logwise | grep -E 'dockerhub|ecr|ghcr'
+   ```
+
+3. **Verify registry authentication:**
+   ```bash
+   # Re-authenticate if needed
+   # For ECR:
+   aws ecr get-login-password --region us-east-1 | \
+     docker login --username AWS --password-stdin $REGISTRY
+   
+   # For Docker Hub:
+   docker login
+   
+   # For GHCR:
+   echo $GITHUB_TOKEN | docker login ghcr.io -u username --password-stdin
+   ```
+
+4. **Update image pull secret if needed:**
+   ```bash
+   # Delete old secret
+   kubectl delete secret dockerhub-secret -n logwise
+   
+   # Create new secret (example for Docker Hub)
+   kubectl create secret docker-registry dockerhub-secret \
+     --docker-server=docker.io \
+     --docker-username=your-username \
+     --docker-password=your-password \
+     --docker-email=your-email@example.com \
+     -n logwise
+   ```
+
+5. **Verify imagePullPolicy is Always (for nonprod/prod):**
+   ```bash
+   kubectl get deployment orchestrator -n logwise -o yaml | grep imagePullPolicy
+   # Should show: imagePullPolicy: Always
+   ```
+
+6. **Check pod events for detailed error:**
+   ```bash
+   kubectl describe pod -n logwise <pod-name> | grep -A 10 Events
+   ```
+
+7. **Test registry connectivity from cluster:**
+   ```bash
+   # Run a test pod to check registry access
+   kubectl run -it --rm debug --image=busybox --restart=Never -- \
+     sh -c "wget -O- https://$REGISTRY"
+   ```
+
+**For detailed troubleshooting, see:** [Image Management Guide](../kubernetes/IMAGE_MANAGEMENT.md)
 
 ### Services Not Accessible
 
@@ -830,8 +1046,13 @@ cd deploy/kubernetes
 ### Remove kind Cluster (Local)
 
 ```bash
+# Option 1: Use destroy script
 cd deploy/kubernetes
 ./scripts/destroy-k8s.sh local
+
+# Option 2: Delete kind cluster directly
+kind delete cluster --name logwise-local  # For Kustomize
+kind delete cluster --name logwise        # For Helm
 ```
 
 ## Production Checklist
@@ -952,6 +1173,41 @@ kubectl rollout history deployment/<name> -n logwise
 kubectl rollout undo deployment/<name> -n logwise
 ```
 
+## Deployment Methods: Kustomize vs Helm
+
+LogWise supports two deployment methods:
+
+### Kustomize (Recommended for GitOps)
+
+- Uses base manifests with environment overlays
+- Better for GitOps workflows
+- More declarative and version-controlled
+- Default method used by `setup-k8s.sh`
+
+**Quick start:**
+```bash
+cd deploy/kubernetes
+./scripts/setup-k8s.sh local
+```
+
+### Helm (Alternative)
+
+- Uses Helm charts with values files
+- Better for complex templating needs
+- More familiar to Helm users
+
+**Quick start:**
+```bash
+# Set up kind cluster (uses common script)
+cd deploy/kubernetes/helm/logwise
+./setup-kind-cluster.sh
+
+# Install Helm chart
+./quick-install.sh [AWS_ACCESS_KEY] [AWS_SECRET] [S3_BUCKET] [S3_ATHENA_OUTPUT]
+```
+
+**Note:** Both methods use the same common `setup-kind-cluster.sh` script for local kind cluster setup, ensuring consistency. See `kubernetes/KUBERNETES_ARCHITECTURE.md` for detailed comparison.
+
 ## Next Steps
 
 After successful deployment:
@@ -963,3 +1219,12 @@ After successful deployment:
 5. ✅ Monitor Spark jobs
 6. ✅ Set up monitoring and alerting
 7. ✅ Review the Production Checklist section above before deploying to production
+
+## Additional Resources
+
+- **Image Management Guide**: `kubernetes/IMAGE_MANAGEMENT.md` - Complete guide for image handling across environments
+- **Architecture Overview**: `kubernetes/KUBERNETES_ARCHITECTURE.md` - System architecture and components
+- **Common Setup Script**: `kubernetes/COMMON_SETUP_SCRIPT.md` - Kind cluster setup for both Kustomize and Helm
+- **Registry Setup**: `kubernetes/REGISTRY_SETUP.md` - Container registry configuration
+- **Metrics Server Testing**: `kubernetes/TESTING_METRICS_SERVER.md` - Metrics Server deployment and testing
+- **Documentation Improvement Plan**: `kubernetes/DOCUMENTATION_IMPROVEMENT_PLAN.md` - Planned documentation enhancements

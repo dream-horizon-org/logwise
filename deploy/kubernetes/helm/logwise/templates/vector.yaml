@@ -69,6 +69,12 @@ spec:
       labels:
         app: vector-logs
     spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       initContainers:
         - name: wait-for-kafka
           image: busybox:1.36

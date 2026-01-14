@@ -112,6 +112,12 @@ spec:
       labels:
         k8s-app: metrics-server
     spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       containers:
       - args:
         - --cert-dir=/tmp

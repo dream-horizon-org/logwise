@@ -64,9 +64,16 @@ Before installing the Logwise Helm chart, ensure you have:
 
 1. **Set up a kind cluster** (optional, if you don't have one):
    ```bash
+   # Option 1: Use Helm wrapper (recommended)
    cd deploy/kubernetes/helm/logwise
    ./setup-kind-cluster.sh
+   
+   # Option 2: Use common script directly
+   cd deploy/kubernetes
+   KIND_CLUSTER_NAME=logwise ./scripts/setup-kind-cluster.sh
    ```
+   
+   **Note:** Both methods use the same common script. The Helm wrapper sets `logwise` as the default cluster name.
 
 2. **Install using the quick install script**:
    ```bash
@@ -535,6 +542,8 @@ Sets up port forwarding for local access.
 
 ### `setup-kind-cluster.sh`
 
+**Note:** This is a wrapper script that calls the common `scripts/setup-kind-cluster.sh` used by both Kustomize and Helm deployments.
+
 Creates a kind cluster and loads Docker images.
 
 ```bash
@@ -542,9 +551,19 @@ Creates a kind cluster and loads Docker images.
 ```
 
 **Features:**
-- Creates kind cluster with port mappings
+- Creates kind cluster with port mappings (uses `kind-config.yaml` if available)
 - Builds and loads Docker images
 - Configures cluster for NodePort access
+- Default cluster name: `logwise` (can be overridden with `KIND_CLUSTER_NAME`)
+
+**Options:**
+- `--no-build`: Skip building images (only load existing ones)
+- `--no-load`: Skip loading images into kind
+- `--skip-existing`: Don't prompt if cluster exists, just reuse it
+- `-n, --name NAME`: Set cluster name
+- `-c, --config PATH`: Use custom kind config file
+
+The common script is located at `../../scripts/setup-kind-cluster.sh` and can be used directly for more control.
 
 ## Accessing Services
 

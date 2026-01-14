@@ -55,6 +55,12 @@ spec:
         app: spark-worker
     spec:
       subdomain: spark-worker
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       initContainers:
         - name: wait-for-spark-master
           image: busybox:1.36
