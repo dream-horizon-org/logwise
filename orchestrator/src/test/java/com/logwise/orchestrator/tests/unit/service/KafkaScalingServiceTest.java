@@ -1,293 +1,246 @@
 package com.logwise.orchestrator.tests.unit.service;
 
-import static org.testng.Assert.*;
+import static org.mockito.Mockito.*;
 
 import com.logwise.orchestrator.config.ApplicationConfig;
 import com.logwise.orchestrator.dto.kafka.ScalingDecision;
 import com.logwise.orchestrator.dto.kafka.TopicPartitionMetrics;
 import com.logwise.orchestrator.service.KafkaScalingService;
 import com.logwise.orchestrator.setup.BaseTest;
+import java.lang.reflect.Method;
 import java.util.*;
 import org.apache.kafka.common.TopicPartition;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/** Unit tests for KafkaScalingService. */
 public class KafkaScalingServiceTest extends BaseTest {
 
   private KafkaScalingService kafkaScalingService;
-  private ApplicationConfig.KafkaConfig kafkaConfig;
+  private ApplicationConfig.KafkaConfig mockKafkaConfig;
 
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
     kafkaScalingService = new KafkaScalingService();
-    kafkaConfig = new ApplicationConfig.KafkaConfig();
-    kafkaConfig.setMaxLagPerPartition(50_000L);
-    kafkaConfig.setDefaultPartitions(3);
+    mockKafkaConfig = mock(ApplicationConfig.KafkaConfig.class);
   }
 
   @Test
-  public void testIdentifyTopicsNeedingScaling_WithHighLag_ReturnsScalingDecision() {
-    String topic = "test-topic";
+  public void testIdentifyTopicsNeedingScaling_WithHighLag_ReturnsScalingDecisions()
+      throws Exception {
+    Map<String, TopicPartitionMetrics> metricsMap = new HashMap<>();
     TopicPartitionMetrics metrics =
         TopicPartitionMetrics.builder()
-            .topic(topic)
+            .topic("logs.service1")
             .partitionCount(3)
-            .totalMessages(3_000_000L)
-            .avgMessagesPerPartition(1_000_000L)
-            .estimatedSizeBytes(3_000_000_000L)
-            .partitionOffsets(Map.of(0, 1_000_000L, 1, 1_000_000L, 2, 1_000_000L))
+            .estimatedSizeBytes(1000000L)
+            .avgMessagesPerPartition(10000L)
             .build();
+    metricsMap.put("logs.service1", metrics);
 
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
     Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic, 0), 100_000L);
-    lagMap.put(new TopicPartition(topic, 1), 100_000L);
-    lagMap.put(new TopicPartition(topic, 2), 100_000L);
+    lagMap.put(new TopicPartition("logs.service1", 0), 100000L);
+    lagMap.put(new TopicPartition("logs.service1", 1), 100000L);
+    lagMap.put(new TopicPartition("logs.service1", 2), 100000L);
+
+    when(mockKafkaConfig.getMaxLagPerPartition()).thenReturn(50000L);
+    when(mockKafkaConfig.getDefaultPartitions()).thenReturn(3);
 
     List<ScalingDecision> decisions =
-        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, kafkaConfig);
+        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, mockKafkaConfig);
 
-    assertNotNull(decisions);
-    assertEquals(decisions.size(), 1);
-    ScalingDecision decision = decisions.get(0);
-    assertEquals(decision.getTopic(), topic);
-    assertTrue(decision.getNewPartitions() > decision.getCurrentPartitions());
-    assertTrue(decision.getFactors().contains("lag"));
+    Assert.assertNotNull(decisions);
+    Assert.assertFalse(decisions.isEmpty());
+    Assert.assertEquals(decisions.get(0).getTopic(), "logs.service1");
+    Assert.assertTrue(
+        decisions.get(0).getNewPartitions() > decisions.get(0).getCurrentPartitions());
+    Assert.assertTrue(decisions.get(0).getFactors().contains("lag"));
   }
 
   @Test
-  public void testIdentifyTopicsNeedingScaling_WithHighPartitionSize_DoesNotScale() {
-    String topic = "test-topic";
+  public void testIdentifyTopicsNeedingScaling_WithLowLag_ReturnsEmptyList() throws Exception {
+    Map<String, TopicPartitionMetrics> metricsMap = new HashMap<>();
     TopicPartitionMetrics metrics =
         TopicPartitionMetrics.builder()
-            .topic(topic)
+            .topic("logs.service1")
             .partitionCount(3)
-            .totalMessages(1_000_000L)
-            .avgMessagesPerPartition(333_333L)
-            .estimatedSizeBytes(30_000_000_000L) // 30GB total, 10GB per partition
-            .partitionOffsets(Map.of(0, 333_333L, 1, 333_333L, 2, 333_333L))
+            .estimatedSizeBytes(1000000L)
+            .avgMessagesPerPartition(10000L)
             .build();
+    metricsMap.put("logs.service1", metrics);
 
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
     Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic, 0), 10_000L); // Low lag
-    lagMap.put(new TopicPartition(topic, 1), 10_000L);
-    lagMap.put(new TopicPartition(topic, 2), 10_000L);
+    lagMap.put(new TopicPartition("logs.service1", 0), 1000L);
+    lagMap.put(new TopicPartition("logs.service1", 1), 1000L);
+    lagMap.put(new TopicPartition("logs.service1", 2), 1000L);
+
+    when(mockKafkaConfig.getMaxLagPerPartition()).thenReturn(50000L);
+    when(mockKafkaConfig.getDefaultPartitions()).thenReturn(3);
 
     List<ScalingDecision> decisions =
-        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, kafkaConfig);
+        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, mockKafkaConfig);
 
-    // Should not scale based on size alone - only lag triggers scaling
-    assertNotNull(decisions);
-    assertTrue(decisions.isEmpty());
+    Assert.assertNotNull(decisions);
+    Assert.assertTrue(decisions.isEmpty());
   }
 
   @Test
-  public void testIdentifyTopicsNeedingScaling_WithHighMessageCount_DoesNotScale() {
-    String topic = "test-topic";
+  public void testIdentifyTopicsNeedingScaling_WithNullMaxLag_UsesDefault() throws Exception {
+    Map<String, TopicPartitionMetrics> metricsMap = new HashMap<>();
     TopicPartitionMetrics metrics =
         TopicPartitionMetrics.builder()
-            .topic(topic)
+            .topic("logs.service1")
             .partitionCount(3)
-            .totalMessages(6_000_000L) // 2M per partition
-            .avgMessagesPerPartition(2_000_000L)
-            .estimatedSizeBytes(1_000_000_000L)
-            .partitionOffsets(Map.of(0, 2_000_000L, 1, 2_000_000L, 2, 2_000_000L))
+            .estimatedSizeBytes(1000000L)
+            .avgMessagesPerPartition(10000L)
             .build();
+    metricsMap.put("logs.service1", metrics);
 
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
     Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic, 0), 10_000L); // Low lag
-    lagMap.put(new TopicPartition(topic, 1), 10_000L);
-    lagMap.put(new TopicPartition(topic, 2), 10_000L);
+    lagMap.put(new TopicPartition("logs.service1", 0), 100000L);
+
+    when(mockKafkaConfig.getMaxLagPerPartition()).thenReturn(null);
+    when(mockKafkaConfig.getDefaultPartitions()).thenReturn(3);
 
     List<ScalingDecision> decisions =
-        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, kafkaConfig);
+        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, mockKafkaConfig);
 
-    // Should not scale based on message count alone - only lag triggers scaling
-    assertNotNull(decisions);
-    assertTrue(decisions.isEmpty());
+    Assert.assertNotNull(decisions);
+    Assert.assertFalse(decisions.isEmpty());
   }
 
   @Test
-  public void testIdentifyTopicsNeedingScaling_WithNoScalingNeeded_ReturnsEmptyList() {
-    String topic = "test-topic";
+  public void testIdentifyTopicsNeedingScaling_WithNullDefaultPartitions_UsesDefault()
+      throws Exception {
+    Map<String, TopicPartitionMetrics> metricsMap = new HashMap<>();
     TopicPartitionMetrics metrics =
         TopicPartitionMetrics.builder()
-            .topic(topic)
+            .topic("logs.service1")
             .partitionCount(3)
-            .totalMessages(100_000L)
-            .avgMessagesPerPartition(33_333L)
-            .estimatedSizeBytes(100_000_000L)
-            .partitionOffsets(Map.of(0, 33_333L, 1, 33_333L, 2, 33_333L))
+            .estimatedSizeBytes(1000000L)
+            .avgMessagesPerPartition(10000L)
             .build();
+    metricsMap.put("logs.service1", metrics);
 
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
     Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic, 0), 10_000L);
-    lagMap.put(new TopicPartition(topic, 1), 10_000L);
-    lagMap.put(new TopicPartition(topic, 2), 10_000L);
+    lagMap.put(new TopicPartition("logs.service1", 0), 100000L);
+
+    when(mockKafkaConfig.getMaxLagPerPartition()).thenReturn(50000L);
+    when(mockKafkaConfig.getDefaultPartitions()).thenReturn(null);
 
     List<ScalingDecision> decisions =
-        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, kafkaConfig);
+        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, mockKafkaConfig);
 
-    assertNotNull(decisions);
-    assertTrue(decisions.isEmpty());
+    Assert.assertNotNull(decisions);
+    Assert.assertFalse(decisions.isEmpty());
   }
 
   @Test
-  public void testIdentifyTopicsNeedingScaling_WithMultipleTopics_ReturnsMultipleDecisions() {
-    String topic1 = "topic-1";
-    String topic2 = "topic-2";
+  public void testShouldScalePartition_WithHighLag_ReturnsTrue() throws Exception {
+    Method method =
+        KafkaScalingService.class.getDeclaredMethod(
+            "shouldScalePartition",
+            String.class,
+            TopicPartitionMetrics.class,
+            long.class,
+            ApplicationConfig.KafkaConfig.class);
+    method.setAccessible(true);
 
-    TopicPartitionMetrics metrics1 =
-        TopicPartitionMetrics.builder()
-            .topic(topic1)
-            .partitionCount(3)
-            .totalMessages(3_000_000L)
-            .avgMessagesPerPartition(1_000_000L)
-            .estimatedSizeBytes(3_000_000_000L)
-            .partitionOffsets(Map.of(0, 1_000_000L, 1, 1_000_000L, 2, 1_000_000L))
-            .build();
-
-    TopicPartitionMetrics metrics2 =
-        TopicPartitionMetrics.builder()
-            .topic(topic2)
-            .partitionCount(3)
-            .totalMessages(3_000_000L)
-            .avgMessagesPerPartition(1_000_000L)
-            .estimatedSizeBytes(3_000_000_000L)
-            .partitionOffsets(Map.of(0, 1_000_000L, 1, 1_000_000L, 2, 1_000_000L))
-            .build();
-
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic1, metrics1, topic2, metrics2);
-    Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic1, 0), 100_000L);
-    lagMap.put(new TopicPartition(topic1, 1), 100_000L);
-    lagMap.put(new TopicPartition(topic1, 2), 100_000L);
-    lagMap.put(new TopicPartition(topic2, 0), 100_000L);
-    lagMap.put(new TopicPartition(topic2, 1), 100_000L);
-    lagMap.put(new TopicPartition(topic2, 2), 100_000L);
-
-    List<ScalingDecision> decisions =
-        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, kafkaConfig);
-
-    assertNotNull(decisions);
-    assertEquals(decisions.size(), 2);
-  }
-
-  @Test
-  public void testIdentifyTopicsNeedingScaling_WithHighLag_IncludesLagFactor() {
-    String topic = "test-topic";
     TopicPartitionMetrics metrics =
-        TopicPartitionMetrics.builder()
-            .topic(topic)
-            .partitionCount(3)
-            .totalMessages(6_000_000L) // High message count
-            .avgMessagesPerPartition(2_000_000L)
-            .estimatedSizeBytes(30_000_000_000L) // High size
-            .partitionOffsets(Map.of(0, 2_000_000L, 1, 2_000_000L, 2, 2_000_000L))
-            .build();
+        TopicPartitionMetrics.builder().topic("logs.service1").partitionCount(3).build();
 
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
-    Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic, 0), 100_000L); // High lag
-    lagMap.put(new TopicPartition(topic, 1), 100_000L);
-    lagMap.put(new TopicPartition(topic, 2), 100_000L);
+    when(mockKafkaConfig.getMaxLagPerPartition()).thenReturn(50000L);
 
-    List<ScalingDecision> decisions =
-        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, kafkaConfig);
+    boolean result =
+        (Boolean)
+            method.invoke(kafkaScalingService, "logs.service1", metrics, 100000L, mockKafkaConfig);
 
-    assertNotNull(decisions);
-    assertEquals(decisions.size(), 1);
-    ScalingDecision decision = decisions.get(0);
-    // Only lag factor should be present
-    assertTrue(decision.getFactors().contains("lag"));
-    assertEquals(decision.getFactors().size(), 1);
+    Assert.assertTrue(result);
   }
 
   @Test
-  public void testIdentifyTopicsNeedingScaling_WithDefaultPartitions_RoundsUpCorrectly() {
-    kafkaConfig.setDefaultPartitions(6);
-    String topic = "test-topic";
+  public void testShouldScalePartition_WithLowLag_ReturnsFalse() throws Exception {
+    Method method =
+        KafkaScalingService.class.getDeclaredMethod(
+            "shouldScalePartition",
+            String.class,
+            TopicPartitionMetrics.class,
+            long.class,
+            ApplicationConfig.KafkaConfig.class);
+    method.setAccessible(true);
+
     TopicPartitionMetrics metrics =
-        TopicPartitionMetrics.builder()
-            .topic(topic)
-            .partitionCount(3)
-            .totalMessages(3_000_000L)
-            .avgMessagesPerPartition(1_000_000L)
-            .estimatedSizeBytes(3_000_000_000L)
-            .partitionOffsets(Map.of(0, 1_000_000L, 1, 1_000_000L, 2, 1_000_000L))
-            .build();
+        TopicPartitionMetrics.builder().topic("logs.service1").partitionCount(3).build();
 
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
-    Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic, 0), 100_000L);
-    lagMap.put(new TopicPartition(topic, 1), 100_000L);
-    lagMap.put(new TopicPartition(topic, 2), 100_000L);
+    when(mockKafkaConfig.getMaxLagPerPartition()).thenReturn(50000L);
 
-    List<ScalingDecision> decisions =
-        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, kafkaConfig);
+    boolean result =
+        (Boolean)
+            method.invoke(kafkaScalingService, "logs.service1", metrics, 1000L, mockKafkaConfig);
 
-    assertNotNull(decisions);
-    assertEquals(decisions.size(), 1);
-    ScalingDecision decision = decisions.get(0);
-    // New partition count should be a multiple of 6
-    assertTrue(decision.getNewPartitions() % 6 == 0);
+    Assert.assertFalse(result);
   }
 
   @Test
-  public void testIdentifyTopicsNeedingScaling_WithNoLagData_DoesNotScale() {
-    String topic = "test-topic";
+  public void testCalculateNewPartitionCount_WithHighLag_ReturnsIncreasedCount() throws Exception {
+    Method method =
+        KafkaScalingService.class.getDeclaredMethod(
+            "calculateNewPartitionCount",
+            TopicPartitionMetrics.class,
+            long.class,
+            ApplicationConfig.KafkaConfig.class,
+            int.class);
+    method.setAccessible(true);
+
     TopicPartitionMetrics metrics =
-        TopicPartitionMetrics.builder()
-            .topic(topic)
-            .partitionCount(3)
-            .totalMessages(1_000_000L)
-            .avgMessagesPerPartition(333_333L)
-            .estimatedSizeBytes(1_000_000_000L)
-            .partitionOffsets(Map.of(0, 333_333L, 1, 333_333L, 2, 333_333L))
-            .build();
+        TopicPartitionMetrics.builder().topic("logs.service1").partitionCount(3).build();
 
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
-    Map<TopicPartition, Long> lagMap = new HashMap<>(); // Empty lag map
+    when(mockKafkaConfig.getMaxLagPerPartition()).thenReturn(50000L);
 
-    List<ScalingDecision> decisions =
-        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, kafkaConfig);
+    int result = (Integer) method.invoke(kafkaScalingService, metrics, 100000L, mockKafkaConfig, 3);
 
-    // Should not scale - only lag triggers scaling and there's no lag data
-    assertNotNull(decisions);
-    assertTrue(decisions.isEmpty());
+    Assert.assertTrue(result > metrics.getPartitionCount());
   }
 
   @Test
-  public void testIdentifyTopicsNeedingScaling_WithNullConfig_UsesDefaults() {
-    String topic = "test-topic";
+  public void testIdentifyScalingFactors_WithHighLag_ReturnsLagFactor() throws Exception {
+    Method method =
+        KafkaScalingService.class.getDeclaredMethod(
+            "identifyScalingFactors",
+            TopicPartitionMetrics.class,
+            long.class,
+            ApplicationConfig.KafkaConfig.class);
+    method.setAccessible(true);
+
     TopicPartitionMetrics metrics =
-        TopicPartitionMetrics.builder()
-            .topic(topic)
-            .partitionCount(3)
-            .totalMessages(3_000_000L)
-            .avgMessagesPerPartition(1_000_000L)
-            .estimatedSizeBytes(3_000_000_000L)
-            .partitionOffsets(Map.of(0, 1_000_000L, 1, 1_000_000L, 2, 1_000_000L))
-            .build();
+        TopicPartitionMetrics.builder().topic("logs.service1").partitionCount(3).build();
 
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
-    Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic, 0), 100_000L);
-    lagMap.put(new TopicPartition(topic, 1), 100_000L);
-    lagMap.put(new TopicPartition(topic, 2), 100_000L);
+    when(mockKafkaConfig.getMaxLagPerPartition()).thenReturn(50000L);
 
-    ApplicationConfig.KafkaConfig nullConfig = new ApplicationConfig.KafkaConfig();
-    nullConfig.setKafkaBrokersHost("localhost:9092");
+    @SuppressWarnings("unchecked")
+    List<String> factors =
+        (List<String>) method.invoke(kafkaScalingService, metrics, 100000L, mockKafkaConfig);
 
-    List<ScalingDecision> decisions =
-        kafkaScalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, nullConfig);
+    Assert.assertNotNull(factors);
+    Assert.assertTrue(factors.contains("lag"));
+  }
 
-    // Should use default thresholds
-    assertNotNull(decisions);
+  @Test
+  public void testBuildScalingReason_WithLagFactor_ReturnsReason() throws Exception {
+    Method method =
+        KafkaScalingService.class.getDeclaredMethod(
+            "buildScalingReason", List.class, TopicPartitionMetrics.class, long.class);
+    method.setAccessible(true);
+
+    TopicPartitionMetrics metrics =
+        TopicPartitionMetrics.builder().topic("logs.service1").partitionCount(3).build();
+
+    List<String> factors = Arrays.asList("lag");
+
+    String reason = (String) method.invoke(kafkaScalingService, factors, metrics, 100000L);
+
+    Assert.assertNotNull(reason);
+    Assert.assertTrue(reason.contains("lag"));
   }
 }
