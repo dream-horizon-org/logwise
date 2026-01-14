@@ -679,7 +679,6 @@ You can override values in multiple ways:
    helm install logwise . --set-file aws.secretAccessKey=./secret.txt
    ```
 
-For detailed Helm configuration options, see the [Helm Chart README](../../../deploy/kubernetes/helm/logwise/README.md).
 
 ### Building and Pushing Images
 
@@ -1251,10 +1250,9 @@ The deployments support horizontal scaling:
 
 ## Additional Resources
 
-- [Production Setup Guide](./production-setup.md)
-- [Component Documentation](../components/)
-- [Architecture Overview](../architecture-overview.md)
-- [Helm Chart README](../../../deploy/kubernetes/helm/logwise/README.md)
+- [Production Setup Guide](../production-setup.md)
+- [Component Documentation](../../components/)
+- [Architecture Overview](../../architecture-overview.md)
 
 ## Support
 
