@@ -107,13 +107,13 @@ export default defineConfig({
                         {
                             text: 'Docker',
                             items: [
-                                { text: 'Docker Setup Guide', link: '/setup-guides/docker/index' }
+                                { text: 'Setup Guide', link: '/setup-guides/docker/index' }
                             ]
                         },
                         {
                             text: 'Kubernetes',
                             items: [
-                                { text: 'Kubernetes Setup Guide', link: '/setup-guides/kubernetes/index' }
+                                { text: 'Setup Guide', link: '/setup-guides/kubernetes/index' }
                             ]
                         },
                         {

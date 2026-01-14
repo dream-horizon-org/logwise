@@ -32,6 +32,12 @@ spec:
       labels:
         app: orch-mysql
     spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       volumes:
         - name: data
           {{- if eq .Values.mysql.orchestrator.storage.type "persistentVolumeClaim" }}

@@ -10,7 +10,7 @@ Usage: {{ include "logwise.image" (dict "root" . "repository" "logwise-orchestra
 {{- $registry := .root.Values.global.imageRegistry -}}
 {{- $repository := .repository -}}
 {{- $tag := .tag | default "latest" -}}
-{{- if $registry -}}
+{{- if and $registry (not (contains "/" $repository)) -}}
 {{- printf "%s/%s:%s" $registry $repository $tag -}}
 {{- else -}}
 {{- printf "%s:%s" $repository $tag -}}

@@ -54,6 +54,12 @@ spec:
       labels:
         app: spark-master
     spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       initContainers:
         - name: wait-for-kafka
           image: busybox:1.36
@@ -79,6 +85,8 @@ spec:
               value: {{ .Values.spark.master.masterOpts | quote }}
             - name: SPARK_MASTER_PORT
               value: {{ .Values.spark.master.masterPort | quote }}
+            - name: SPARK_PUBLIC_DNS
+              value: "spark-master"
           command:
             - bash
             - -lc
