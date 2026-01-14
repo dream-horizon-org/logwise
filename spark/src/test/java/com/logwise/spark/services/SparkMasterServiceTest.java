@@ -101,4 +101,48 @@ public class SparkMasterServiceTest extends BaseSparkTest {
     assertEquals(result2.intValue(), 16);
     verify(mockSparkMasterClient, times(2)).json();
   }
+
+  @Test
+  public void testGetCoresUsed_WithNegativeCores_ReturnsNegativeValue() {
+    SparkMasterJsonResponse response = new SparkMasterJsonResponse();
+    response.setCoresused(-1);
+    when(mockSparkMasterClient.json()).thenReturn(response);
+
+    Integer result = sparkMasterService.getCoresUsed();
+
+    assertNotNull(result);
+    assertEquals(result.intValue(), -1);
+    verify(mockSparkMasterClient, times(1)).json();
+  }
+
+  @Test
+  public void testGetCoresUsed_WithNullPointerException_ReturnsNull() {
+    when(mockSparkMasterClient.json()).thenThrow(new NullPointerException("Null response"));
+
+    Integer result = sparkMasterService.getCoresUsed();
+
+    assertNull(result);
+    verify(mockSparkMasterClient, times(1)).json();
+  }
+
+  @Test
+  public void testGetCoresUsed_WithIllegalStateException_ReturnsNull() {
+    when(mockSparkMasterClient.json()).thenThrow(new IllegalStateException("Service unavailable"));
+
+    Integer result = sparkMasterService.getCoresUsed();
+
+    assertNull(result);
+    verify(mockSparkMasterClient, times(1)).json();
+  }
+
+  @Test
+  public void testGetCoresUsed_WithCheckedException_ReturnsNull() {
+    when(mockSparkMasterClient.json())
+        .thenThrow(new RuntimeException(new java.io.IOException("IO error")));
+
+    Integer result = sparkMasterService.getCoresUsed();
+
+    assertNull(result);
+    verify(mockSparkMasterClient, times(1)).json();
+  }
 }

@@ -78,4 +78,36 @@ public class JobNameTest {
     assertNotNull(jobName);
     assertEquals(jobName, JobName.PUSH_LOGS_TO_S3);
   }
+
+  @Test
+  public void testFromValue_WithWhitespace_ThrowsException() {
+    try {
+      JobName.fromValue(" push-logs-to-s3 ");
+      fail("Should throw IllegalArgumentException for whitespace");
+    } catch (IllegalArgumentException e) {
+      assertTrue(e.getMessage().contains("Invalid value"));
+    }
+  }
+
+  @Test
+  public void testFromValue_WithPartialMatch_ThrowsException() {
+    try {
+      JobName.fromValue("push-logs");
+      fail("Should throw IllegalArgumentException for partial match");
+    } catch (IllegalArgumentException e) {
+      assertTrue(e.getMessage().contains("Invalid value"));
+    }
+  }
+
+  @Test
+  public void testGetValue_ReturnsCorrectString() {
+    assertEquals(JobName.PUSH_LOGS_TO_S3.getValue(), "push-logs-to-s3");
+  }
+
+  @Test
+  public void testFromValue_WithExactMatch_ReturnsCorrectEnum() {
+    JobName result = JobName.fromValue("push-logs-to-s3");
+    assertEquals(result, JobName.PUSH_LOGS_TO_S3);
+    assertEquals(result.getValue(), "push-logs-to-s3");
+  }
 }
