@@ -40,6 +40,7 @@ public class ComponentTest extends BaseTest {
   public void setUp() throws Exception {
     super.setUp();
     MockitoAnnotations.openMocks(this);
+    TestResponseWrapper.init(vertx);
     component = new SyncComponents(serviceManagerService);
   }
 

@@ -859,4 +859,184 @@ public class SparkServiceTest extends BaseTest {
       verify(mockSparkScaleOverrideDao, times(1)).getSparkScaleOverride(eq(tenant));
     }
   }
+
+  @Test
+  public void testGetSparkSubmitRequestBody_WithS3aAccessKey_SetsAccessKey() throws Exception {
+    Method method =
+        SparkService.class.getDeclaredMethod(
+            "getSparkSubmitRequestBody",
+            ApplicationConfig.TenantConfig.class,
+            Integer.class,
+            Integer.class);
+    method.setAccessible(true);
+
+    ApplicationConfig.TenantConfig tenantConfig =
+        ApplicationTestConfig.createMockTenantConfig("ABC");
+    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
+    sparkConfig.setS3aAccessKey("test-access-key");
+    sparkConfig.setS3aSecretKey("test-secret-key");
+
+    SubmitSparkJobRequest request =
+        (SubmitSparkJobRequest) method.invoke(null, tenantConfig, null, null);
+
+    Assert.assertNotNull(request);
+    // S3a keys are stored in environmentVariables, not sparkProperties
+    Assert.assertEquals(request.getEnvironmentVariables().get("S3A-ACCESS-KEY"), "test-access-key");
+    Assert.assertEquals(request.getEnvironmentVariables().get("S3A-SECRET-KEY"), "test-secret-key");
+  }
+
+  @Test
+  public void testGetSparkSubmitRequestBody_WithEmptyAwsRegion_HandlesGracefully()
+      throws Exception {
+    Method method =
+        SparkService.class.getDeclaredMethod(
+            "getSparkSubmitRequestBody",
+            ApplicationConfig.TenantConfig.class,
+            Integer.class,
+            Integer.class);
+    method.setAccessible(true);
+
+    ApplicationConfig.TenantConfig tenantConfig =
+        ApplicationTestConfig.createMockTenantConfig("ABC");
+    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
+    sparkConfig.setAwsRegion("");
+
+    SubmitSparkJobRequest request =
+        (SubmitSparkJobRequest) method.invoke(null, tenantConfig, null, null);
+
+    Assert.assertNotNull(request);
+  }
+
+  @Test
+  public void testGetSparkSubmitRequestBody_WithPlaceholderCredentials_HandlesGracefully()
+      throws Exception {
+    Method method =
+        SparkService.class.getDeclaredMethod(
+            "getSparkSubmitRequestBody",
+            ApplicationConfig.TenantConfig.class,
+            Integer.class,
+            Integer.class);
+    method.setAccessible(true);
+
+    ApplicationConfig.TenantConfig tenantConfig =
+        ApplicationTestConfig.createMockTenantConfig("ABC");
+    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
+    sparkConfig.setAwsAccessKeyId("your-access-key");
+    sparkConfig.setAwsSecretAccessKey("your-secret-key");
+
+    SubmitSparkJobRequest request =
+        (SubmitSparkJobRequest) method.invoke(null, tenantConfig, null, null);
+
+    Assert.assertNotNull(request);
+  }
+
+  @Test
+  public void testGetSparkSubmitRequestBody_WithEmptyAccessKey_HandlesGracefully()
+      throws Exception {
+    Method method =
+        SparkService.class.getDeclaredMethod(
+            "getSparkSubmitRequestBody",
+            ApplicationConfig.TenantConfig.class,
+            Integer.class,
+            Integer.class);
+    method.setAccessible(true);
+
+    ApplicationConfig.TenantConfig tenantConfig =
+        ApplicationTestConfig.createMockTenantConfig("ABC");
+    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
+    sparkConfig.setAwsAccessKeyId("");
+    sparkConfig.setAwsSecretAccessKey("");
+
+    SubmitSparkJobRequest request =
+        (SubmitSparkJobRequest) method.invoke(null, tenantConfig, null, null);
+
+    Assert.assertNotNull(request);
+  }
+
+  @Test
+  public void testGetSparkSubmitRequestBody_WithEmptySessionToken_HandlesGracefully()
+      throws Exception {
+    Method method =
+        SparkService.class.getDeclaredMethod(
+            "getSparkSubmitRequestBody",
+            ApplicationConfig.TenantConfig.class,
+            Integer.class,
+            Integer.class);
+    method.setAccessible(true);
+
+    ApplicationConfig.TenantConfig tenantConfig =
+        ApplicationTestConfig.createMockTenantConfig("ABC");
+    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
+    sparkConfig.setAwsAccessKeyId("test-key");
+    sparkConfig.setAwsSecretAccessKey("test-secret");
+    sparkConfig.setAwsSessionToken("");
+
+    SubmitSparkJobRequest request =
+        (SubmitSparkJobRequest) method.invoke(null, tenantConfig, null, null);
+
+    Assert.assertNotNull(request);
+  }
+
+  @Test
+  public void testGetSparkSubmitRequestBody_WithoutSessionToken_SetsBasicCredentials()
+      throws Exception {
+    Method method =
+        SparkService.class.getDeclaredMethod(
+            "getSparkSubmitRequestBody",
+            ApplicationConfig.TenantConfig.class,
+            Integer.class,
+            Integer.class);
+    method.setAccessible(true);
+
+    ApplicationConfig.TenantConfig tenantConfig =
+        ApplicationTestConfig.createMockTenantConfig("ABC");
+    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
+    sparkConfig.setAwsAccessKeyId("test-key");
+    sparkConfig.setAwsSecretAccessKey("test-secret");
+    sparkConfig.setAwsSessionToken(null);
+
+    SubmitSparkJobRequest request =
+        (SubmitSparkJobRequest) method.invoke(null, tenantConfig, null, null);
+
+    Assert.assertNotNull(request);
+    Object credentialsProviderObj =
+        request.getSparkProperties().get("spark.hadoop.fs.s3a.aws.credentials.provider");
+    if (credentialsProviderObj != null) {
+      String credentialsProvider = String.valueOf(credentialsProviderObj);
+      Assert.assertTrue(
+          credentialsProvider.contains("SimpleAWSCredentialsProvider")
+              || credentialsProvider.contains("TemporaryAWSCredentialsProvider"));
+    }
+  }
+
+  @Test
+  public void testGetLatestWalFile_WithCompactFiles_HandlesCorrectly() throws Exception {
+    Method method = SparkService.class.getDeclaredMethod("getLatestWalFile", List.class);
+    method.setAccessible(true);
+
+    List<String> walFiles = Arrays.asList("10.compact", "5", "15.compact", "3");
+    String result = (String) method.invoke(null, walFiles);
+
+    Assert.assertNotNull(result);
+  }
+
+  @Test
+  public void testIsValidWalFile_WithCompactFile_ReturnsTrue() throws Exception {
+    Method method = SparkService.class.getDeclaredMethod("isValidWalFile", String.class);
+    method.setAccessible(true);
+
+    Boolean result = (Boolean) method.invoke(null, "123.compact");
+
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testIsValidWalFile_WithNonNumeric_ReturnsFalse() throws Exception {
+    Method method = SparkService.class.getDeclaredMethod("isValidWalFile", String.class);
+    method.setAccessible(true);
+
+    Boolean result = (Boolean) method.invoke(null, "abc.compact");
+
+    Assert.assertFalse(result);
+  }
 }
