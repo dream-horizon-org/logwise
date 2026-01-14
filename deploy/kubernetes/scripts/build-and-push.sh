@@ -63,6 +63,36 @@ img() {
   fi
 }
 
+# Check if docker buildx is available
+has_buildx() {
+  docker buildx version >/dev/null 2>&1
+}
+
+# Check if docker build supports --progress flag
+supports_progress_flag() {
+  # Check regular docker build first
+  if docker build --help 2>&1 | grep -q "\-\-progress"; then
+    return 0
+  fi
+  # Check buildx if available
+  if has_buildx && docker buildx build --help 2>&1 | grep -q "\-\-progress"; then
+    return 0
+  fi
+  return 1
+}
+
+# Check if Dockerfile uses BuildKit-specific features
+uses_buildkit_features() {
+  local dockerfile_path="$1"
+  if [ -f "$dockerfile_path" ]; then
+    grep -q "syntax=docker/dockerfile" "$dockerfile_path" || \
+    grep -q "--mount=type=cache" "$dockerfile_path" || \
+    grep -q "RUN --mount" "$dockerfile_path"
+  else
+    return 1
+  fi
+}
+
 # Build a single image
 build_image() {
   local service="$1"
@@ -72,32 +102,55 @@ build_image() {
   
   log_info "Building $service image: $image_tag"
   
-  # Build docker command - use conditional expansion for empty arrays
+  # Check if Dockerfile requires BuildKit
+  local needs_buildkit=false
+  if uses_buildkit_features "$dockerfile_path"; then
+    needs_buildkit=true
+    log_info "Dockerfile uses BuildKit features, BuildKit will be enabled"
+  fi
+  
+  # Determine build command and flags
+  local build_cmd="docker build"
+  local build_args=(
+    --tag "$image_tag"
+    --file "$dockerfile_path"
+  )
+  
+  # Use buildx if available (provides BuildKit support)
+  if has_buildx; then
+    build_cmd="docker buildx build"
+    # Enable BuildKit when using buildx (it's enabled by default)
+    build_args+=(--load)  # Load image into local Docker daemon
+  elif [ "$needs_buildkit" = "true" ]; then
+    # BuildKit features detected but buildx not available
+    # Try to enable BuildKit via environment variable
+    log_info "BuildKit features detected but buildx not available, attempting with DOCKER_BUILDKIT=1"
+    export DOCKER_BUILDKIT=1
+  fi
+  
+  # Add --progress flag only if supported
+  if supports_progress_flag; then
+    build_args+=(--progress=plain)
+  fi
+  
+  # Add BuildKit build arg if DOCKER_BUILDKIT is set
   if [ -n "${DOCKER_BUILDKIT:-}" ]; then
-    if docker build \
-      --tag "$image_tag" \
-      --file "$dockerfile_path" \
-      --progress=plain \
-      --build-arg DOCKER_BUILDKIT=1 \
-      "$context_path"; then
-      log_success "Built $service image: $image_tag"
-      return 0
-    else
-      log_error "Failed to build $service image: $image_tag"
-      return 1
-    fi
+    build_args+=(--build-arg DOCKER_BUILDKIT=1)
+  fi
+  
+  # Add context path
+  build_args+=("$context_path")
+  
+  # Execute build
+  if $build_cmd "${build_args[@]}"; then
+    log_success "Built $service image: $image_tag"
+    return 0
   else
-    if docker build \
-      --tag "$image_tag" \
-      --file "$dockerfile_path" \
-      --progress=plain \
-      "$context_path"; then
-      log_success "Built $service image: $image_tag"
-      return 0
-    else
-      log_error "Failed to build $service image: $image_tag"
-      return 1
+    log_error "Failed to build $service image: $image_tag"
+    if [ "$needs_buildkit" = "true" ] && ! has_buildx; then
+      log_error "This Dockerfile requires BuildKit. Install docker-buildx: brew install docker-buildx"
     fi
+    return 1
   fi
 }
 

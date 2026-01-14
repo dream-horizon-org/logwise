@@ -2,6 +2,7 @@ package com.logwise.orchestrator.client.kafka;
 
 import com.logwise.orchestrator.dto.kafka.ClusterInfo;
 import com.logwise.orchestrator.dto.kafka.SparkCheckpointOffsets;
+import com.logwise.orchestrator.dto.kafka.TopicOffsetInfo;
 import com.logwise.orchestrator.dto.kafka.TopicPartitionMetrics;
 import com.logwise.orchestrator.enums.KafkaType;
 import io.reactivex.Completable;
@@ -45,6 +46,14 @@ public interface KafkaClient {
   Single<Map<String, TopicPartitionMetrics>> getPartitionMetrics(List<String> topics);
 
   /**
+   * Get end offset sum and current partition count for topics.
+   *
+   * @param topics List of topic names
+   * @return Map of topic name to TopicOffsetInfo containing sumOfEndOffsets and currentNumberOfPartitions
+   */
+  Single<Map<String, TopicOffsetInfo>> getEndOffsetSum(List<String> topics);
+
+    /**
    * Get end offsets (high watermarks) for partitions. Used to calculate lag when combined with
    * Spark checkpoint offsets.
    *

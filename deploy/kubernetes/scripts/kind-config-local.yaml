@@ -2,6 +2,11 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
+    # Resource configuration:
+    # Note: Actual CPU/memory limits are controlled by Docker Desktop settings.
+    # Ensure Docker Desktop has at least 6 CPUs and 10GB memory allocated.
+    # On macOS: Docker Desktop → Settings → Resources → Advanced
+    # The node will use resources available from Docker Desktop.
     # Map NodePorts from the kind node out to your host so you can use localhost.
     extraPortMappings:
       # Grafana Service (NodePort 30080) → http://localhost:30080
@@ -24,5 +29,20 @@ nodes:
       - containerPort: 30418
         hostPort: 30418
         protocol: TCP
+    # Configure kubelet to allow metrics-server access
+    # This fixes the 403 Forbidden error when metrics-server tries to scrape node metrics
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            authorization-mode: AlwaysAllow
+            anonymous-auth: "true"
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            authorization-mode: AlwaysAllow
+            anonymous-auth: "true"
 
 

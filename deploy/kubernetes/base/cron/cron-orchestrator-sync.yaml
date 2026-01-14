@@ -35,4 +35,7 @@ spec:
                     "${ORCH_URL}/monitor-spark-job" \
                     || echo "$(date -Is) Monitor Spark Job failed" >&2
 
-
+                  curl -fsS --retry 3 --retry-connrefused --max-time 15 \
+                    -X POST -H "Content-Type: application/json" -H "X-Tenant-Name: ${TENANT}" \
+                    "${ORCH_URL}/kafka/scale-partitions" \
+                    || echo "$(date -Is) Kafka Scale Partitions failed" >&2

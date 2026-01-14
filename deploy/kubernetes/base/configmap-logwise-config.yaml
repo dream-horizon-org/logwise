@@ -5,9 +5,9 @@ metadata:
   namespace: logwise
 data:
   AWS_REGION: "us-east-1"
-  S3_BUCKET_NAME: "logwise-varun-test"
-  S3_ATHENA_OUTPUT: "s3://logwise-varun-test/athena-output/"
-  ATHENA_WORKGROUP: "observability"
+  S3_BUCKET_NAME: "kd-logwise-test"
+  S3_ATHENA_OUTPUT: "s3://kd-logwise-test/athena-output/"
+  ATHENA_WORKGROUP: "logwise"
   ATHENA_CATALOG: "AwsDataCatalog"
   ATHENA_DATABASE: "logwise"
   KAFKA_BROKERS: "kafka"

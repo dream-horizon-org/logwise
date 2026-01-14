@@ -73,10 +73,10 @@ spec:
           resources:
             requests:
               cpu: "1000m"
-              memory: "2048Mi"
+              memory: "2Gi"
             limits:
               cpu: "1000m"
-              memory: "2048Mi"
+              memory: "2Gi"
           volumeMounts:
             - name: kafka-data
               mountPath: /var/lib/kafka/data

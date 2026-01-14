@@ -20,6 +20,7 @@ import com.logwise.orchestrator.testconfig.ApplicationTestConfig;
 import com.logwise.orchestrator.util.ApplicationConfigUtil;
 import io.reactivex.Completable;
 import io.reactivex.Single;
+import io.vertx.reactivex.core.Vertx;
 import java.util.*;
 import org.apache.kafka.common.TopicPartition;
 import org.mockito.MockedStatic;
@@ -43,9 +44,10 @@ public class KafkaServiceTest extends BaseTest {
     mockSparkCheckpointService = mock(SparkCheckpointService.class);
     mockKafkaScalingService = mock(KafkaScalingService.class);
     mockKafkaClient = mock(KafkaClient.class);
+    Vertx mockVertx = mock(Vertx.class);
     kafkaService =
         new KafkaService(
-            mockKafkaClientFactory, mockSparkCheckpointService, mockKafkaScalingService);
+            mockVertx, mockKafkaClientFactory, mockSparkCheckpointService, mockKafkaScalingService);
   }
 
   @Test

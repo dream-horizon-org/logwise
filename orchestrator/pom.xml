@@ -365,7 +365,7 @@
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.18.30</version>
+      <version>1.18.36</version>
       <scope>provided</scope>
     </dependency>
 
@@ -486,11 +486,6 @@
       <version>${mysql-connector-java.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.reflections</groupId>
-      <artifactId>reflections</artifactId>
-      <version>${reflections.version}</version>
-    </dependency>
 
     <dependency>
       <groupId>me.escoffier.vertx</groupId>
@@ -505,18 +500,19 @@
        ========================================================== -->
   <build>
     <plugins>
-      <!-- Compiler uses release 17 -->
+      <!-- Compiler uses release 11 -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
+        <version>3.13.0</version>
         <configuration>
           <release>${maven.compiler.release}</release>
+          <fork>true</fork>
           <annotationProcessorPaths>
             <path>
               <groupId>org.projectlombok</groupId>
               <artifactId>lombok</artifactId>
-              <version>1.18.30</version>
+              <version>1.18.36</version>
             </path>
           </annotationProcessorPaths>
         </configuration>

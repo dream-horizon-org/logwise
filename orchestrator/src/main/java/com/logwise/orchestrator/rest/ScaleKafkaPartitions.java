@@ -85,14 +85,12 @@ public class ScaleKafkaPartitions {
       kafkaService
           .scaleKafkaPartitions(tenant)
           .subscribe(
-              scalingDecisions -> {
+              scalingMap -> {
                 ScaleKafkaPartitionsResponse response =
                     ScaleKafkaPartitionsResponse.builder()
                         .success(true)
                         .message("Successfully scaled Kafka partitions for tenant: " + tenantName)
-                        .topicsScaled(scalingDecisions.size())
-                        .scalingDecisions(
-                            scalingDecisions != null ? scalingDecisions : Collections.emptyList())
+                        .topicsScaled(scalingMap.size())
                         .warnings(warnings)
                         .errors(errors)
                         .build();
@@ -106,7 +104,6 @@ public class ScaleKafkaPartitions {
                         .success(false)
                         .message("Failed to scale Kafka partitions: " + throwable.getMessage())
                         .topicsScaled(0)
-                        .scalingDecisions(Collections.emptyList())
                         .warnings(warnings)
                         .errors(errors)
                         .build();
@@ -121,7 +118,6 @@ public class ScaleKafkaPartitions {
               .success(false)
               .message("Error processing request: " + e.getMessage())
               .topicsScaled(0)
-              .scalingDecisions(Collections.emptyList())
               .warnings(warnings)
               .errors(errors)
               .build();
