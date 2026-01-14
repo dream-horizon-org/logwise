@@ -384,4 +384,127 @@ public class PipelineHealthCheckServiceTest extends BaseTest {
       Assert.assertTrue(response.getString("message").contains("Pipeline health check failed"));
     }
   }
+
+  @Test
+  public void testCheckVectorHealth_WithTimeout_ReturnsDown() throws Exception {
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
+        mockResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockRxWebClient.getAbs(anyString())).thenReturn(mockRequest);
+    when(mockRequest.rxSend())
+        .thenReturn(
+            Single.timer(10, java.util.concurrent.TimeUnit.SECONDS)
+                .flatMap(
+                    __ ->
+                        Single.just(
+                            (io.vertx.reactivex.ext.web.client.HttpResponse<
+                                    io.vertx.reactivex.core.buffer.Buffer>)
+                                mockResponse)));
+
+    Single<JsonObject> result = service.checkVectorHealth(mockTenantConfig);
+
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "DOWN");
+  }
+
+  @Test
+  public void testCheckSparkHealth_WithError_ReturnsDown() throws Exception {
+    RuntimeException error = new RuntimeException("Connection error");
+
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockRxWebClient.getAbs(anyString())).thenReturn(mockRequest);
+    when(mockRequest.rxSend()).thenReturn(Single.error(error));
+
+    Single<JsonObject> result = service.checkSparkHealth(mockTenantConfig);
+
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "DOWN");
+    Assert.assertTrue(response.getString("message").contains("Spark health check failed"));
+  }
+
+  @Test
+  public void testCheckS3Logs_WithError_ReturnsDown() throws Exception {
+    Tenant tenant = Tenant.ABC;
+    ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
+    RuntimeException error = new RuntimeException("S3 error");
+
+    when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
+        .thenReturn(Single.error(error));
+
+    try (MockedStatic<ObjectStoreFactory> mockedFactory = mockStatic(ObjectStoreFactory.class)) {
+      mockedFactory
+          .when(() -> ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
+
+      Single<JsonObject> result = service.checkS3Logs(tenant, mockTenantConfig);
+
+      JsonObject response = result.blockingGet();
+      Assert.assertNotNull(response);
+      Assert.assertEquals(response.getString("status"), "DOWN");
+      Assert.assertTrue(response.getString("message").contains("S3 logs check failed"));
+    }
+  }
+
+  @Test
+  public void testCheckCompletePipeline_WithSomeDown_ReturnsDown() throws Exception {
+    Tenant tenant = Tenant.ABC;
+
+    // Mock Vector to return DOWN
+    io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
+        mockVectorResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockVectorResponse.statusCode()).thenReturn(500);
+
+    // Mock Spark to return DOWN
+    Driver driver = new Driver();
+    driver.setState("FINISHED");
+    SparkMasterJsonResponse sparkResponse = new SparkMasterJsonResponse();
+    sparkResponse.setActivedrivers(Arrays.asList(driver));
+
+    io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
+        mockSparkResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockSparkResponse.bodyAsString())
+        .thenReturn("{\"activedrivers\":[{\"state\":\"FINISHED\"}]}");
+
+    ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
+    List<String> prefixes = Arrays.asList("logs/service1/");
+    int currentHour = java.time.LocalDateTime.now().getHour();
+    String hourPattern = String.format("hour=%02d", currentHour);
+    List<String> objects = Arrays.asList("logs/service1/" + hourPattern + "/file1.log");
+
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockVectorRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockSparkRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockRxWebClient.getAbs(contains("/health"))).thenReturn(mockVectorRequest);
+    when(mockRxWebClient.getAbs(contains("/json"))).thenReturn(mockSparkRequest);
+    when(mockVectorRequest.rxSend()).thenReturn(Single.just(mockVectorResponse));
+    when(mockSparkRequest.rxSend()).thenReturn(Single.just(mockSparkResponse));
+    when(mockObjectMapper.readValue(anyString(), eq(SparkMasterJsonResponse.class)))
+        .thenReturn(sparkResponse);
+    when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
+        .thenReturn(Single.just(prefixes));
+    when(mockObjectStoreClient.listObjects(anyString())).thenReturn(Single.just(objects));
+
+    try (MockedStatic<ObjectStoreFactory> mockedFactory = mockStatic(ObjectStoreFactory.class);
+        MockedStatic<ApplicationConfigUtil> mockedConfig =
+            mockStatic(ApplicationConfigUtil.class)) {
+      mockedFactory
+          .when(() -> ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
+      mockedConfig
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(mockTenantConfig);
+
+      Single<JsonObject> result = service.checkCompletePipeline(tenant);
+
+      JsonObject response = result.blockingGet();
+      Assert.assertNotNull(response);
+      Assert.assertEquals(response.getString("status"), "DOWN");
+      Assert.assertTrue(response.getString("message").contains("One or more pipeline components"));
+    }
+  }
 }
