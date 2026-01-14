@@ -14,9 +14,9 @@ public class SparkScaleOverrideMapperTest {
     UpdateSparkScaleOverrideRequest request = new UpdateSparkScaleOverrideRequest();
     request.setEnableUpScale(true);
     request.setEnableDownScale(false);
-    
+
     SparkScaleOverride result = SparkScaleOverrideMapper.toSparkScaleOverride(tenant, request);
-    
+
     Assert.assertNotNull(result);
     Assert.assertEquals(result.getTenant(), tenant);
     Assert.assertEquals(result.getUpscale(), true);
@@ -29,9 +29,9 @@ public class SparkScaleOverrideMapperTest {
     UpdateSparkScaleOverrideRequest request = new UpdateSparkScaleOverrideRequest();
     request.setEnableUpScale(null);
     request.setEnableDownScale(null);
-    
+
     SparkScaleOverride result = SparkScaleOverrideMapper.toSparkScaleOverride(tenant, request);
-    
+
     Assert.assertNotNull(result);
     Assert.assertEquals(result.getTenant(), tenant);
     Assert.assertNull(result.getUpscale());
@@ -44,9 +44,9 @@ public class SparkScaleOverrideMapperTest {
     UpdateSparkScaleOverrideRequest request = new UpdateSparkScaleOverrideRequest();
     request.setEnableUpScale(true);
     request.setEnableDownScale(true);
-    
+
     SparkScaleOverride result = SparkScaleOverrideMapper.toSparkScaleOverride(tenant, request);
-    
+
     Assert.assertNotNull(result);
     Assert.assertEquals(result.getTenant(), tenant);
     Assert.assertEquals(result.getUpscale(), true);
@@ -59,13 +59,12 @@ public class SparkScaleOverrideMapperTest {
     UpdateSparkScaleOverrideRequest request = new UpdateSparkScaleOverrideRequest();
     request.setEnableUpScale(false);
     request.setEnableDownScale(false);
-    
+
     SparkScaleOverride result = SparkScaleOverrideMapper.toSparkScaleOverride(tenant, request);
-    
+
     Assert.assertNotNull(result);
     Assert.assertEquals(result.getTenant(), tenant);
     Assert.assertEquals(result.getUpscale(), false);
     Assert.assertEquals(result.getDownscale(), false);
   }
 }
-
