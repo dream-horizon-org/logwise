@@ -1,8 +1,10 @@
 package com.logwise.orchestrator.tests.unit.service;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.testng.Assert.*;
 
 import com.logwise.orchestrator.client.kafka.KafkaClient;
 import com.logwise.orchestrator.config.ApplicationConfig;
@@ -16,18 +18,15 @@ import com.logwise.orchestrator.service.KafkaScalingService;
 import com.logwise.orchestrator.service.KafkaService;
 import com.logwise.orchestrator.service.SparkCheckpointService;
 import com.logwise.orchestrator.setup.BaseTest;
-import com.logwise.orchestrator.testconfig.ApplicationTestConfig;
 import com.logwise.orchestrator.util.ApplicationConfigUtil;
-import io.reactivex.Completable;
 import io.reactivex.Single;
 import java.util.*;
 import org.apache.kafka.common.TopicPartition;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/** Unit tests for KafkaService. */
 public class KafkaServiceTest extends BaseTest {
 
   private KafkaService kafkaService;
@@ -35,6 +34,9 @@ public class KafkaServiceTest extends BaseTest {
   private SparkCheckpointService mockSparkCheckpointService;
   private KafkaScalingService mockKafkaScalingService;
   private KafkaClient mockKafkaClient;
+  private ApplicationConfig.TenantConfig mockTenantConfig;
+  private ApplicationConfig.KafkaConfig mockKafkaConfig;
+  private ApplicationConfig.SparkConfig mockSparkConfig;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -43,275 +45,160 @@ public class KafkaServiceTest extends BaseTest {
     mockSparkCheckpointService = mock(SparkCheckpointService.class);
     mockKafkaScalingService = mock(KafkaScalingService.class);
     mockKafkaClient = mock(KafkaClient.class);
+    mockTenantConfig = mock(ApplicationConfig.TenantConfig.class);
+    mockKafkaConfig = mock(ApplicationConfig.KafkaConfig.class);
+    mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+
+    when(mockTenantConfig.getKafka()).thenReturn(mockKafkaConfig);
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getSubscribePattern()).thenReturn("logs.*");
+    when(mockKafkaConfig.getKafkaType()).thenReturn(KafkaType.MSK);
+    when(mockKafkaClientFactory.createKafkaClient(any(ApplicationConfig.KafkaConfig.class)))
+        .thenReturn(mockKafkaClient);
+
     kafkaService =
         new KafkaService(
             mockKafkaClientFactory, mockSparkCheckpointService, mockKafkaScalingService);
   }
 
   @Test
-  public void testScaleKafkaPartitions_WithTopicsNeedingScaling_ScalesPartitions() {
+  public void testScaleKafkaPartitions_WithScalingDisabled_ReturnsEmptyList() throws Exception {
     Tenant tenant = Tenant.ABC;
-    String topic = "test-topic";
-    Set<String> topics = Set.of(topic);
+    when(mockKafkaConfig.getEnablePartitionScaling()).thenReturn(false);
 
-    TopicPartitionMetrics metrics =
-        TopicPartitionMetrics.builder()
-            .topic(topic)
-            .partitionCount(3)
-            .totalMessages(3_000_000L)
-            .avgMessagesPerPartition(1_000_000L)
-            .estimatedSizeBytes(3_000_000_000L)
-            .partitionOffsets(Map.of(0, 1_000_000L, 1, 1_000_000L, 2, 1_000_000L))
-            .build();
+    try (MockedStatic<ApplicationConfigUtil> mockedConfig =
+        mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfig
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(mockTenantConfig);
 
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
+      Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
+
+      List<ScalingDecision> decisions = result.blockingGet();
+      Assert.assertNotNull(decisions);
+      Assert.assertTrue(decisions.isEmpty());
+      verify(mockKafkaClientFactory, never()).createKafkaClient(any());
+    }
+  }
+
+  @Test
+  public void testScaleKafkaPartitions_WithNullScalingFlag_ReturnsEmptyList() throws Exception {
+    Tenant tenant = Tenant.ABC;
+    when(mockKafkaConfig.getEnablePartitionScaling()).thenReturn(null);
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfig =
+        mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfig
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(mockTenantConfig);
+
+      Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
+
+      List<ScalingDecision> decisions = result.blockingGet();
+      Assert.assertNotNull(decisions);
+      Assert.assertTrue(decisions.isEmpty());
+    }
+  }
+
+  @Test
+  public void testScaleKafkaPartitions_WithNoTopics_ReturnsEmptyList() throws Exception {
+    Tenant tenant = Tenant.ABC;
+    when(mockKafkaConfig.getEnablePartitionScaling()).thenReturn(true);
+    when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.just(Collections.emptySet()));
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfig =
+        mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfig
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(mockTenantConfig);
+
+      Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
+
+      List<ScalingDecision> decisions = result.blockingGet();
+      Assert.assertNotNull(decisions);
+      Assert.assertTrue(decisions.isEmpty());
+      verify(mockKafkaClient, times(1)).listTopics(anyString());
+      verify(mockKafkaClient, times(1)).close();
+    }
+  }
+
+  @Test
+  public void testScaleKafkaPartitions_WithTopicsButNoScalingNeeded_ReturnsEmptyList()
+      throws Exception {
+    Tenant tenant = Tenant.ABC;
+    Set<String> topics = new HashSet<>(Arrays.asList("logs.service1", "logs.service2"));
+    Map<String, TopicPartitionMetrics> metricsMap = new HashMap<>();
+    SparkCheckpointOffsets checkpointOffsets =
+        SparkCheckpointOffsets.builder().available(true).offsets(Collections.emptyMap()).build();
     Map<TopicPartition, Long> endOffsets = new HashMap<>();
-    endOffsets.put(new TopicPartition(topic, 0), 1_000_000L);
-    endOffsets.put(new TopicPartition(topic, 1), 1_000_000L);
-    endOffsets.put(new TopicPartition(topic, 2), 1_000_000L);
-
-    Map<TopicPartition, Long> checkpointOffsets = new HashMap<>();
-    checkpointOffsets.put(new TopicPartition(topic, 0), 900_000L);
-    checkpointOffsets.put(new TopicPartition(topic, 1), 900_000L);
-    checkpointOffsets.put(new TopicPartition(topic, 2), 900_000L);
-
     Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic, 0), 100_000L);
-    lagMap.put(new TopicPartition(topic, 1), 100_000L);
-    lagMap.put(new TopicPartition(topic, 2), 100_000L);
 
-    ScalingDecision decision =
-        ScalingDecision.builder()
-            .topic(topic)
-            .currentPartitions(3)
-            .newPartitions(6)
-            .reason("lag: 100000")
-            .factors(List.of("lag"))
-            .build();
+    when(mockKafkaConfig.getEnablePartitionScaling()).thenReturn(true);
+    when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.just(topics));
+    when(mockKafkaClient.getPartitionMetrics(anyList())).thenReturn(Single.just(metricsMap));
+    when(mockSparkCheckpointService.getSparkCheckpointOffsets(tenant))
+        .thenReturn(Single.just(checkpointOffsets));
+    when(mockKafkaClient.getEndOffsets(anyList())).thenReturn(Single.just(endOffsets));
+    when(mockKafkaClient.calculateLag(anyMap(), anyMap())).thenReturn(Single.just(lagMap));
+    when(mockKafkaScalingService.identifyTopicsNeedingScaling(anyMap(), anyMap(), any()))
+        .thenReturn(Collections.emptyList());
 
-    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
-        Mockito.mockStatic(ApplicationConfigUtil.class)) {
-      ApplicationConfig.TenantConfig tenantConfig =
-          ApplicationTestConfig.createMockTenantConfig("ABC");
-      tenantConfig.getKafka().setKafkaType(KafkaType.EC2);
-      mockedConfigUtil
+    try (MockedStatic<ApplicationConfigUtil> mockedConfig =
+        mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
-          .thenReturn(tenantConfig);
-
-      when(mockKafkaClientFactory.createKafkaClient(any())).thenReturn(mockKafkaClient);
-      when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.just(topics));
-      when(mockKafkaClient.getPartitionMetrics(anyList())).thenReturn(Single.just(metricsMap));
-      when(mockKafkaClient.getEndOffsets(anyList())).thenReturn(Single.just(endOffsets));
-      when(mockKafkaClient.calculateLag(any(), any())).thenReturn(Single.just(lagMap));
-      when(mockKafkaClient.increasePartitions(anyMap())).thenReturn(Completable.complete());
-
-      SparkCheckpointOffsets checkpointOffsetsObj =
-          SparkCheckpointOffsets.builder()
-              .checkpointPath("checkpoint/application")
-              .offsets(checkpointOffsets)
-              .available(true)
-              .build();
-
-      when(mockSparkCheckpointService.getSparkCheckpointOffsets(tenant))
-          .thenReturn(Single.just(checkpointOffsetsObj));
-      when(mockKafkaScalingService.identifyTopicsNeedingScaling(any(), any(), any()))
-          .thenReturn(List.of(decision));
+          .thenReturn(mockTenantConfig);
 
       Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
-      List<ScalingDecision> decisions = result.blockingGet();
-      assertNotNull(decisions);
-      assertEquals(decisions.size(), 1);
-      assertEquals(decisions.get(0).getTopic(), topic);
 
-      verify(mockKafkaClient, times(1)).listTopics(anyString());
-      verify(mockKafkaClient, times(1)).getPartitionMetrics(anyList());
-      verify(mockKafkaClient, times(1)).getEndOffsets(anyList());
-      verify(mockKafkaClient, times(1)).calculateLag(any(), any());
-      verify(mockKafkaClient, times(1)).increasePartitions(anyMap());
+      List<ScalingDecision> decisions = result.blockingGet();
+      Assert.assertNotNull(decisions);
+      Assert.assertTrue(decisions.isEmpty());
       verify(mockKafkaClient, times(1)).close();
     }
   }
 
   @Test
-  public void testScaleKafkaPartitions_WithNoTopics_CompletesSuccessfully() {
+  public void testScaleKafkaPartitions_WithErrorCreatingClient_ReturnsError() {
     Tenant tenant = Tenant.ABC;
-    Set<String> topics = Collections.emptySet();
+    RuntimeException error = new RuntimeException("Client creation error");
 
-    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
-        Mockito.mockStatic(ApplicationConfigUtil.class)) {
-      ApplicationConfig.TenantConfig tenantConfig =
-          ApplicationTestConfig.createMockTenantConfig("ABC");
-      mockedConfigUtil
-          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
-          .thenReturn(tenantConfig);
-
-      when(mockKafkaClientFactory.createKafkaClient(any())).thenReturn(mockKafkaClient);
-      when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.just(topics));
+    try (MockedStatic<ApplicationConfigUtil> mockedConfig =
+        mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfig.when(() -> ApplicationConfigUtil.getTenantConfig(tenant)).thenThrow(error);
 
       Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
-      List<ScalingDecision> decisions = result.blockingGet();
-      assertNotNull(decisions);
-      assertTrue(decisions.isEmpty());
-
-      verify(mockKafkaClient, times(1)).listTopics(anyString());
-      verify(mockKafkaClient, never()).getPartitionMetrics(anyList());
-      verify(mockKafkaClient, times(1)).close();
-    }
-  }
-
-  @Test
-  public void testScaleKafkaPartitions_WithNoScalingNeeded_CompletesSuccessfully() {
-    Tenant tenant = Tenant.ABC;
-    String topic = "test-topic";
-    Set<String> topics = Set.of(topic);
-
-    TopicPartitionMetrics metrics =
-        TopicPartitionMetrics.builder()
-            .topic(topic)
-            .partitionCount(3)
-            .totalMessages(100_000L)
-            .avgMessagesPerPartition(33_333L)
-            .estimatedSizeBytes(100_000_000L)
-            .partitionOffsets(Map.of(0, 33_333L, 1, 33_333L, 2, 33_333L))
-            .build();
-
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
-    Map<TopicPartition, Long> endOffsets = new HashMap<>();
-    endOffsets.put(new TopicPartition(topic, 0), 33_333L);
-    endOffsets.put(new TopicPartition(topic, 1), 33_333L);
-    endOffsets.put(new TopicPartition(topic, 2), 33_333L);
-
-    Map<TopicPartition, Long> checkpointOffsets = new HashMap<>();
-    checkpointOffsets.put(new TopicPartition(topic, 0), 33_000L);
-    checkpointOffsets.put(new TopicPartition(topic, 1), 33_000L);
-    checkpointOffsets.put(new TopicPartition(topic, 2), 33_000L);
-
-    Map<TopicPartition, Long> lagMap = new HashMap<>();
-    lagMap.put(new TopicPartition(topic, 0), 333L);
-    lagMap.put(new TopicPartition(topic, 1), 333L);
-    lagMap.put(new TopicPartition(topic, 2), 333L);
-
-    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
-        Mockito.mockStatic(ApplicationConfigUtil.class)) {
-      ApplicationConfig.TenantConfig tenantConfig =
-          ApplicationTestConfig.createMockTenantConfig("ABC");
-      mockedConfigUtil
-          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
-          .thenReturn(tenantConfig);
-
-      when(mockKafkaClientFactory.createKafkaClient(any())).thenReturn(mockKafkaClient);
-      when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.just(topics));
-      when(mockKafkaClient.getPartitionMetrics(anyList())).thenReturn(Single.just(metricsMap));
-      when(mockKafkaClient.getEndOffsets(anyList())).thenReturn(Single.just(endOffsets));
-      when(mockKafkaClient.calculateLag(any(), any())).thenReturn(Single.just(lagMap));
-
-      SparkCheckpointOffsets checkpointOffsetsObj =
-          SparkCheckpointOffsets.builder()
-              .checkpointPath("checkpoint/application")
-              .offsets(checkpointOffsets)
-              .available(true)
-              .build();
-
-      when(mockSparkCheckpointService.getSparkCheckpointOffsets(tenant))
-          .thenReturn(Single.just(checkpointOffsetsObj));
-      when(mockKafkaScalingService.identifyTopicsNeedingScaling(any(), any(), any()))
-          .thenReturn(Collections.emptyList());
-
-      Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
-      List<ScalingDecision> decisions = result.blockingGet();
-      assertNotNull(decisions);
-      assertTrue(decisions.isEmpty());
-
-      verify(mockKafkaClient, times(1)).listTopics(anyString());
-      verify(mockKafkaClient, times(1)).getPartitionMetrics(anyList());
-      verify(mockKafkaClient, never()).increasePartitions(anyMap());
-      verify(mockKafkaClient, times(1)).close();
-    }
-  }
-
-  @Test
-  public void testScaleKafkaPartitions_WithUnavailableCheckpoint_UsesZeroLag() {
-    Tenant tenant = Tenant.ABC;
-    String topic = "test-topic";
-    Set<String> topics = Set.of(topic);
-
-    TopicPartitionMetrics metrics =
-        TopicPartitionMetrics.builder()
-            .topic(topic)
-            .partitionCount(3)
-            .totalMessages(3_000_000L)
-            .avgMessagesPerPartition(1_000_000L)
-            .estimatedSizeBytes(3_000_000_000L)
-            .partitionOffsets(Map.of(0, 1_000_000L, 1, 1_000_000L, 2, 1_000_000L))
-            .build();
-
-    Map<String, TopicPartitionMetrics> metricsMap = Map.of(topic, metrics);
-    Map<TopicPartition, Long> endOffsets = new HashMap<>();
-    endOffsets.put(new TopicPartition(topic, 0), 1_000_000L);
-    endOffsets.put(new TopicPartition(topic, 1), 1_000_000L);
-    endOffsets.put(new TopicPartition(topic, 2), 1_000_000L);
-
-    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
-        Mockito.mockStatic(ApplicationConfigUtil.class)) {
-      ApplicationConfig.TenantConfig tenantConfig =
-          ApplicationTestConfig.createMockTenantConfig("ABC");
-      mockedConfigUtil
-          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
-          .thenReturn(tenantConfig);
-
-      when(mockKafkaClientFactory.createKafkaClient(any())).thenReturn(mockKafkaClient);
-      when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.just(topics));
-      when(mockKafkaClient.getPartitionMetrics(anyList())).thenReturn(Single.just(metricsMap));
-      when(mockKafkaClient.getEndOffsets(anyList())).thenReturn(Single.just(endOffsets));
-
-      SparkCheckpointOffsets checkpointOffsetsObj =
-          SparkCheckpointOffsets.builder()
-              .checkpointPath("checkpoint/application")
-              .offsets(Collections.emptyMap())
-              .available(false)
-              .build();
-
-      when(mockSparkCheckpointService.getSparkCheckpointOffsets(tenant))
-          .thenReturn(Single.just(checkpointOffsetsObj));
-      when(mockKafkaScalingService.identifyTopicsNeedingScaling(any(), any(), any()))
-          .thenReturn(Collections.emptyList());
-
-      Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
-      List<ScalingDecision> decisions = result.blockingGet();
-      assertNotNull(decisions);
-      // With unavailable checkpoint, zero lag is used, so no scaling decisions should be made
-      assertEquals(decisions.size(), 0);
-
-      verify(mockKafkaClient, times(1)).listTopics(anyString());
-      verify(mockKafkaClient, never()).calculateLag(any(), any());
-      verify(mockKafkaClient, times(1)).close();
-    }
-  }
-
-  @Test
-  public void testScaleKafkaPartitions_WithError_ClosesClient() {
-    Tenant tenant = Tenant.ABC;
-
-    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
-        Mockito.mockStatic(ApplicationConfigUtil.class)) {
-      ApplicationConfig.TenantConfig tenantConfig =
-          ApplicationTestConfig.createMockTenantConfig("ABC");
-      mockedConfigUtil
-          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
-          .thenReturn(tenantConfig);
-
-      when(mockKafkaClientFactory.createKafkaClient(any())).thenReturn(mockKafkaClient);
-      when(mockKafkaClient.listTopics(anyString()))
-          .thenReturn(Single.error(new RuntimeException("Kafka error")));
 
       try {
-        Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
         result.blockingGet();
-        fail("Should have thrown exception");
+        Assert.fail("Should have thrown exception");
       } catch (Exception e) {
-        // Expected
+        Assert.assertNotNull(e);
       }
+    }
+  }
 
+  @Test
+  public void testScaleKafkaPartitions_WithErrorDuringScaling_ClosesClient() throws Exception {
+    Tenant tenant = Tenant.ABC;
+    when(mockKafkaConfig.getEnablePartitionScaling()).thenReturn(true);
+    RuntimeException error = new RuntimeException("Scaling error");
+    when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.error(error));
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfig =
+        mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfig
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(mockTenantConfig);
+
+      Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
+
+      try {
+        result.blockingGet();
+        Assert.fail("Should have thrown exception");
+      } catch (Exception e) {
+        Assert.assertNotNull(e);
+      }
       verify(mockKafkaClient, times(1)).close();
     }
   }

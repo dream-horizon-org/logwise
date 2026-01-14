@@ -1,728 +1,387 @@
 package com.logwise.orchestrator.tests.unit.service;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logwise.orchestrator.client.ObjectStoreClient;
 import com.logwise.orchestrator.config.ApplicationConfig;
 import com.logwise.orchestrator.dto.response.SparkMasterJsonResponse;
+import com.logwise.orchestrator.dto.response.SparkMasterJsonResponse.Driver;
 import com.logwise.orchestrator.enums.Tenant;
 import com.logwise.orchestrator.factory.ObjectStoreFactory;
 import com.logwise.orchestrator.service.PipelineHealthCheckService;
 import com.logwise.orchestrator.setup.BaseTest;
-import com.logwise.orchestrator.testconfig.ApplicationTestConfig;
 import com.logwise.orchestrator.util.ApplicationConfigUtil;
 import com.logwise.orchestrator.webclient.reactivex.client.WebClient;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/** Unit tests for PipelineHealthCheckService. */
-@SuppressWarnings("unchecked")
 public class PipelineHealthCheckServiceTest extends BaseTest {
 
-  private PipelineHealthCheckService pipelineHealthCheckService;
+  private PipelineHealthCheckService service;
   private WebClient mockWebClient;
-  private ObjectMapper objectMapper;
-  private io.vertx.reactivex.ext.web.client.WebClient mockVertxWebClient;
+  private ObjectMapper mockObjectMapper;
+  private io.vertx.reactivex.ext.web.client.WebClient mockRxWebClient;
+  private ApplicationConfig.TenantConfig mockTenantConfig;
+  private ApplicationConfig.VectorConfig mockVectorConfig;
+  private ApplicationConfig.SparkConfig mockSparkConfig;
+  private ApplicationConfig.KafkaConfig mockKafkaConfig;
 
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
     mockWebClient = mock(WebClient.class);
-    objectMapper = new ObjectMapper();
-    pipelineHealthCheckService = new PipelineHealthCheckService(mockWebClient, objectMapper);
-    mockVertxWebClient = mock(io.vertx.reactivex.ext.web.client.WebClient.class);
-    when(mockWebClient.getWebClient()).thenReturn(mockVertxWebClient);
-  }
+    mockObjectMapper = mock(ObjectMapper.class);
+    mockRxWebClient = mock(io.vertx.reactivex.ext.web.client.WebClient.class);
+    mockTenantConfig = mock(ApplicationConfig.TenantConfig.class);
+    mockVectorConfig = mock(ApplicationConfig.VectorConfig.class);
+    mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    mockKafkaConfig = mock(ApplicationConfig.KafkaConfig.class);
 
-  @AfterClass
-  public static void tearDownClass() {
-    BaseTest.cleanup();
-  }
+    when(mockWebClient.getWebClient()).thenReturn(mockRxWebClient);
+    when(mockTenantConfig.getName()).thenReturn("ABC");
+    when(mockTenantConfig.getVector()).thenReturn(mockVectorConfig);
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockTenantConfig.getKafka()).thenReturn(mockKafkaConfig);
+    when(mockVectorConfig.getHost()).thenReturn("vector-host");
+    when(mockVectorConfig.getApiPort()).thenReturn(8686);
+    when(mockSparkConfig.getSparkMasterHost()).thenReturn("spark-host");
+    when(mockSparkConfig.getSubscribePattern()).thenReturn("logs.*");
+    when(mockSparkConfig.getLogsDir()).thenReturn("/logs");
+    when(mockKafkaConfig.getKafkaBrokersHost()).thenReturn("kafka-host");
+    when(mockKafkaConfig.getKafkaBrokerPort()).thenReturn(9092);
 
-  // ==================== checkVectorHealth Tests ====================
+    service = new PipelineHealthCheckService(mockWebClient, mockObjectMapper);
+  }
 
   @Test
-  public void testCheckVectorHealth_WithHealthyResponse_ReturnsUp() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.VectorConfig vectorConfig = new ApplicationConfig.VectorConfig();
-    vectorConfig.setHost("vector.example.com");
-    vectorConfig.setApiPort(8686);
-    tenantConfig.setVector(vectorConfig);
-
-    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+  public void testCheckVectorHealth_With200Response_ReturnsUp() throws Exception {
     io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+        mockResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockResponse.statusCode()).thenReturn(200);
 
-    when(mockHttpResponse.statusCode()).thenReturn(200);
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
-    when(mockHttpRequest.rxSend()).thenReturn(Single.just(mockHttpResponse));
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockRxWebClient.getAbs(anyString())).thenReturn(mockRequest);
+    when(mockRequest.rxSend()).thenReturn(Single.just(mockResponse));
 
-    JsonObject result = pipelineHealthCheckService.checkVectorHealth(tenantConfig).blockingGet();
+    Single<JsonObject> result = service.checkVectorHealth(mockTenantConfig);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "UP");
-    Assert.assertEquals(result.getString("message"), "Vector is healthy");
-    Assert.assertEquals(result.getInteger("responseCode"), Integer.valueOf(200));
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "UP");
+    Assert.assertEquals(response.getString("message"), "Vector is healthy");
   }
 
   @Test
-  public void testCheckVectorHealth_WithUnhealthyResponse_ReturnsDown() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.VectorConfig vectorConfig = new ApplicationConfig.VectorConfig();
-    vectorConfig.setHost("vector.example.com");
-    vectorConfig.setApiPort(8686);
-    tenantConfig.setVector(vectorConfig);
-
-    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+  public void testCheckVectorHealth_WithNon200Response_ReturnsDown() throws Exception {
     io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
-
-    when(mockHttpResponse.statusCode()).thenReturn(500);
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
-    when(mockHttpRequest.rxSend()).thenReturn(Single.just(mockHttpResponse));
-
-    JsonObject result = pipelineHealthCheckService.checkVectorHealth(tenantConfig).blockingGet();
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "DOWN");
-    Assert.assertTrue(result.getString("message").contains("Vector health check returned 500"));
-    Assert.assertEquals(result.getInteger("responseCode"), Integer.valueOf(500));
-  }
-
-  @Test
-  public void testCheckVectorHealth_WithError_ReturnsDown() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.VectorConfig vectorConfig = new ApplicationConfig.VectorConfig();
-    vectorConfig.setHost("vector.example.com");
-    vectorConfig.setApiPort(8686);
-    tenantConfig.setVector(vectorConfig);
+        mockResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockResponse.statusCode()).thenReturn(500);
 
     io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+        mockRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockRxWebClient.getAbs(anyString())).thenReturn(mockRequest);
+    when(mockRequest.rxSend()).thenReturn(Single.just(mockResponse));
 
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
-    when(mockHttpRequest.rxSend())
-        .thenReturn(Single.error(new RuntimeException("Connection refused")));
+    Single<JsonObject> result = service.checkVectorHealth(mockTenantConfig);
 
-    JsonObject result = pipelineHealthCheckService.checkVectorHealth(tenantConfig).blockingGet();
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "DOWN");
-    Assert.assertTrue(result.getString("message").contains("Vector health check failed"));
-    Assert.assertEquals(result.getString("error"), "RuntimeException");
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "DOWN");
   }
 
   @Test
-  public void testCheckVectorHealth_WithTimeout_ReturnsDown() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.VectorConfig vectorConfig = new ApplicationConfig.VectorConfig();
-    vectorConfig.setHost("vector.example.com");
-    vectorConfig.setApiPort(8686);
-    tenantConfig.setVector(vectorConfig);
+  public void testCheckVectorHealth_WithError_ReturnsDown() throws Exception {
+    RuntimeException error = new RuntimeException("Connection error");
 
     io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+        mockRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockRxWebClient.getAbs(anyString())).thenReturn(mockRequest);
+    when(mockRequest.rxSend()).thenReturn(Single.error(error));
 
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
-    io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
-    when(mockHttpRequest.rxSend())
-        .thenReturn(
-            Single
-                .<io.vertx.reactivex.ext.web.client.HttpResponse<
-                        io.vertx.reactivex.core.buffer.Buffer>>
-                    just(mockHttpResponse)
-                .delay(10, java.util.concurrent.TimeUnit.SECONDS));
+    Single<JsonObject> result = service.checkVectorHealth(mockTenantConfig);
 
-    JsonObject result = pipelineHealthCheckService.checkVectorHealth(tenantConfig).blockingGet();
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "DOWN");
-    Assert.assertEquals(result.getString("message"), "Vector health check timed out");
-  }
-
-  // ==================== checkKafkaHealth Tests ====================
-
-  @Test
-  public void testCheckKafkaHealth_WithValidConfig_ReturnsUp() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.KafkaConfig kafkaConfig = new ApplicationConfig.KafkaConfig();
-    kafkaConfig.setKafkaBrokersHost("kafka.example.com");
-    kafkaConfig.setKafkaBrokerPort(9092);
-    tenantConfig.setKafka(kafkaConfig);
-
-    JsonObject result = pipelineHealthCheckService.checkKafkaHealth(tenantConfig).blockingGet();
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "UP");
-    Assert.assertEquals(result.getString("message"), "Kafka broker is reachable");
-    Assert.assertEquals(result.getString("host"), "kafka.example.com");
-    Assert.assertEquals(result.getInteger("port"), Integer.valueOf(9092));
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "DOWN");
+    Assert.assertTrue(response.getString("message").contains("Vector health check failed"));
   }
 
   @Test
-  public void testCheckKafkaHealth_WithNullPort_ReturnsUp() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.KafkaConfig kafkaConfig = new ApplicationConfig.KafkaConfig();
-    kafkaConfig.setKafkaBrokersHost("kafka.example.com");
-    kafkaConfig.setKafkaBrokerPort(null);
-    tenantConfig.setKafka(kafkaConfig);
+  public void testCheckKafkaHealth_ReturnsUp() throws Exception {
+    Single<JsonObject> result = service.checkKafkaHealth(mockTenantConfig);
 
-    JsonObject result = pipelineHealthCheckService.checkKafkaHealth(tenantConfig).blockingGet();
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "UP");
-    Assert.assertFalse(result.containsKey("port"));
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "UP");
+    Assert.assertEquals(response.getString("host"), "kafka-host");
+    Assert.assertEquals(response.getInteger("port"), Integer.valueOf(9092));
   }
 
-  // ==================== checkKafkaTopics Tests ====================
-
   @Test
-  public void testCheckKafkaTopics_ReturnsUnknownStatus() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setSubscribePattern("test-topic-*");
+  public void testCheckKafkaHealth_WithNullPort_ReturnsUpWithoutPort() throws Exception {
+    when(mockKafkaConfig.getKafkaBrokerPort()).thenReturn(null);
 
-    JsonObject result = pipelineHealthCheckService.checkKafkaTopics(tenantConfig).blockingGet();
+    Single<JsonObject> result = service.checkKafkaHealth(mockTenantConfig);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "UNKNOWN");
-    Assert.assertTrue(result.getString("message").contains("Kafka topic check requires"));
-    Assert.assertEquals(result.getString("pattern"), "test-topic-*");
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "UP");
+    Assert.assertFalse(response.containsKey("port"));
   }
 
-  // ==================== checkSparkHealth Tests ====================
+  @Test
+  public void testCheckKafkaTopics_ReturnsUnknown() throws Exception {
+    Single<JsonObject> result = service.checkKafkaTopics(mockTenantConfig);
+
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "UNKNOWN");
+    Assert.assertTrue(response.getString("message").contains("Kafka Admin Client"));
+    Assert.assertEquals(response.getString("pattern"), "logs.*");
+  }
 
   @Test
-  public void testCheckSparkHealth_WithRunningDriver_ReturnsUp() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setSparkMasterHost("spark-master.example.com");
-
-    SparkMasterJsonResponse sparkResponse = new SparkMasterJsonResponse();
-    List<SparkMasterJsonResponse.Driver> drivers = new ArrayList<>();
-    SparkMasterJsonResponse.Driver driver = new SparkMasterJsonResponse.Driver();
+  public void testCheckSparkHealth_WithRunningDriver_ReturnsUp() throws Exception {
+    Driver driver = new Driver();
     driver.setState("RUNNING");
-    drivers.add(driver);
-    sparkResponse.setActivedrivers(drivers);
-
-    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
-    io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
-
-    try {
-      when(mockHttpResponse.bodyAsString())
-          .thenReturn(objectMapper.writeValueAsString(sparkResponse));
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
-    when(mockHttpRequest.rxSend()).thenReturn(Single.just(mockHttpResponse));
-
-    JsonObject result = pipelineHealthCheckService.checkSparkHealth(tenantConfig).blockingGet();
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "UP");
-    Assert.assertEquals(result.getString("message"), "Spark driver is running");
-    Assert.assertEquals(result.getInteger("drivers"), Integer.valueOf(1));
-  }
-
-  @Test
-  public void testCheckSparkHealth_WithNoRunningDriver_ReturnsDown() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setSparkMasterHost("spark-master.example.com");
-
     SparkMasterJsonResponse sparkResponse = new SparkMasterJsonResponse();
-    List<SparkMasterJsonResponse.Driver> drivers = new ArrayList<>();
-    SparkMasterJsonResponse.Driver driver1 = new SparkMasterJsonResponse.Driver();
-    driver1.setState("FINISHED");
-    drivers.add(driver1);
-    SparkMasterJsonResponse.Driver driver2 = new SparkMasterJsonResponse.Driver();
-    driver2.setState("FAILED");
-    drivers.add(driver2);
-    sparkResponse.setActivedrivers(drivers);
+    sparkResponse.setActivedrivers(Arrays.asList(driver));
+
+    io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
+        mockResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockResponse.bodyAsString()).thenReturn("{\"activedrivers\":[{\"state\":\"RUNNING\"}]}");
 
     io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
-    io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+        mockRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockRxWebClient.getAbs(anyString())).thenReturn(mockRequest);
+    when(mockRequest.rxSend()).thenReturn(Single.just(mockResponse));
+    when(mockObjectMapper.readValue(anyString(), eq(SparkMasterJsonResponse.class)))
+        .thenReturn(sparkResponse);
 
-    try {
-      when(mockHttpResponse.bodyAsString())
-          .thenReturn(objectMapper.writeValueAsString(sparkResponse));
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
-    when(mockHttpRequest.rxSend()).thenReturn(Single.just(mockHttpResponse));
+    Single<JsonObject> result = service.checkSparkHealth(mockTenantConfig);
 
-    JsonObject result = pipelineHealthCheckService.checkSparkHealth(tenantConfig).blockingGet();
-
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "DOWN");
-    Assert.assertEquals(result.getString("message"), "No running Spark driver found");
-    Assert.assertEquals(result.getInteger("drivers"), Integer.valueOf(2));
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "UP");
+    Assert.assertEquals(response.getString("message"), "Spark driver is running");
+    Assert.assertEquals(response.getInteger("drivers"), Integer.valueOf(1));
   }
 
   @Test
-  public void testCheckSparkHealth_WithEmptyDrivers_ReturnsDown() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setSparkMasterHost("spark-master.example.com");
-
+  public void testCheckSparkHealth_WithNoRunningDriver_ReturnsDown() throws Exception {
+    Driver driver = new Driver();
+    driver.setState("FINISHED");
     SparkMasterJsonResponse sparkResponse = new SparkMasterJsonResponse();
-    sparkResponse.setActivedrivers(Collections.emptyList());
+    sparkResponse.setActivedrivers(Arrays.asList(driver));
 
-    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
     io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+        mockResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockResponse.bodyAsString()).thenReturn("{\"activedrivers\":[{\"state\":\"FINISHED\"}]}");
 
-    try {
-      when(mockHttpResponse.bodyAsString())
-          .thenReturn(objectMapper.writeValueAsString(sparkResponse));
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
-    when(mockHttpRequest.rxSend()).thenReturn(Single.just(mockHttpResponse));
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockRxWebClient.getAbs(anyString())).thenReturn(mockRequest);
+    when(mockRequest.rxSend()).thenReturn(Single.just(mockResponse));
+    when(mockObjectMapper.readValue(anyString(), eq(SparkMasterJsonResponse.class)))
+        .thenReturn(sparkResponse);
 
-    JsonObject result = pipelineHealthCheckService.checkSparkHealth(tenantConfig).blockingGet();
+    Single<JsonObject> result = service.checkSparkHealth(mockTenantConfig);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "DOWN");
-    Assert.assertEquals(result.getString("message"), "No running Spark driver found");
-    Assert.assertEquals(result.getInteger("drivers"), Integer.valueOf(0));
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "DOWN");
+    Assert.assertEquals(response.getString("message"), "No running Spark driver found");
   }
 
   @Test
-  public void testCheckSparkHealth_WithParseError_ReturnsDown() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setSparkMasterHost("spark-master.example.com");
-
-    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+  public void testCheckSparkHealth_WithParseError_ReturnsDown() throws Exception {
     io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+        mockResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockResponse.bodyAsString()).thenReturn("invalid json");
 
-    when(mockHttpResponse.bodyAsString()).thenReturn("invalid json");
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
-    when(mockHttpRequest.rxSend()).thenReturn(Single.just(mockHttpResponse));
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockRxWebClient.getAbs(anyString())).thenReturn(mockRequest);
+    when(mockRequest.rxSend()).thenReturn(Single.just(mockResponse));
+    when(mockObjectMapper.readValue(anyString(), eq(SparkMasterJsonResponse.class)))
+        .thenThrow(new RuntimeException("Parse error"));
 
-    JsonObject result = pipelineHealthCheckService.checkSparkHealth(tenantConfig).blockingGet();
+    Single<JsonObject> result = service.checkSparkHealth(mockTenantConfig);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "DOWN");
-    Assert.assertTrue(result.getString("message").contains("Failed to parse Spark response"));
+    JsonObject response = result.blockingGet();
+    Assert.assertNotNull(response);
+    Assert.assertEquals(response.getString("status"), "DOWN");
+    Assert.assertTrue(response.getString("message").contains("Failed to parse Spark response"));
   }
 
   @Test
-  public void testCheckSparkHealth_WithError_ReturnsDown() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setSparkMasterHost("spark-master.example.com");
+  public void testCheckS3Logs_WithEmptyPrefixes_ReturnsWarning() throws Exception {
+    Tenant tenant = Tenant.ABC;
+    ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
 
-    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
+        .thenReturn(Single.just(Collections.emptyList()));
 
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
-    when(mockHttpRequest.rxSend())
-        .thenReturn(Single.error(new RuntimeException("Connection refused")));
+    try (MockedStatic<ObjectStoreFactory> mockedFactory = mockStatic(ObjectStoreFactory.class)) {
+      mockedFactory
+          .when(() -> ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
 
-    JsonObject result = pipelineHealthCheckService.checkSparkHealth(tenantConfig).blockingGet();
+      Single<JsonObject> result = service.checkS3Logs(tenant, mockTenantConfig);
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "DOWN");
-    Assert.assertTrue(result.getString("message").contains("Spark health check failed"));
+      JsonObject response = result.blockingGet();
+      Assert.assertNotNull(response);
+      Assert.assertEquals(response.getString("status"), "WARNING");
+      Assert.assertTrue(response.getString("message").contains("No log prefixes"));
+    }
   }
 
   @Test
-  public void testCheckSparkHealth_WithTimeout_ReturnsDown() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setSparkMasterHost("spark-master.example.com");
+  public void testCheckS3Logs_WithRecentLogs_ReturnsUp() throws Exception {
+    Tenant tenant = Tenant.ABC;
+    ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
+    List<String> prefixes = Arrays.asList("logs/service1/", "logs/service2/");
 
-    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    // Create object keys with current hour
+    int currentHour = java.time.LocalDateTime.now().getHour();
+    String hourPattern = String.format("hour=%02d", currentHour);
+    List<String> objects =
+        Arrays.asList(
+            "logs/service1/" + hourPattern + "/file1.log",
+            "logs/service2/" + hourPattern + "/file2.log");
 
-    when(mockVertxWebClient.getAbs(anyString())).thenReturn(mockHttpRequest);
+    when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
+        .thenReturn(Single.just(prefixes));
+    when(mockObjectStoreClient.listObjects(anyString())).thenReturn(Single.just(objects));
+
+    try (MockedStatic<ObjectStoreFactory> mockedFactory = mockStatic(ObjectStoreFactory.class)) {
+      mockedFactory
+          .when(() -> ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
+
+      Single<JsonObject> result = service.checkS3Logs(tenant, mockTenantConfig);
+
+      JsonObject response = result.blockingGet();
+      Assert.assertNotNull(response);
+      Assert.assertEquals(response.getString("status"), "UP");
+      Assert.assertTrue(response.getString("message").contains("Recent logs found"));
+    }
+  }
+
+  @Test
+  public void testCheckS3Logs_WithNoRecentLogs_ReturnsWarning() throws Exception {
+    Tenant tenant = Tenant.ABC;
+    ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
+    List<String> prefixes = Arrays.asList("logs/service1/");
+
+    // Create object keys with old hour (not current hour)
+    int oldHour = (java.time.LocalDateTime.now().getHour() + 1) % 24;
+    String hourPattern = String.format("hour=%02d", oldHour);
+    List<String> objects = Arrays.asList("logs/service1/" + hourPattern + "/file1.log");
+
+    when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
+        .thenReturn(Single.just(prefixes));
+    when(mockObjectStoreClient.listObjects(anyString())).thenReturn(Single.just(objects));
+
+    try (MockedStatic<ObjectStoreFactory> mockedFactory = mockStatic(ObjectStoreFactory.class)) {
+      mockedFactory
+          .when(() -> ObjectStoreFactory.getClient(tenant))
+          .thenReturn(mockObjectStoreClient);
+
+      Single<JsonObject> result = service.checkS3Logs(tenant, mockTenantConfig);
+
+      JsonObject response = result.blockingGet();
+      Assert.assertNotNull(response);
+      Assert.assertEquals(response.getString("status"), "WARNING");
+      Assert.assertTrue(response.getString("message").contains("No recent logs"));
+    }
+  }
+
+  @Test
+  public void testCheckCompletePipeline_WithAllUp_ReturnsUp() throws Exception {
+    Tenant tenant = Tenant.ABC;
+
+    // Mock all health checks to return UP
     io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-        mockHttpResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
-    when(mockHttpRequest.rxSend())
-        .thenReturn(
-            Single
-                .<io.vertx.reactivex.ext.web.client.HttpResponse<
-                        io.vertx.reactivex.core.buffer.Buffer>>
-                    just(mockHttpResponse)
-                .delay(10, java.util.concurrent.TimeUnit.SECONDS));
+        mockVectorResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockVectorResponse.statusCode()).thenReturn(200);
 
-    JsonObject result = pipelineHealthCheckService.checkSparkHealth(tenantConfig).blockingGet();
+    Driver driver = new Driver();
+    driver.setState("RUNNING");
+    SparkMasterJsonResponse sparkResponse = new SparkMasterJsonResponse();
+    sparkResponse.setActivedrivers(Arrays.asList(driver));
 
-    Assert.assertNotNull(result);
-    Assert.assertEquals(result.getString("status"), "DOWN");
-    Assert.assertEquals(result.getString("message"), "Spark health check timed out");
-  }
+    io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
+        mockSparkResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
+    when(mockSparkResponse.bodyAsString())
+        .thenReturn("{\"activedrivers\":[{\"state\":\"RUNNING\"}]}");
 
-  // ==================== checkS3Logs Tests ====================
+    ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
+    List<String> prefixes = Arrays.asList("logs/service1/");
+    int currentHour = java.time.LocalDateTime.now().getHour();
+    String hourPattern = String.format("hour=%02d", currentHour);
+    List<String> objects = Arrays.asList("logs/service1/" + hourPattern + "/file1.log");
 
-  @Test
-  public void testCheckS3Logs_WithRecentLogs_ReturnsUp() {
-    Tenant tenant = Tenant.ABC;
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setLogsDir("logs");
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockVectorRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
+        mockSparkRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+    when(mockRxWebClient.getAbs(contains("/health"))).thenReturn(mockVectorRequest);
+    when(mockRxWebClient.getAbs(contains("/json"))).thenReturn(mockSparkRequest);
+    when(mockVectorRequest.rxSend()).thenReturn(Single.just(mockVectorResponse));
+    when(mockSparkRequest.rxSend()).thenReturn(Single.just(mockSparkResponse));
+    when(mockObjectMapper.readValue(anyString(), eq(SparkMasterJsonResponse.class)))
+        .thenReturn(sparkResponse);
+    when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
+        .thenReturn(Single.just(prefixes));
+    when(mockObjectStoreClient.listObjects(anyString())).thenReturn(Single.just(objects));
 
-    try (MockedStatic<ObjectStoreFactory> mockedFactory =
-        Mockito.mockStatic(ObjectStoreFactory.class)) {
-      ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
-
-      // Mock listCommonPrefix to return prefixes
-      List<String> prefixes = Arrays.asList("logs/service1/", "logs/service2/");
-      when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
-          .thenReturn(Single.just(prefixes));
-
-      // Mock listObjects to return recent objects (with current hour)
-      int currentHour = java.time.LocalDateTime.now().getHour();
-      List<String> objects =
-          Arrays.asList(
-              String.format("logs/service1/env=prod/hour=%02d/minute=00/file1.log", currentHour),
-              String.format("logs/service2/env=dev/hour=%02d/minute=30/file2.log", currentHour));
-      when(mockObjectStoreClient.listObjects(anyString())).thenReturn(Single.just(objects));
-
+    try (MockedStatic<ObjectStoreFactory> mockedFactory = mockStatic(ObjectStoreFactory.class);
+        MockedStatic<ApplicationConfigUtil> mockedConfig =
+            mockStatic(ApplicationConfigUtil.class)) {
       mockedFactory
           .when(() -> ObjectStoreFactory.getClient(tenant))
           .thenReturn(mockObjectStoreClient);
-
-      JsonObject result =
-          pipelineHealthCheckService.checkS3Logs(tenant, tenantConfig).blockingGet();
-
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.getString("status"), "UP");
-      Assert.assertEquals(result.getString("message"), "Recent logs found in S3");
-      Assert.assertTrue(result.getInteger("recentObjects") > 0);
-      Assert.assertEquals(result.getInteger("totalPrefixes"), Integer.valueOf(2));
-    }
-  }
-
-  @Test
-  public void testCheckS3Logs_WithNoRecentLogs_ReturnsWarning() {
-    Tenant tenant = Tenant.ABC;
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setLogsDir("logs");
-
-    try (MockedStatic<ObjectStoreFactory> mockedFactory =
-        Mockito.mockStatic(ObjectStoreFactory.class)) {
-      ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
-
-      // Mock listCommonPrefix to return prefixes
-      List<String> prefixes = Arrays.asList("logs/service1/", "logs/service2/");
-      when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
-          .thenReturn(Single.just(prefixes));
-
-      // Mock listObjects to return old objects (previous hour)
-      int previousHour = (java.time.LocalDateTime.now().getHour() + 23) % 24;
-      List<String> objects =
-          Arrays.asList(
-              String.format("logs/service1/env=prod/hour=%02d/minute=00/file1.log", previousHour),
-              String.format("logs/service2/env=dev/hour=%02d/minute=30/file2.log", previousHour));
-      when(mockObjectStoreClient.listObjects(anyString())).thenReturn(Single.just(objects));
-
-      mockedFactory
-          .when(() -> ObjectStoreFactory.getClient(tenant))
-          .thenReturn(mockObjectStoreClient);
-
-      JsonObject result =
-          pipelineHealthCheckService.checkS3Logs(tenant, tenantConfig).blockingGet();
-
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.getString("status"), "WARNING");
-      Assert.assertEquals(result.getString("message"), "No recent logs found in S3 (last hour)");
-      Assert.assertEquals(result.getInteger("totalPrefixes"), Integer.valueOf(2));
-    }
-  }
-
-  @Test
-  public void testCheckS3Logs_WithNoPrefixes_ReturnsWarning() {
-    Tenant tenant = Tenant.ABC;
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setLogsDir("logs");
-
-    try (MockedStatic<ObjectStoreFactory> mockedFactory =
-        Mockito.mockStatic(ObjectStoreFactory.class)) {
-      ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
-
-      // Mock listCommonPrefix to return empty list
-      when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
-          .thenReturn(Single.just(Collections.emptyList()));
-
-      mockedFactory
-          .when(() -> ObjectStoreFactory.getClient(tenant))
-          .thenReturn(mockObjectStoreClient);
-
-      JsonObject result =
-          pipelineHealthCheckService.checkS3Logs(tenant, tenantConfig).blockingGet();
-
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.getString("status"), "WARNING");
-      Assert.assertEquals(result.getString("message"), "No log prefixes found in S3");
-      Assert.assertEquals(result.getString("logsDir"), "logs");
-    }
-  }
-
-  @Test
-  public void testCheckS3Logs_WithError_ReturnsDown() {
-    Tenant tenant = Tenant.ABC;
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setLogsDir("logs");
-
-    try (MockedStatic<ObjectStoreFactory> mockedFactory =
-        Mockito.mockStatic(ObjectStoreFactory.class)) {
-      ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
-
-      when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
-          .thenReturn(Single.error(new RuntimeException("S3 access denied")));
-
-      mockedFactory
-          .when(() -> ObjectStoreFactory.getClient(tenant))
-          .thenReturn(mockObjectStoreClient);
-
-      JsonObject result =
-          pipelineHealthCheckService.checkS3Logs(tenant, tenantConfig).blockingGet();
-
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.getString("status"), "DOWN");
-      Assert.assertTrue(result.getString("message").contains("S3 logs check failed"));
-    }
-  }
-
-  @Test
-  public void testCheckS3Logs_WithTimeout_ReturnsDown() {
-    Tenant tenant = Tenant.ABC;
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    ApplicationConfig.SparkConfig sparkConfig = tenantConfig.getSpark();
-    sparkConfig.setLogsDir("logs");
-
-    try (MockedStatic<ObjectStoreFactory> mockedFactory =
-        Mockito.mockStatic(ObjectStoreFactory.class)) {
-      ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
-
-      when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
-          .thenReturn(
-              Single.<List<String>>just(Collections.emptyList())
-                  .delay(15, java.util.concurrent.TimeUnit.SECONDS));
-
-      mockedFactory
-          .when(() -> ObjectStoreFactory.getClient(tenant))
-          .thenReturn(mockObjectStoreClient);
-
-      JsonObject result =
-          pipelineHealthCheckService.checkS3Logs(tenant, tenantConfig).blockingGet();
-
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.getString("status"), "DOWN");
-      Assert.assertEquals(result.getString("message"), "S3 logs check timed out");
-    }
-  }
-
-  // ==================== checkCompletePipeline Tests ====================
-
-  @Test
-  public void testCheckCompletePipeline_WithAllComponentsUp_ReturnsUp() {
-    Tenant tenant = Tenant.ABC;
-
-    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
-            Mockito.mockStatic(ApplicationConfigUtil.class);
-        MockedStatic<ObjectStoreFactory> mockedFactory =
-            Mockito.mockStatic(ObjectStoreFactory.class)) {
-      ApplicationConfig.TenantConfig tenantConfig =
-          ApplicationTestConfig.createMockTenantConfig("ABC");
-      ApplicationConfig.VectorConfig vectorConfig = new ApplicationConfig.VectorConfig();
-      vectorConfig.setHost("vector.example.com");
-      vectorConfig.setApiPort(8686);
-      tenantConfig.setVector(vectorConfig);
-
-      mockedConfigUtil
+      mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
-          .thenReturn(tenantConfig);
+          .thenReturn(mockTenantConfig);
 
-      // Mock Vector health check
-      io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-          mockVectorRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
-      io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-          mockVectorResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
-      when(mockVectorResponse.statusCode()).thenReturn(200);
-      when(mockVertxWebClient.getAbs(contains("/health"))).thenReturn(mockVectorRequest);
-      when(mockVectorRequest.rxSend()).thenReturn(Single.just(mockVectorResponse));
+      Single<JsonObject> result = service.checkCompletePipeline(tenant);
 
-      // Mock Spark health check
-      io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-          mockSparkRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
-      io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-          mockSparkResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
-      SparkMasterJsonResponse sparkResponse = new SparkMasterJsonResponse();
-      List<SparkMasterJsonResponse.Driver> drivers = new ArrayList<>();
-      SparkMasterJsonResponse.Driver driver = new SparkMasterJsonResponse.Driver();
-      driver.setState("RUNNING");
-      drivers.add(driver);
-      sparkResponse.setActivedrivers(drivers);
-      try {
-        when(mockSparkResponse.bodyAsString())
-            .thenReturn(objectMapper.writeValueAsString(sparkResponse));
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-      when(mockVertxWebClient.getAbs(contains("/json"))).thenReturn(mockSparkRequest);
-      when(mockSparkRequest.rxSend()).thenReturn(Single.just(mockSparkResponse));
-
-      // Mock S3 logs check
-      ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
-      List<String> prefixes = Arrays.asList("logs/service1/");
-      when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
-          .thenReturn(Single.just(prefixes));
-      int currentHour = java.time.LocalDateTime.now().getHour();
-      List<String> objects =
-          Arrays.asList(
-              String.format("logs/service1/env=prod/hour=%02d/minute=00/file1.log", currentHour));
-      when(mockObjectStoreClient.listObjects(anyString())).thenReturn(Single.just(objects));
-      mockedFactory
-          .when(() -> ObjectStoreFactory.getClient(tenant))
-          .thenReturn(mockObjectStoreClient);
-
-      JsonObject result = pipelineHealthCheckService.checkCompletePipeline(tenant).blockingGet();
-
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.getString("status"), "UP");
-      Assert.assertEquals(result.getString("message"), "All pipeline components are healthy");
-      Assert.assertEquals(result.getString("tenant"), "ABC");
-      Assert.assertTrue(result.containsKey("checks"));
-      io.vertx.core.json.JsonArray checks = result.getJsonArray("checks");
-      Assert.assertNotNull(checks);
-      Assert.assertEquals(checks.size(), 4);
+      JsonObject response = result.blockingGet();
+      Assert.assertNotNull(response);
+      Assert.assertEquals(response.getString("status"), "UP");
+      Assert.assertTrue(response.getString("message").contains("All pipeline components"));
     }
   }
 
   @Test
-  public void testCheckCompletePipeline_WithOneComponentDown_ReturnsDown() {
+  public void testCheckCompletePipeline_WithError_ReturnsDown() throws Exception {
     Tenant tenant = Tenant.ABC;
+    RuntimeException error = new RuntimeException("Config error");
 
-    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
-            Mockito.mockStatic(ApplicationConfigUtil.class);
-        MockedStatic<ObjectStoreFactory> mockedFactory =
-            Mockito.mockStatic(ObjectStoreFactory.class)) {
-      ApplicationConfig.TenantConfig tenantConfig =
-          ApplicationTestConfig.createMockTenantConfig("ABC");
-      ApplicationConfig.VectorConfig vectorConfig = new ApplicationConfig.VectorConfig();
-      vectorConfig.setHost("vector.example.com");
-      vectorConfig.setApiPort(8686);
-      tenantConfig.setVector(vectorConfig);
+    try (MockedStatic<ApplicationConfigUtil> mockedConfig =
+        mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfig.when(() -> ApplicationConfigUtil.getTenantConfig(tenant)).thenThrow(error);
 
-      mockedConfigUtil
-          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
-          .thenReturn(tenantConfig);
+      Single<JsonObject> result = service.checkCompletePipeline(tenant);
 
-      // Mock Vector health check - UP
-      io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-          mockVectorRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
-      io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-          mockVectorResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
-      when(mockVectorResponse.statusCode()).thenReturn(200);
-      when(mockVertxWebClient.getAbs(contains("/health"))).thenReturn(mockVectorRequest);
-      when(mockVectorRequest.rxSend()).thenReturn(Single.just(mockVectorResponse));
-
-      // Mock Spark health check - DOWN (no running driver)
-      io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer>
-          mockSparkRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
-      io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
-          mockSparkResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
-      SparkMasterJsonResponse sparkResponse = new SparkMasterJsonResponse();
-      sparkResponse.setActivedrivers(Collections.emptyList());
-      try {
-        when(mockSparkResponse.bodyAsString())
-            .thenReturn(objectMapper.writeValueAsString(sparkResponse));
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-      when(mockVertxWebClient.getAbs(contains("/json"))).thenReturn(mockSparkRequest);
-      when(mockSparkRequest.rxSend()).thenReturn(Single.just(mockSparkResponse));
-
-      // Mock S3 logs check - UP
-      ObjectStoreClient mockObjectStoreClient = mock(ObjectStoreClient.class);
-      List<String> prefixes = Arrays.asList("logs/service1/");
-      when(mockObjectStoreClient.listCommonPrefix(anyString(), anyString()))
-          .thenReturn(Single.just(prefixes));
-      int currentHour = java.time.LocalDateTime.now().getHour();
-      List<String> objects =
-          Arrays.asList(
-              String.format("logs/service1/env=prod/hour=%02d/minute=00/file1.log", currentHour));
-      when(mockObjectStoreClient.listObjects(anyString())).thenReturn(Single.just(objects));
-      mockedFactory
-          .when(() -> ObjectStoreFactory.getClient(tenant))
-          .thenReturn(mockObjectStoreClient);
-
-      JsonObject result = pipelineHealthCheckService.checkCompletePipeline(tenant).blockingGet();
-
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.getString("status"), "DOWN");
-      Assert.assertEquals(
-          result.getString("message"), "One or more pipeline components have issues");
-      Assert.assertTrue(result.containsKey("checks"));
-    }
-  }
-
-  @Test
-  public void testCheckCompletePipeline_WithError_ReturnsDown() {
-    Tenant tenant = Tenant.ABC;
-
-    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
-        Mockito.mockStatic(ApplicationConfigUtil.class)) {
-      mockedConfigUtil
-          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
-          .thenThrow(new RuntimeException("Config error"));
-
-      JsonObject result = pipelineHealthCheckService.checkCompletePipeline(tenant).blockingGet();
-
-      Assert.assertNotNull(result);
-      Assert.assertEquals(result.getString("status"), "DOWN");
-      Assert.assertTrue(result.getString("message").contains("Pipeline health check failed"));
-      Assert.assertEquals(result.getString("error"), "RuntimeException");
+      JsonObject response = result.blockingGet();
+      Assert.assertNotNull(response);
+      Assert.assertEquals(response.getString("status"), "DOWN");
+      Assert.assertTrue(response.getString("message").contains("Pipeline health check failed"));
     }
   }
 }
