@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logwise.orchestrator.config.ApplicationConfig.KafkaConfig;
 import com.logwise.orchestrator.dto.kafka.ClusterInfo;
 import com.logwise.orchestrator.dto.kafka.SparkCheckpointOffsets;
+import com.logwise.orchestrator.dto.kafka.TopicOffsetInfo;
 import com.logwise.orchestrator.dto.kafka.TopicPartitionMetrics;
 import com.logwise.orchestrator.enums.KafkaType;
 import io.reactivex.Completable;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -158,6 +160,69 @@ public abstract class AbstractKafkaClient implements KafkaClient {
                         });
               } catch (InterruptedException | ExecutionException e) {
                 log.error("Error getting partition metrics", e);
+                return Single.error(e);
+              }
+            });
+  }
+
+  @Override
+  public Single<Map<String, TopicOffsetInfo>> getEndOffsetSum(List<String> topics) {
+    return createAdminClient()
+        .flatMap(
+            adminClient -> {
+              try {
+                // Get topic descriptions
+                DescribeTopicsResult topicsResult = adminClient.describeTopics(topics);
+                Map<String, TopicDescription> topicDescriptions = topicsResult.all().get();
+
+                // Process each topic separately
+                return Observable.fromIterable(topics)
+                    .flatMapSingle(
+                        topic -> {
+                          TopicDescription desc = topicDescriptions.get(topic);
+
+                          // If topic doesn't exist, return default values
+                          if (desc == null) {
+                            TopicOffsetInfo defaultInfo =
+                                TopicOffsetInfo.builder()
+                                    .sumOfEndOffsets(0L)
+                                    .currentNumberOfPartitions(0)
+                                    .build();
+                            return Single.just(new AbstractMap.SimpleEntry<>(topic, defaultInfo));
+                          }
+
+                          // Get current number of partitions
+                          int partitionCount = desc.partitions().size();
+
+                          // Get partitions for this topic
+                          List<TopicPartition> topicPartitions = new ArrayList<>();
+                          for (TopicPartitionInfo partitionInfo : desc.partitions()) {
+                            topicPartitions.add(
+                                new TopicPartition(topic, partitionInfo.partition()));
+                          }
+
+                          // Get end offsets for this topic's partitions
+                          return getEndOffsets(topicPartitions)
+                              .map(
+                                  endOffsets -> {
+                                    // Sum offsets for this topic
+                                    long topicSum = 0L;
+                                    for (Long offset : endOffsets.values()) {
+                                      if (offset != null) {
+                                        topicSum += offset;
+                                      }
+                                    }
+                                    TopicOffsetInfo offsetInfo =
+                                        TopicOffsetInfo.builder()
+                                            .sumOfEndOffsets(topicSum)
+                                            .currentNumberOfPartitions(partitionCount)
+                                            .build();
+                                    return new AbstractMap.SimpleEntry<>(topic, offsetInfo);
+                                  });
+                        })
+                    .toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue);
+              } catch (InterruptedException | ExecutionException e) {
+                log.error("Error getting end offset sum", e);
                 return Single.error(e);
               }
             });
