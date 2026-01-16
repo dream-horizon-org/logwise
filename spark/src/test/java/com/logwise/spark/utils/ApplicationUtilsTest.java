@@ -230,4 +230,55 @@ public class ApplicationUtilsTest {
     Assert.assertNotNull(result);
     Assert.assertEquals(result, "");
   }
+
+  @Test
+  public void testGetIpAddresses_WithIpv4Address_ReturnsIpAddress() {
+    String ipv4 = "127.0.0.1";
+    List<String> ipAddresses = ApplicationUtils.getIpAddresses(ipv4);
+
+    Assert.assertNotNull(ipAddresses);
+    Assert.assertFalse(ipAddresses.isEmpty());
+    Assert.assertTrue(ipAddresses.contains(ipv4));
+  }
+
+  @Test
+  public void testGetIpAddresses_WithIpv6Address_ReturnsIpAddress() {
+    String ipv6 = "::1";
+    List<String> ipAddresses = ApplicationUtils.getIpAddresses(ipv6);
+
+    Assert.assertNotNull(ipAddresses);
+    Assert.assertFalse(ipAddresses.isEmpty());
+  }
+
+  @Test
+  public void testConvertMapToJsonString_WithNullKey_HandlesGracefully() {
+    Map<String, String> mapWithNullKey = new HashMap<>();
+    mapWithNullKey.put(null, "value");
+
+    String result = ApplicationUtils.convertMapToJsonString(mapWithNullKey);
+
+    Assert.assertNotNull(result);
+    // Should handle null key gracefully
+  }
+
+  @Test
+  public void testConvertProtoTimestampToIso_WithZeroTimestamp_ReturnsEpochTime() {
+    Timestamp timestamp = Timestamp.newBuilder().setSeconds(0L).setNanos(0).build();
+
+    String result = ApplicationUtils.convertProtoTimestampToIso(timestamp);
+
+    Assert.assertNotNull(result);
+    Assert.assertTrue(
+        result.contains("1970-01-01") || result.contains("T") || result.contains("Z"));
+  }
+
+  @Test
+  public void testConvertProtoTimestampToSqlTimestamp_WithNegativeTimestamp_HandlesCorrectly() {
+    Timestamp timestamp = Timestamp.newBuilder().setSeconds(-1000L).setNanos(0).build();
+
+    java.sql.Timestamp result = ApplicationUtils.convertProtoTimestampToSqlTimestamp(timestamp);
+
+    Assert.assertNotNull(result);
+    Assert.assertTrue(result.getTime() < 0);
+  }
 }

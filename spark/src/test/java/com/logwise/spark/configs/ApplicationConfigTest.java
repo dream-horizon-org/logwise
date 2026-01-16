@@ -296,4 +296,43 @@ public class ApplicationConfigTest {
     assertNotNull(config);
     assertTrue(config.hasPath("s3.bucket"));
   }
+
+  @Test
+  public void testGetConfig_WithQuotedValueInPropertiesFormat_RemovesQuotes() {
+    // Test parseConfigString branch: when value already has quotes (lines 86-88)
+    String configArg1 = "key=\"already-quoted-value\"";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
+
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
+
+    assertNotNull(config);
+    assertEquals(config.getString("key"), "already-quoted-value");
+  }
+
+  @Test
+  public void testGetConfig_WithHoconFormat_HandlesCorrectly() {
+    // Test parseConfigString: when conf doesn't contain "=", uses HOCON format (line 95)
+    String hoconConfig = "key:value";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
+
+    Config config = ApplicationConfig.getConfig(hoconConfig, configArg1, configArg2);
+
+    assertNotNull(config);
+    assertEquals(config.getString("key"), "value");
+  }
+
+  @Test
+  public void testGetConfig_WithPropertiesFormatContainingColon_QuotesValue() {
+    // Test parseConfigString: properties format with colon in value (line 90)
+    String configArg1 = "key=value:with:colons";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
+
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
+
+    assertNotNull(config);
+    assertEquals(config.getString("key"), "value:with:colons");
+  }
 }

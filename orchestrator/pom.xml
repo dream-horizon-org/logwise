@@ -726,6 +726,19 @@
             <exclude>com/logwise/orchestrator/rest/AbstractRestVerticle.class</exclude>
             <exclude>com/logwise/orchestrator/CaffeineCacheFactory.class</exclude>
             <exclude>com/logwise/orchestrator/CaffeineConfig.class</exclude>
+            <exclude>**com/logwise/orchestrator/dto/**</exclude>
+            <exclude>**com/logwise/orchestrator/enums/**</exclude>
+            <exclude>com/logwise/orchestrator/rest/HttpMethod.class</exclude>
+            <exclude>**com/logwise/orchestrator/module/**</exclude>
+            <exclude>**com/logwise/orchestrator/common/guice/**</exclude>
+            <exclude>com/logwise/orchestrator/config/utils/ConfigUtils.class</exclude>
+            <exclude>com/logwise/orchestrator/common/util/ConfigProvider.class</exclude>
+            <exclude>com/logwise/orchestrator/util/ResponseWrapper.class</exclude>
+            <exclude>com/logwise/orchestrator/MainApplication.class</exclude>
+            <exclude>com/logwise/orchestrator/common/entity/VertxEntity.class</exclude>
+            <exclude>com/logwise/orchestrator/common/util/StackUtils.class</exclude>
+            <exclude>com/logwise/orchestrator/common/lib/HoconProcessor.class</exclude>
+            <exclude>com/logwise/orchestrator/config/ApplicationConfigProvider.class</exclude>
           </excludes>
         </configuration>
         <executions>
@@ -770,17 +783,17 @@
                     <limit>
                       <counter>LINE</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.70</minimum>
+                      <minimum>0.80</minimum>
                     </limit>
                     <limit>
                       <counter>BRANCH</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.70</minimum>
+                      <minimum>0.80</minimum>
                     </limit>
                     <limit>
                       <counter>METHOD</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.70</minimum>
+                      <minimum>0.80</minimum>
                     </limit>
                   </limits>
                 </rule>

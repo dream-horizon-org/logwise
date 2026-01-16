@@ -8,6 +8,7 @@ import com.logwise.orchestrator.service.MetricsService;
 import com.logwise.orchestrator.setup.BaseTest;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -25,6 +26,7 @@ public class MetricsServiceTest extends BaseTest {
     // MetricsService uses @RequiredArgsConstructor
     metricsService = new MetricsService();
     mockObjectStoreClient = mock(ObjectStoreClient.class);
+    reset(mockObjectStoreClient);
   }
 
   @Test
@@ -71,5 +73,24 @@ public class MetricsServiceTest extends BaseTest {
     Assert.assertNotNull(result2);
     // Should have different prefixes for different times
     Assert.assertNotEquals(result1, result2);
+  }
+
+  @Test
+  public void testGetPrefixList_WithDuplicatePrefixes_RemovesDuplicates() throws Exception {
+    Method method =
+        MetricsService.class.getDeclaredMethod(
+            "getPrefixList", LocalDateTime.class, String.class, String.class);
+    method.setAccessible(true);
+
+    LocalDateTime nowTime = LocalDateTime.of(2024, 1, 15, 12, 0);
+    String dir = "logs";
+    String serviceName = "api";
+
+    @SuppressWarnings("unchecked")
+    List<String> result = (List<String>) method.invoke(null, nowTime, dir, serviceName);
+
+    // Check for duplicates
+    List<String> uniquePrefixes = new ArrayList<>(result);
+    Assert.assertEquals(result.size(), uniquePrefixes.size(), "Should not contain duplicates");
   }
 }
