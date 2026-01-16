@@ -86,6 +86,7 @@ public class ApplicationConfig {
     // Scaling thresholds
     @NonFinal @Optional Long maxLagPerPartition = 50_000L;
     @NonFinal @Optional Integer defaultPartitions = 3;
+    @NonFinal @Optional Long partitionRatePerSecond = 1000L;
 
     // MSK-specific fields
     @NonFinal @Optional String mskClusterArn;

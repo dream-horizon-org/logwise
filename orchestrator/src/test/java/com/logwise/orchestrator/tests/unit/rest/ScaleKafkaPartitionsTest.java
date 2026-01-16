@@ -12,6 +12,7 @@ import com.logwise.orchestrator.rest.io.Response;
 import com.logwise.orchestrator.service.KafkaService;
 import io.reactivex.Single;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import org.testng.Assert;
@@ -36,7 +37,7 @@ public class ScaleKafkaPartitionsTest {
     List<ScalingDecision> decisions = new ArrayList<>();
 
     when(mockKafkaService.scaleKafkaPartitions(any(Tenant.class)))
-        .thenReturn(Single.just(decisions));
+        .thenReturn(Single.just(Collections.emptyMap()));
 
     CompletionStage<Response<ScaleKafkaPartitionsResponse>> result =
         scaleKafkaPartitions.scalePartitions(tenantName, request);
@@ -51,10 +52,9 @@ public class ScaleKafkaPartitionsTest {
   @Test
   public void testScalePartitions_WithNullRequest_CreatesDefaultRequest() throws Exception {
     String tenantName = "ABC";
-    List<ScalingDecision> decisions = new ArrayList<>();
 
     when(mockKafkaService.scaleKafkaPartitions(any(Tenant.class)))
-        .thenReturn(Single.just(decisions));
+        .thenReturn(Single.just(Collections.emptyMap()));
 
     CompletionStage<Response<ScaleKafkaPartitionsResponse>> result =
         scaleKafkaPartitions.scalePartitions(tenantName, null);

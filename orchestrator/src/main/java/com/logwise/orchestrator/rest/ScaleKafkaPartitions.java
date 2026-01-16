@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -85,14 +84,12 @@ public class ScaleKafkaPartitions {
       kafkaService
           .scaleKafkaPartitions(tenant)
           .subscribe(
-              scalingDecisions -> {
+              scalingMap -> {
                 ScaleKafkaPartitionsResponse response =
                     ScaleKafkaPartitionsResponse.builder()
                         .success(true)
                         .message("Successfully scaled Kafka partitions for tenant: " + tenantName)
-                        .topicsScaled(scalingDecisions.size())
-                        .scalingDecisions(
-                            scalingDecisions != null ? scalingDecisions : Collections.emptyList())
+                        .topicsScaled(scalingMap.size())
                         .warnings(warnings)
                         .errors(errors)
                         .build();
@@ -106,7 +103,6 @@ public class ScaleKafkaPartitions {
                         .success(false)
                         .message("Failed to scale Kafka partitions: " + throwable.getMessage())
                         .topicsScaled(0)
-                        .scalingDecisions(Collections.emptyList())
                         .warnings(warnings)
                         .errors(errors)
                         .build();
@@ -121,7 +117,6 @@ public class ScaleKafkaPartitions {
               .success(false)
               .message("Error processing request: " + e.getMessage())
               .topicsScaled(0)
-              .scalingDecisions(Collections.emptyList())
               .warnings(warnings)
               .errors(errors)
               .build();
