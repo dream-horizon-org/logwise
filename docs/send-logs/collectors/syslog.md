@@ -13,7 +13,7 @@ Syslog daemons forward logs over **TCP** or **UDP**, and Vector ingests them usi
 
 Example syslog-ng snippet that reads a local log file and forwards logs to Vector over TCP:
 
-```conf
+```text
 source s_healthcheck {
   file("/var/log/healthcheck/healthcheck.log");
 };
@@ -39,7 +39,7 @@ For rsyslog, the equivalent configuration would use an `action` with `omfwd` (or
 
 To receive syslog traffic, Vector needs a **syslog source**:
 
-```48:60:vector/vector.yaml
+```yaml
   syslog_logs:
     type: "syslog"
     address: "0.0.0.0:5514"

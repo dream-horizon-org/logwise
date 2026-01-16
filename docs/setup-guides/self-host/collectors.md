@@ -26,7 +26,7 @@ This document shows:
 
 Vector’s OTLP listener is defined in `vector/vector.yaml`:
 
-```1:9:vector/vector.yaml
+```yaml
 sources:
   otlp_logs:
     type: "opentelemetry"
@@ -49,7 +49,7 @@ Any collector that can speak OTLP can send logs to:
 
 The OTEL Collector can tail log files and export them to Vector over **OTLP HTTP**:
 
-```8:40:deploy/healthcheck-dummy/otel-collector-config.yaml
+```yaml
 receivers:
   filelog/healthcheck:
     include: 
@@ -86,7 +86,7 @@ Replace `<VECTOR_HOST>` with the hostname or IP where Vector is reachable.
 
 Example configuration (taken from `deploy/healthcheck-dummy/fluent-bit.conf`):
 
-```1:26:deploy/healthcheck-dummy/fluent-bit.conf
+```ini
 [SERVICE]
     Flush        1
     Daemon       off
@@ -193,7 +193,7 @@ Example Fluentd config:
 
 Add a `socket` source (or `fluent` / `fluent_source` depending on Vector version) to `vector/vector.yaml`:
 
-```30:40:vector/vector.yaml
+```yaml
   fluentd_logs:
     type: "socket"
     address: "0.0.0.0:24224"
@@ -243,7 +243,7 @@ output {
 
 Add a `socket` source for Logstash:
 
-```40:48:vector/vector.yaml
+```yaml
   logstash_logs:
     type: "socket"
     address: "0.0.0.0:24225"
@@ -265,7 +265,7 @@ Vector can ingest these via its `syslog` source.
 
 Example snippet:
 
-```conf
+```text
 source s_healthcheck {
   file("/var/log/healthcheck/healthcheck.log");
 };
@@ -287,7 +287,7 @@ log {
 
 Add a `syslog` source in `vector/vector.yaml`:
 
-```48:60:vector/vector.yaml
+```yaml
   syslog_logs:
     type: "syslog"
     address: "0.0.0.0:5514"
