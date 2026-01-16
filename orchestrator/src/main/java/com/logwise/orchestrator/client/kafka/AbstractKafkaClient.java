@@ -216,7 +216,15 @@ public abstract class AbstractKafkaClient implements KafkaClient {
                                     return new AbstractMap.SimpleEntry<>(topic, offsetInfo);
                                   });
                         })
-                    .toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue);
+                    .toList()
+                    .map(
+                        entries -> {
+                          Map<String, TopicOffsetInfo> result = new HashMap<>();
+                          for (AbstractMap.SimpleEntry<String, TopicOffsetInfo> entry : entries) {
+                            result.put(entry.getKey(), entry.getValue());
+                          }
+                          return result;
+                        });
               } catch (InterruptedException | ExecutionException e) {
                 log.error("Error getting end offset sum", e);
                 return Single.error(e);
