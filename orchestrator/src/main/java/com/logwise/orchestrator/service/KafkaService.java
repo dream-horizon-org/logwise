@@ -26,9 +26,7 @@ public class KafkaService {
   private final KafkaClientFactory kafkaClientFactory;
   private final Cache<String, Single<OffsetWithTimestamp>> topicOffsetSumCache;
 
-  /**
-   * Data class to hold offset sum and timestamp together.
-   */
+  /** Data class to hold offset sum and timestamp together. */
   private static class OffsetWithTimestamp {
     private final long offsetSum;
     private final long timestamp;
@@ -195,26 +193,26 @@ public class KafkaService {
    */
   private int calculateRequiredPartitions(
       String topic, TopicOffsetInfo offsetInfo, KafkaConfig kafkaConfig) {
-        long currentOffsetSum = offsetInfo.getSumOfEndOffsets();
+    long currentOffsetSum = offsetInfo.getSumOfEndOffsets();
 
-        OffsetWithTimestamp lastOffsetData = getLastTimeOffsetSumFromCache(topic);
+    OffsetWithTimestamp lastOffsetData = getLastTimeOffsetSumFromCache(topic);
 
     if (lastOffsetData == null) {
-        updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
+      updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
 
-        // No previous data, store current and return -1 (no scaling)
+      // No previous data, store current and return -1 (no scaling)
       return -1;
     }
-    
+
     long currentTimestamp = System.currentTimeMillis();
     long timeDifferenceSeconds = (currentTimestamp - lastOffsetData.getTimestamp()) / 1000;
-    
+
     if (timeDifferenceSeconds <= 0 || timeDifferenceSeconds > 300) {
       // Time difference is invalid or too long return -1
-        updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
-        return -1;
+      updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
+      return -1;
     }
-    
+
     long offsetDifference = currentOffsetSum - lastOffsetData.getOffsetSum();
     long ingestionRate = offsetDifference / timeDifferenceSeconds;
     int requiredPartitions =
@@ -227,10 +225,9 @@ public class KafkaService {
         "performScaling: Current number of partitions for topic {} is {}",
         topic,
         currentPartitions);
-      updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
+    updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
 
-
-      // Only scale if required partitions exceed current partitions
+    // Only scale if required partitions exceed current partitions
     if (requiredPartitions <= currentPartitions) {
       return -1;
     }
@@ -242,7 +239,8 @@ public class KafkaService {
    * Get the last time offset sum from cache for a given topic.
    *
    * @param topic Topic name
-   * @return OffsetWithTimestamp containing last offset sum and timestamp, or null if not found in cache
+   * @return OffsetWithTimestamp containing last offset sum and timestamp, or null if not found in
+   *     cache
    */
   private OffsetWithTimestamp getLastTimeOffsetSumFromCache(String topic) {
     Single<OffsetWithTimestamp> cachedValue = topicOffsetSumCache.getIfPresent(topic);
@@ -260,6 +258,7 @@ public class KafkaService {
    */
   private void updateLastTimeOffsetSumInCache(String topic, Long offsetSum) {
     long currentTimestamp = System.currentTimeMillis();
-    topicOffsetSumCache.put(topic, Single.just(new OffsetWithTimestamp(offsetSum, currentTimestamp)));
+    topicOffsetSumCache.put(
+        topic, Single.just(new OffsetWithTimestamp(offsetSum, currentTimestamp)));
   }
 }

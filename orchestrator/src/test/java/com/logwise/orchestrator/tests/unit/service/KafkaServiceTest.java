@@ -33,13 +33,14 @@ public class KafkaServiceTest extends BaseTest {
   private ApplicationConfig.TenantConfig mockTenantConfig;
   private ApplicationConfig.KafkaConfig mockKafkaConfig;
   private ApplicationConfig.SparkConfig mockSparkConfig;
+
   @SuppressWarnings("unchecked")
   private Cache<String, Single<?>> mockCache;
 
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
-    
+
     mockKafkaClientFactory = mock(KafkaClientFactory.class);
     mockKafkaClient = mock(KafkaClient.class);
     mockTenantConfig = mock(ApplicationConfig.TenantConfig.class);
@@ -58,10 +59,11 @@ public class KafkaServiceTest extends BaseTest {
   }
 
   /**
-   * Creates a KafkaService instance with mocked cache factory.
-   * The MockedStatic must remain open during the test execution.
+   * Creates a KafkaService instance with mocked cache factory. The MockedStatic must remain open
+   * during the test execution.
    */
-  private KafkaService createKafkaServiceWithMockedCache(MockedStatic<CaffeineCacheFactory> mockedFactory) {
+  private KafkaService createKafkaServiceWithMockedCache(
+      MockedStatic<CaffeineCacheFactory> mockedFactory) {
     mockedFactory
         .when(() -> CaffeineCacheFactory.createCache(any(Vertx.class), anyString()))
         .thenReturn(mockCache);
@@ -78,7 +80,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -102,7 +104,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -126,7 +128,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -168,7 +170,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -188,7 +190,7 @@ public class KafkaServiceTest extends BaseTest {
     Tenant tenant = Tenant.ABC;
     Set<String> topics = new HashSet<>(Arrays.asList("logs.service1"));
     Map<String, TopicOffsetInfo> offsetsSumMap = new HashMap<>();
-    
+
     // Current offset: 110000, last cached offset: 100000, time difference: 60 seconds
     // ingestionRate = (110000 - 100000) / 60 = 166.67/sec
     // requiredPartitions = ceil(166.67 / 1000) = 1
@@ -208,7 +210,7 @@ public class KafkaServiceTest extends BaseTest {
     Object offsetWithTimestamp = createOffsetWithTimestamp(100000L, cachedTimestamp);
     @SuppressWarnings({"unchecked", "rawtypes"})
     Single cachedValue = Single.just(offsetWithTimestamp);
-    
+
     // Mock cache to return cached data - this will trigger the calculation path (lines 218-238)
     when(mockCache.getIfPresent(eq("logs.service1"))).thenReturn(cachedValue);
 
@@ -217,7 +219,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -226,8 +228,9 @@ public class KafkaServiceTest extends BaseTest {
 
       Map<String, Integer> scalingMap = result.blockingGet();
       Assert.assertNotNull(scalingMap);
-      Assert.assertTrue(scalingMap.isEmpty(), "Should return empty when requiredPartitions <= currentPartitions");
-      
+      Assert.assertTrue(
+          scalingMap.isEmpty(), "Should return empty when requiredPartitions <= currentPartitions");
+
       // Verify that cache was updated with new offset
       verify(mockCache, times(1)).put(eq("logs.service1"), any(Single.class));
       verify(mockKafkaClient, times(1)).close();
@@ -257,7 +260,7 @@ public class KafkaServiceTest extends BaseTest {
     Object offsetWithTimestamp = createOffsetWithTimestamp(100000L, cachedTimestamp);
     @SuppressWarnings({"unchecked", "rawtypes"})
     Single cachedValue = Single.just(offsetWithTimestamp);
-    
+
     // Mock cache to return cached data with invalid time difference
     when(mockCache.getIfPresent(eq("logs.service1"))).thenReturn(cachedValue);
 
@@ -266,7 +269,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -275,8 +278,9 @@ public class KafkaServiceTest extends BaseTest {
 
       Map<String, Integer> scalingMap = result.blockingGet();
       Assert.assertNotNull(scalingMap);
-      Assert.assertTrue(scalingMap.isEmpty(), "Should return empty when time difference > 300 seconds");
-      
+      Assert.assertTrue(
+          scalingMap.isEmpty(), "Should return empty when time difference > 300 seconds");
+
       // Verify that cache was updated with new offset (line 214)
       verify(mockCache, times(1)).put(eq("logs.service1"), any(Single.class));
       verify(mockKafkaClient, times(1)).close();
@@ -305,7 +309,7 @@ public class KafkaServiceTest extends BaseTest {
     Object offsetWithTimestamp = createOffsetWithTimestamp(100000L, cachedTimestamp);
     @SuppressWarnings({"unchecked", "rawtypes"})
     Single cachedValue = Single.just(offsetWithTimestamp);
-    
+
     // Mock cache to return cached data with invalid time difference
     when(mockCache.getIfPresent(eq("logs.service1"))).thenReturn(cachedValue);
 
@@ -314,7 +318,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -324,7 +328,7 @@ public class KafkaServiceTest extends BaseTest {
       Map<String, Integer> scalingMap = result.blockingGet();
       Assert.assertNotNull(scalingMap);
       Assert.assertTrue(scalingMap.isEmpty(), "Should return empty when time difference <= 0");
-      
+
       // Verify that cache was updated with new offset (line 214)
       verify(mockCache, times(1)).put(eq("logs.service1"), any(Single.class));
       verify(mockKafkaClient, times(1)).close();
@@ -356,7 +360,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -382,7 +386,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig.when(() -> ApplicationConfigUtil.getTenantConfig(tenant)).thenThrow(error);
 
       // The method should catch the exception and return Single.error()
@@ -421,7 +425,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -441,7 +445,7 @@ public class KafkaServiceTest extends BaseTest {
       throws Exception {
     Tenant tenant = Tenant.ABC;
     Set<String> topics = new HashSet<>(Arrays.asList("logs.service1", "logs.service2"));
-    
+
     // First call: populate cache with initial offset
     Map<String, TopicOffsetInfo> firstCallOffsetsSumMap = new HashMap<>();
     TopicOffsetInfo firstCallOffsetInfo =
@@ -449,7 +453,7 @@ public class KafkaServiceTest extends BaseTest {
     firstCallOffsetsSumMap.put("logs.service1", firstCallOffsetInfo);
 
     // Second call: use higher offset to trigger scaling
-    // If currentOffsetSum = 1100000, lastOffsetSum = 100000 (from first call), 
+    // If currentOffsetSum = 1100000, lastOffsetSum = 100000 (from first call),
     // timeDifference = 60 seconds, ingestionRate = (1100000-100000)/60 = 16666.67/sec
     // requiredPartitions = ceil(16666.67 / 1000) = 17, which is > 3 (currentPartitions)
     Map<String, TopicOffsetInfo> secondCallOffsetsSumMap = new HashMap<>();
@@ -472,19 +476,17 @@ public class KafkaServiceTest extends BaseTest {
     Object offsetWithTimestamp = createOffsetWithTimestamp(100000L, firstCallTimestamp);
     @SuppressWarnings({"unchecked", "rawtypes"})
     Single cachedValue = Single.just(offsetWithTimestamp);
-    
+
     // First call: cache returns null (no cached data)
     // Second call: cache returns the cached value from first call
-    when(mockCache.getIfPresent(eq("logs.service1")))
-        .thenReturn(null)
-        .thenReturn(cachedValue);
+    when(mockCache.getIfPresent(eq("logs.service1"))).thenReturn(null).thenReturn(cachedValue);
 
     try (MockedStatic<CaffeineCacheFactory> mockedCacheFactory =
             mockStatic(CaffeineCacheFactory.class);
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -493,47 +495,58 @@ public class KafkaServiceTest extends BaseTest {
       Single<Map<String, Integer>> firstResult = kafkaService.scaleKafkaPartitions(tenant);
       Map<String, Integer> firstScalingMap = firstResult.blockingGet();
       Assert.assertNotNull(firstScalingMap);
-      Assert.assertTrue(firstScalingMap.isEmpty(), "First call should return empty (no cached data)");
+      Assert.assertTrue(
+          firstScalingMap.isEmpty(), "First call should return empty (no cached data)");
       // Verify cache.put was called to store the offset
       verify(mockCache, times(1)).put(eq("logs.service1"), any(Single.class));
-      
+
       // Second call: should trigger scaling due to increased offset
       Single<Map<String, Integer>> secondResult = kafkaService.scaleKafkaPartitions(tenant);
       Map<String, Integer> secondScalingMap = secondResult.blockingGet();
       Assert.assertNotNull(secondScalingMap);
       Assert.assertEquals(secondScalingMap.size(), 1, "Should scale logs.service1");
       Assert.assertNotNull(secondScalingMap.get("logs.service1"));
-      
+
       // Verify exact calculation:
       // ingestionRate = (1100000 - 100000) / 60 = 16666.67/sec
       // requiredPartitions = ceil(16666.67 / 1000) = 17
       Integer requiredPartitions = secondScalingMap.get("logs.service1");
-      Assert.assertEquals(requiredPartitions.intValue(), 17, 
+      Assert.assertEquals(
+          requiredPartitions.intValue(),
+          17,
           "Should require exactly 17 partitions based on ingestion rate calculation");
       Assert.assertTrue(requiredPartitions > 3, "Should require more than 3 partitions");
-      
+
       // Verify increasePartitions was called with correct parameters
-      verify(mockKafkaClient, times(1)).increasePartitions(argThat(map -> 
-          map != null && map.size() == 1 && map.get("logs.service1") != null && 
-          map.get("logs.service1").equals(17)));
-      
+      verify(mockKafkaClient, times(1))
+          .increasePartitions(
+              argThat(
+                  map ->
+                      map != null
+                          && map.size() == 1
+                          && map.get("logs.service1") != null
+                          && map.get("logs.service1").equals(17)));
+
       verify(mockKafkaClient, times(2)).close();
       verify(mockKafkaClient, times(1)).increasePartitions(anyMap());
     }
   }
 
   /**
-   * Helper method to create an OffsetWithTimestamp object using reflection since it's a private inner class.
+   * Helper method to create an OffsetWithTimestamp object using reflection since it's a private
+   * inner class.
    */
   private Object createOffsetWithTimestamp(long offsetSum, long timestamp) {
     try {
       // OffsetWithTimestamp is a private static inner class, so we need to use reflection
-      Class<?> offsetClass = Class.forName("com.logwise.orchestrator.service.KafkaService$OffsetWithTimestamp");
-      
+      Class<?> offsetClass =
+          Class.forName("com.logwise.orchestrator.service.KafkaService$OffsetWithTimestamp");
+
       // Get the constructor and make it accessible
-      java.lang.reflect.Constructor<?> constructor = offsetClass.getDeclaredConstructor(long.class, long.class);
+      java.lang.reflect.Constructor<?> constructor =
+          offsetClass.getDeclaredConstructor(long.class, long.class);
       constructor.setAccessible(true);
-      
+
       return constructor.newInstance(offsetSum, timestamp);
     } catch (Exception e) {
       throw new RuntimeException("Failed to create OffsetWithTimestamp", e);
@@ -555,7 +568,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -586,7 +599,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);
@@ -612,12 +625,13 @@ public class KafkaServiceTest extends BaseTest {
   }
 
   @Test
-  public void testScaleKafkaPartitions_WithErrorInIncreasePartitions_ClosesClient() throws Exception {
+  public void testScaleKafkaPartitions_WithErrorInIncreasePartitions_ClosesClient()
+      throws Exception {
     Tenant tenant = Tenant.ABC;
     Set<String> topics = new HashSet<>(Arrays.asList("logs.service1"));
     Map<String, TopicOffsetInfo> offsetsSumMap = new HashMap<>();
-    
-    // Setup to trigger scaling: currentOffsetSum = 1100000, lastOffsetSum = 100000, 
+
+    // Setup to trigger scaling: currentOffsetSum = 1100000, lastOffsetSum = 100000,
     // timeDifference = 60 seconds, ingestionRate = 16666.67/sec, requiredPartitions = 17
     TopicOffsetInfo offsetInfo =
         TopicOffsetInfo.builder().sumOfEndOffsets(1100000L).currentNumberOfPartitions(3).build();
@@ -627,9 +641,10 @@ public class KafkaServiceTest extends BaseTest {
     when(mockKafkaConfig.getPartitionRatePerSecond()).thenReturn(1000L);
     when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.just(topics));
     when(mockKafkaClient.getEndOffsetSum(anyList())).thenReturn(Single.just(offsetsSumMap));
-    
+
     RuntimeException error = new RuntimeException("Error increasing partitions");
-    when(mockKafkaClient.increasePartitions(anyMap())).thenReturn(io.reactivex.Completable.error(error));
+    when(mockKafkaClient.increasePartitions(anyMap()))
+        .thenReturn(io.reactivex.Completable.error(error));
 
     // Create cached data - simulate previous call with offset 100000, 60 seconds ago
     // Use relative timestamp to ensure valid time difference (must be > 0 and <= 300 seconds)
@@ -637,7 +652,7 @@ public class KafkaServiceTest extends BaseTest {
     Object offsetWithTimestamp = createOffsetWithTimestamp(100000L, cachedTimestamp);
     @SuppressWarnings({"unchecked", "rawtypes"})
     Single cachedValue = Single.just(offsetWithTimestamp);
-    
+
     when(mockCache.getIfPresent(eq("logs.service1"))).thenReturn(cachedValue);
 
     try (MockedStatic<CaffeineCacheFactory> mockedCacheFactory =
@@ -645,7 +660,7 @@ public class KafkaServiceTest extends BaseTest {
         MockedStatic<ApplicationConfigUtil> mockedConfig =
             mockStatic(ApplicationConfigUtil.class)) {
       KafkaService kafkaService = createKafkaServiceWithMockedCache(mockedCacheFactory);
-      
+
       mockedConfig
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
           .thenReturn(mockTenantConfig);

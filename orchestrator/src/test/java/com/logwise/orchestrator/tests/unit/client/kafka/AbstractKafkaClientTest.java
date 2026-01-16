@@ -57,7 +57,8 @@ public class AbstractKafkaClientTest extends BaseTest {
 
     // Mock DescribeTopicsResult to return a KafkaFuture
     DescribeTopicsResult mockDescribeResult = mock(DescribeTopicsResult.class);
-    KafkaFuture<Map<String, TopicDescription>> kafkaFuture = createMockKafkaFuture(topicDescriptions);
+    KafkaFuture<Map<String, TopicDescription>> kafkaFuture =
+        createMockKafkaFuture(topicDescriptions);
     when(mockDescribeResult.all()).thenReturn(kafkaFuture);
     when(mockAdminClient.describeTopics(topics)).thenReturn(mockDescribeResult);
 
@@ -89,7 +90,7 @@ public class AbstractKafkaClientTest extends BaseTest {
       assertNotNull(offsetInfo);
       assertEquals(offsetInfo.getSumOfEndOffsets(), 600L); // 100 + 200 + 300
       assertEquals(offsetInfo.getCurrentNumberOfPartitions(), 3);
-      
+
       // Verify that adminClient.describeTopics was called
       verify(mockAdminClient, times(1)).describeTopics(topics);
     }
@@ -108,7 +109,8 @@ public class AbstractKafkaClientTest extends BaseTest {
 
     // Mock DescribeTopicsResult to return a KafkaFuture
     DescribeTopicsResult mockDescribeResult = mock(DescribeTopicsResult.class);
-    KafkaFuture<Map<String, TopicDescription>> kafkaFuture = createMockKafkaFuture(topicDescriptions);
+    KafkaFuture<Map<String, TopicDescription>> kafkaFuture =
+        createMockKafkaFuture(topicDescriptions);
     when(mockDescribeResult.all()).thenReturn(kafkaFuture);
     when(mockAdminClient.describeTopics(topics)).thenReturn(mockDescribeResult);
 
@@ -132,16 +134,22 @@ public class AbstractKafkaClientTest extends BaseTest {
       // Mock createAdminClient to return our mocked adminClient
       when(spyClient.createAdminClient()).thenReturn(Single.just(mockAdminClient));
       // Mock getEndOffsets to return different results based on topic
-      when(spyClient.getEndOffsets(argThat(list -> {
-        if (list == null || list.isEmpty()) return false;
-        TopicPartition tp = (TopicPartition) list.get(0);
-        return tp != null && "topic1".equals(tp.topic());
-      }))).thenReturn(Single.just(topic1Offsets));
-      when(spyClient.getEndOffsets(argThat(list -> {
-        if (list == null || list.isEmpty()) return false;
-        TopicPartition tp = (TopicPartition) list.get(0);
-        return tp != null && "topic2".equals(tp.topic());
-      }))).thenReturn(Single.just(topic2Offsets));
+      when(spyClient.getEndOffsets(
+              argThat(
+                  list -> {
+                    if (list == null || list.isEmpty()) return false;
+                    TopicPartition tp = (TopicPartition) list.get(0);
+                    return tp != null && "topic1".equals(tp.topic());
+                  })))
+          .thenReturn(Single.just(topic1Offsets));
+      when(spyClient.getEndOffsets(
+              argThat(
+                  list -> {
+                    if (list == null || list.isEmpty()) return false;
+                    TopicPartition tp = (TopicPartition) list.get(0);
+                    return tp != null && "topic2".equals(tp.topic());
+                  })))
+          .thenReturn(Single.just(topic2Offsets));
 
       // Execute
       Map<String, TopicOffsetInfo> result = spyClient.getEndOffsetSum(topics).blockingGet();
@@ -149,7 +157,7 @@ public class AbstractKafkaClientTest extends BaseTest {
       // Verify
       assertNotNull(result);
       assertEquals(result.size(), 2);
-      
+
       TopicOffsetInfo topic1Info = result.get("topic1");
       assertNotNull(topic1Info);
       assertEquals(topic1Info.getSumOfEndOffsets(), 200L); // 50 + 150
@@ -159,7 +167,7 @@ public class AbstractKafkaClientTest extends BaseTest {
       assertNotNull(topic2Info);
       assertEquals(topic2Info.getSumOfEndOffsets(), 600L); // 100 + 200 + 300
       assertEquals(topic2Info.getCurrentNumberOfPartitions(), 3);
-      
+
       // Verify that adminClient.describeTopics was called
       verify(mockAdminClient, times(1)).describeTopics(topics);
     }
@@ -175,7 +183,8 @@ public class AbstractKafkaClientTest extends BaseTest {
 
     // Mock DescribeTopicsResult to return a KafkaFuture
     DescribeTopicsResult mockDescribeResult = mock(DescribeTopicsResult.class);
-    KafkaFuture<Map<String, TopicDescription>> kafkaFuture = createMockKafkaFuture(topicDescriptions);
+    KafkaFuture<Map<String, TopicDescription>> kafkaFuture =
+        createMockKafkaFuture(topicDescriptions);
     when(mockDescribeResult.all()).thenReturn(kafkaFuture);
     when(mockAdminClient.describeTopics(topics)).thenReturn(mockDescribeResult);
 
@@ -199,7 +208,7 @@ public class AbstractKafkaClientTest extends BaseTest {
       assertNotNull(offsetInfo);
       assertEquals(offsetInfo.getSumOfEndOffsets(), 0L);
       assertEquals(offsetInfo.getCurrentNumberOfPartitions(), 0);
-      
+
       // Verify getEndOffsets was never called for non-existent topic
       verify(spyClient, never()).getEndOffsets(anyList());
       // Verify that adminClient.describeTopics was called
@@ -213,7 +222,8 @@ public class AbstractKafkaClientTest extends BaseTest {
 
     // Mock DescribeTopicsResult to return a KafkaFuture
     DescribeTopicsResult mockDescribeResult = mock(DescribeTopicsResult.class);
-    KafkaFuture<Map<String, TopicDescription>> kafkaFuture = createMockKafkaFuture(Collections.emptyMap());
+    KafkaFuture<Map<String, TopicDescription>> kafkaFuture =
+        createMockKafkaFuture(Collections.emptyMap());
     when(mockDescribeResult.all()).thenReturn(kafkaFuture);
     when(mockAdminClient.describeTopics(topics)).thenReturn(mockDescribeResult);
 
@@ -233,7 +243,7 @@ public class AbstractKafkaClientTest extends BaseTest {
       // Verify
       assertNotNull(result);
       assertTrue(result.isEmpty());
-      
+
       // Verify that adminClient.describeTopics was called even with empty list
       verify(mockAdminClient, times(1)).describeTopics(topics);
     }
@@ -251,7 +261,8 @@ public class AbstractKafkaClientTest extends BaseTest {
 
     // Mock DescribeTopicsResult to return a KafkaFuture
     DescribeTopicsResult mockDescribeResult = mock(DescribeTopicsResult.class);
-    KafkaFuture<Map<String, TopicDescription>> kafkaFuture = createMockKafkaFuture(topicDescriptions);
+    KafkaFuture<Map<String, TopicDescription>> kafkaFuture =
+        createMockKafkaFuture(topicDescriptions);
     when(mockDescribeResult.all()).thenReturn(kafkaFuture);
     when(mockAdminClient.describeTopics(topics)).thenReturn(mockDescribeResult);
 
@@ -282,7 +293,7 @@ public class AbstractKafkaClientTest extends BaseTest {
       assertNotNull(offsetInfo);
       assertEquals(offsetInfo.getSumOfEndOffsets(), 400L); // 100 + 0 (null ignored) + 300
       assertEquals(offsetInfo.getCurrentNumberOfPartitions(), 3);
-      
+
       // Verify that null offset was actually skipped (only 2 offsets should be summed)
       // The getEndOffsets map has 3 entries but one is null, so sum should be 400 (100 + 300)
       // Note: getEndOffsets is called internally by the implementation, verification may count
@@ -299,7 +310,7 @@ public class AbstractKafkaClientTest extends BaseTest {
 
     // Mock DescribeTopicsResult to throw InterruptedException
     DescribeTopicsResult mockDescribeResult = mock(DescribeTopicsResult.class);
-    KafkaFuture<Map<String, TopicDescription>> kafkaFuture = 
+    KafkaFuture<Map<String, TopicDescription>> kafkaFuture =
         createMockKafkaFutureWithException(new InterruptedException("Interrupted"));
     when(mockDescribeResult.all()).thenReturn(kafkaFuture);
     when(mockAdminClient.describeTopics(topics)).thenReturn(mockDescribeResult);
@@ -324,11 +335,11 @@ public class AbstractKafkaClientTest extends BaseTest {
         Throwable cause = e.getCause();
         assertTrue(
             cause instanceof InterruptedException,
-            "Exception cause should be InterruptedException, but got: " + 
-            (cause != null ? cause.getClass().getName() : "null"));
+            "Exception cause should be InterruptedException, but got: "
+                + (cause != null ? cause.getClass().getName() : "null"));
         assertEquals(cause.getMessage(), "Interrupted");
       }
-      
+
       // Verify that adminClient.describeTopics was called
       verify(mockAdminClient, times(1)).describeTopics(topics);
     }
@@ -341,7 +352,7 @@ public class AbstractKafkaClientTest extends BaseTest {
 
     // Mock DescribeTopicsResult to throw ExecutionException
     DescribeTopicsResult mockDescribeResult = mock(DescribeTopicsResult.class);
-    KafkaFuture<Map<String, TopicDescription>> kafkaFuture = 
+    KafkaFuture<Map<String, TopicDescription>> kafkaFuture =
         createMockKafkaFutureWithException(new ExecutionException("Execution failed", null));
     when(mockDescribeResult.all()).thenReturn(kafkaFuture);
     when(mockAdminClient.describeTopics(topics)).thenReturn(mockDescribeResult);
@@ -366,13 +377,13 @@ public class AbstractKafkaClientTest extends BaseTest {
         Throwable cause = e.getCause();
         assertTrue(
             cause instanceof ExecutionException,
-            "Exception cause should be ExecutionException, but got: " + 
-            (cause != null ? cause.getClass().getName() : "null"));
+            "Exception cause should be ExecutionException, but got: "
+                + (cause != null ? cause.getClass().getName() : "null"));
         assertTrue(
             cause.getMessage() != null && cause.getMessage().contains("Execution failed"),
             "Exception message should contain 'Execution failed'");
       }
-      
+
       // Verify that adminClient.describeTopics was called
       verify(mockAdminClient, times(1)).describeTopics(topics);
     }
@@ -390,7 +401,8 @@ public class AbstractKafkaClientTest extends BaseTest {
 
     // Mock DescribeTopicsResult to return a KafkaFuture
     DescribeTopicsResult mockDescribeResult = mock(DescribeTopicsResult.class);
-    KafkaFuture<Map<String, TopicDescription>> kafkaFuture = createMockKafkaFuture(topicDescriptions);
+    KafkaFuture<Map<String, TopicDescription>> kafkaFuture =
+        createMockKafkaFuture(topicDescriptions);
     when(mockDescribeResult.all()).thenReturn(kafkaFuture);
     when(mockAdminClient.describeTopics(topics)).thenReturn(mockDescribeResult);
 
@@ -418,7 +430,7 @@ public class AbstractKafkaClientTest extends BaseTest {
       assertNotNull(offsetInfo);
       assertEquals(offsetInfo.getSumOfEndOffsets(), 0L);
       assertEquals(offsetInfo.getCurrentNumberOfPartitions(), 0);
-      
+
       // Verify that adminClient.describeTopics was called
       verify(mockAdminClient, times(1)).describeTopics(topics);
     }
@@ -437,7 +449,8 @@ public class AbstractKafkaClientTest extends BaseTest {
 
     // Mock DescribeTopicsResult to return a KafkaFuture
     DescribeTopicsResult mockDescribeResult = mock(DescribeTopicsResult.class);
-    KafkaFuture<Map<String, TopicDescription>> kafkaFuture = createMockKafkaFuture(topicDescriptions);
+    KafkaFuture<Map<String, TopicDescription>> kafkaFuture =
+        createMockKafkaFuture(topicDescriptions);
     when(mockDescribeResult.all()).thenReturn(kafkaFuture);
     when(mockAdminClient.describeTopics(topics)).thenReturn(mockDescribeResult);
 
@@ -475,7 +488,7 @@ public class AbstractKafkaClientTest extends BaseTest {
       assertNotNull(nonExistentInfo);
       assertEquals(nonExistentInfo.getSumOfEndOffsets(), 0L);
       assertEquals(nonExistentInfo.getCurrentNumberOfPartitions(), 0);
-      
+
       // Verify that adminClient.describeTopics was called
       verify(mockAdminClient, times(1)).describeTopics(topics);
     }
