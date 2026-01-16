@@ -69,6 +69,13 @@ public class ApplicationTestConfig {
     sparkConfig.setLog4jPropertiesFilePath("log4j.properties");
     sparkConfig.setExecutorCores("2");
     sparkConfig.setExecutorMemory("4G");
+    sparkConfig.setPerCoreLogsProcess(1000);
+    sparkConfig.setExecutorCoresPerMachine(4);
+    sparkConfig.setMinWorkerCount(2);
+    sparkConfig.setMaxWorkerCount(10);
+    // Set default cluster config
+    ApplicationConfig.SparkClusterConfig clusterConfig = new ApplicationConfig.SparkClusterConfig();
+    sparkConfig.setCluster(clusterConfig);
     tenantConfig.setSpark(sparkConfig);
 
     ApplicationConfig.Orchestrator orchestrator = new ApplicationConfig.Orchestrator();
