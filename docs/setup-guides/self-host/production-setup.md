@@ -6,7 +6,7 @@ title: Production-Ready Self-Hosted Setup
 
 This guide provides comprehensive instructions for deploying Logwise in a production environment with enterprise-grade non-functional requirements. The architecture is designed to be horizontally scalable, highly available, fault-tolerant, and performant.
 
-![Logwise Architecture](../production-setup.png)
+![Logwise Architecture](../../production-setup.png)
 
 # Architecture Overview
 
