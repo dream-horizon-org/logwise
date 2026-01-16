@@ -117,4 +117,33 @@ public class ObjectStoreServiceTest {
       Assert.assertTrue(services.isEmpty());
     }
   }
+
+  @Test
+  public void testGetDefaultRetentionDays_WithValidConfig_ReturnsRetentionDays() throws Exception {
+    java.lang.reflect.Method method =
+        ObjectStoreService.class.getDeclaredMethod(
+            "getDefaultRetentionDays", ApplicationConfig.TenantConfig.class);
+    method.setAccessible(true);
+
+    when(mockTenantConfig.getDefaultLogsRetentionDays()).thenReturn(30);
+
+    Integer result = (Integer) method.invoke(null, mockTenantConfig);
+
+    Assert.assertNotNull(result);
+    Assert.assertEquals(result.intValue(), 30);
+  }
+
+  @Test
+  public void testGetDefaultRetentionDays_WithNullRetentionDays_ReturnsNull() throws Exception {
+    java.lang.reflect.Method method =
+        ObjectStoreService.class.getDeclaredMethod(
+            "getDefaultRetentionDays", ApplicationConfig.TenantConfig.class);
+    method.setAccessible(true);
+
+    when(mockTenantConfig.getDefaultLogsRetentionDays()).thenReturn(null);
+
+    Integer result = (Integer) method.invoke(null, mockTenantConfig);
+
+    Assert.assertNull(result);
+  }
 }

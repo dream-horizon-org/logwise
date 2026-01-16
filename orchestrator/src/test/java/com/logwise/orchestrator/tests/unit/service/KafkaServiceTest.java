@@ -285,4 +285,90 @@ public class KafkaServiceTest extends BaseTest {
       verify(mockKafkaClient, times(1)).close();
     }
   }
+
+  @Test
+  public void testScaleKafkaPartitions_WithUnavailableCheckpoint_UsesZeroLag() throws Exception {
+    Tenant tenant = Tenant.ABC;
+    Set<String> topics = new HashSet<>(Arrays.asList("logs.service1"));
+    Map<String, TopicPartitionMetrics> metricsMap = new HashMap<>();
+    TopicPartitionMetrics metrics =
+        TopicPartitionMetrics.builder()
+            .topic("logs.service1")
+            .partitionCount(3)
+            .totalMessages(1000L)
+            .build();
+    metricsMap.put("logs.service1", metrics);
+
+    SparkCheckpointOffsets checkpointOffsets =
+        SparkCheckpointOffsets.builder().available(false).offsets(Collections.emptyMap()).build();
+    Map<TopicPartition, Long> endOffsets = new HashMap<>();
+    Map<TopicPartition, Long> lagMap = new HashMap<>();
+
+    when(mockKafkaConfig.getEnablePartitionScaling()).thenReturn(true);
+    when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.just(topics));
+    when(mockKafkaClient.getPartitionMetrics(anyList())).thenReturn(Single.just(metricsMap));
+    when(mockSparkCheckpointService.getSparkCheckpointOffsets(tenant))
+        .thenReturn(Single.just(checkpointOffsets));
+    when(mockKafkaClient.getEndOffsets(anyList())).thenReturn(Single.just(endOffsets));
+    when(mockKafkaScalingService.identifyTopicsNeedingScaling(anyMap(), anyMap(), any()))
+        .thenReturn(Collections.emptyList());
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfig =
+        mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfig
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(mockTenantConfig);
+
+      Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
+
+      List<ScalingDecision> decisions = result.blockingGet();
+      Assert.assertNotNull(decisions);
+      // Should use zero lag when checkpoint unavailable
+      verify(mockKafkaClient, never()).calculateLag(anyMap(), anyMap());
+      verify(mockKafkaClient, times(1)).close();
+    }
+  }
+
+  @Test
+  public void testScaleKafkaPartitions_WithEmptyCheckpointOffsets_UsesZeroLag() throws Exception {
+    Tenant tenant = Tenant.ABC;
+    Set<String> topics = new HashSet<>(Arrays.asList("logs.service1"));
+    Map<String, TopicPartitionMetrics> metricsMap = new HashMap<>();
+    TopicPartitionMetrics metrics =
+        TopicPartitionMetrics.builder()
+            .topic("logs.service1")
+            .partitionCount(3)
+            .totalMessages(1000L)
+            .build();
+    metricsMap.put("logs.service1", metrics);
+
+    SparkCheckpointOffsets checkpointOffsets =
+        SparkCheckpointOffsets.builder().available(true).offsets(Collections.emptyMap()).build();
+    Map<TopicPartition, Long> endOffsets = new HashMap<>();
+    Map<TopicPartition, Long> lagMap = new HashMap<>();
+
+    when(mockKafkaConfig.getEnablePartitionScaling()).thenReturn(true);
+    when(mockKafkaClient.listTopics(anyString())).thenReturn(Single.just(topics));
+    when(mockKafkaClient.getPartitionMetrics(anyList())).thenReturn(Single.just(metricsMap));
+    when(mockSparkCheckpointService.getSparkCheckpointOffsets(tenant))
+        .thenReturn(Single.just(checkpointOffsets));
+    when(mockKafkaClient.getEndOffsets(anyList())).thenReturn(Single.just(endOffsets));
+    when(mockKafkaScalingService.identifyTopicsNeedingScaling(anyMap(), anyMap(), any()))
+        .thenReturn(Collections.emptyList());
+
+    try (MockedStatic<ApplicationConfigUtil> mockedConfig =
+        mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfig
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(mockTenantConfig);
+
+      Single<List<ScalingDecision>> result = kafkaService.scaleKafkaPartitions(tenant);
+
+      List<ScalingDecision> decisions = result.blockingGet();
+      Assert.assertNotNull(decisions);
+      // Should use zero lag when offsets are empty
+      verify(mockKafkaClient, never()).calculateLag(anyMap(), anyMap());
+      verify(mockKafkaClient, times(1)).close();
+    }
+  }
 }
