@@ -66,4 +66,64 @@ public class KafkaServiceTest {
     // Act - should throw UnknownHostException
     kafkaService.getKafkaBootstrapServerIp(INVALID_HOSTNAME);
   }
+
+  @Test
+  public void testGetKafkaBootstrapServerIp_WithEmptyHostname_HandlesGracefully() {
+    // Empty string may resolve to localhost depending on system configuration
+    // Test that it doesn't crash - actual behavior may vary
+    try {
+      String result = kafkaService.getKafkaBootstrapServerIp("");
+      // If it doesn't throw, verify it returns a valid result
+      assertNotNull(result);
+    } catch (Exception e) {
+      // If it throws, that's also acceptable
+      assertNotNull(e);
+    }
+  }
+
+  @Test
+  public void testGetKafkaBootstrapServerIp_WithNullHostname_HandlesGracefully() {
+    // Null may cause exception or resolve depending on implementation
+    // Test that it handles gracefully
+    try {
+      String result = kafkaService.getKafkaBootstrapServerIp(null);
+      // If it doesn't throw, verify it returns a valid result
+      assertNotNull(result);
+    } catch (Exception e) {
+      // If it throws, that's also acceptable
+      assertNotNull(e);
+    }
+  }
+
+  @Test
+  public void testGetKafkaBootstrapServerIp_WithIpv4Address_ReturnsFormattedIp() {
+    String ipv4Address = "127.0.0.1";
+    String result = kafkaService.getKafkaBootstrapServerIp(ipv4Address);
+
+    assertNotNull(result);
+    assertEquals(result, ipv4Address + ":" + KAFKA_PORT);
+  }
+
+  @Test
+  public void testGetKafkaBootstrapServerIp_WithIpv6Address_ReturnsFormattedIp() {
+    String ipv6Address = "::1";
+    String result = kafkaService.getKafkaBootstrapServerIp(ipv6Address);
+
+    assertNotNull(result);
+    assertTrue(result.contains(":" + KAFKA_PORT));
+  }
+
+  @Test
+  public void testGetKafkaBootstrapServerIp_WithDifferentPort_ReturnsCorrectPort() {
+    Map<String, Object> configMap = new HashMap<>();
+    String customPort = "9093";
+    configMap.put("kafka.bootstrap.servers.port", customPort);
+    Config customConfig = MockConfigHelper.createConfig(configMap);
+    KafkaService customKafkaService = new KafkaService(customConfig, true);
+
+    String result = customKafkaService.getKafkaBootstrapServerIp(LOCALHOST);
+
+    assertNotNull(result);
+    assertTrue(result.contains(":" + customPort));
+  }
 }

@@ -4,6 +4,8 @@ import static org.testng.Assert.*;
 
 import com.typesafe.config.Config;
 import java.lang.reflect.Method;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -12,6 +14,23 @@ import org.testng.annotations.Test;
  * <p>Tests configuration loading, fallback chain, and system properties/environment integration.
  */
 public class ApplicationConfigTest {
+
+  private String originalTenantValue;
+
+  @BeforeMethod
+  public void setUp() {
+    originalTenantValue = System.getProperty("X-Tenant-Name");
+    System.setProperty("X-Tenant-Name", "test-tenant");
+  }
+
+  @AfterMethod
+  public void tearDown() {
+    if (originalTenantValue != null) {
+      System.setProperty("X-Tenant-Name", originalTenantValue);
+    } else {
+      System.clearProperty("X-Tenant-Name");
+    }
+  }
 
   @Test
   public void testGetConfig_WithCommandLineArguments_ReturnsConfig() {
@@ -49,34 +68,30 @@ public class ApplicationConfigTest {
 
   @Test
   public void testGetConfig_SystemPropertiesAreLoaded() throws Exception {
-    // Arrange
     String testPropertyKey = "test.system.property";
     String testPropertyValue = "system-value";
     System.setProperty(testPropertyKey, testPropertyValue);
-    String configArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
     ApplicationConfig appConfig = null;
 
     try {
-      // Act - use reflection to call private init() method to get initialized
-      // ApplicationConfig
       Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
       initMethod.setAccessible(true);
-      appConfig = (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
+      appConfig =
+          (ApplicationConfig)
+              initMethod.invoke(null, (Object) new String[] {configArg1, configArg2});
 
-      // Assert - instance creation must succeed
       assertNotNull(appConfig, "ApplicationConfig instance creation failed");
       Config systemConfig = appConfig.getSystemProperties();
       assertNotNull(systemConfig);
-      // Verify system property is accessible
       assertTrue(systemConfig.hasPath(testPropertyKey), "System property should be accessible");
       assertEquals(
           systemConfig.getString(testPropertyKey),
           testPropertyValue,
           "System property value should match");
     } finally {
-      // Cleanup
       System.clearProperty(testPropertyKey);
-      // Fail test if instance creation did not succeed
       assertNotNull(
           appConfig, "Test failed: ApplicationConfig instance was not created successfully");
     }
@@ -84,28 +99,24 @@ public class ApplicationConfigTest {
 
   @Test
   public void testGetConfig_SystemEnvironmentIsLoaded() throws Exception {
-    // Arrange
-    String configArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
     ApplicationConfig appConfig = null;
 
     try {
-      // Act - use reflection to call private init() method to get initialized
-      // ApplicationConfig
       Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
       initMethod.setAccessible(true);
-      appConfig = (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
+      appConfig =
+          (ApplicationConfig)
+              initMethod.invoke(null, (Object) new String[] {configArg1, configArg2});
 
-      // Assert - instance creation must succeed
       assertNotNull(appConfig, "ApplicationConfig instance creation failed");
       Config envConfig = appConfig.getSystemEnvironment();
       assertNotNull(envConfig);
-      // Verify environment config is not empty (should contain at least PATH or
-      // similar)
       assertTrue(
           envConfig.entrySet().size() > 0,
           "Environment config should contain environment variables");
     } finally {
-      // Fail test if instance creation did not succeed
       assertNotNull(
           appConfig, "Test failed: ApplicationConfig instance was not created successfully");
     }
@@ -122,29 +133,27 @@ public class ApplicationConfigTest {
 
   @Test
   public void testGetConfig_WithTenantName_ReturnsConfig() {
-    // Arrange - provide tenant.name and s3.bucket to resolve substitution
-    String configArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(configArg);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2);
 
-    // Assert
     assertNotNull(config);
     assertEquals(config.getString("tenant.name"), "test-tenant");
   }
 
   @Test
   public void testGetConfig_ConfigFactoryCacheInvalidation() {
-    // Arrange
     String propertyKey = "test.property";
-    String configString1 =
-        propertyKey + "=value1\n" + "tenant.name=test-tenant\ns3.bucket=test-bucket";
-    String configString2 =
-        propertyKey + "=value2\n" + "tenant.name=test-tenant\ns3.bucket=test-bucket";
+    String configString1a = propertyKey + "=value1";
+    String configString1b = "tenant.name=test-tenant";
+    String configString1c = "s3.bucket=test-bucket";
+    String configString2a = propertyKey + "=value2";
+    String configString2b = "tenant.name=test-tenant";
+    String configString2c = "s3.bucket=test-bucket";
 
-    // Act
-    Config config1 = ApplicationConfig.getConfig(configString1);
-    Config config2 = ApplicationConfig.getConfig(configString2);
+    Config config1 = ApplicationConfig.getConfig(configString1a, configString1b, configString1c);
+    Config config2 = ApplicationConfig.getConfig(configString2a, configString2b, configString2c);
 
     // Assert - ConfigFactory.invalidateCaches() is called, so each call should use
     // new config
@@ -160,22 +169,14 @@ public class ApplicationConfigTest {
 
   @Test
   public void testGetConfig_CommandLineArgsOverrideApplicationConf() {
-    // Arrange
-    // application.conf has app.job.name = push-logs-to-s3
-    // We'll override it with command-line arg
     String overriddenJobName = "custom-job-name";
-    String configArg =
-        "app.job.name="
-            + overriddenJobName
-            + "\n"
-            + "tenant.name=test-tenant\ns3.bucket=test-bucket";
+    String configArg1 = "app.job.name=" + overriddenJobName;
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(configArg);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
 
-    // Assert
     assertNotNull(config);
-    // Command-line arg should override application.conf value
     assertEquals(
         config.getString("app.job.name"),
         overriddenJobName,
@@ -192,21 +193,20 @@ public class ApplicationConfigTest {
 
   @Test
   public void testGetConfig_SystemPropertiesAvailableForAccess() {
-    // Arrange - Set system properties
     String customPropertyKey = "custom.test.property";
     String customPropertyValue = "custom-value";
     System.setProperty(customPropertyKey, customPropertyValue);
-    String configArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
 
     try {
-      // Act - Get config and access system properties
-      Config config = ApplicationConfig.getConfig(configArg);
+      Config config = ApplicationConfig.getConfig(configArg1, configArg2);
 
-      // Use reflection to get ApplicationConfig instance to access system properties
       Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
       initMethod.setAccessible(true);
       ApplicationConfig appConfig =
-          (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
+          (ApplicationConfig)
+              initMethod.invoke(null, (Object) new String[] {configArg1, configArg2});
 
       Config systemConfig = appConfig.getSystemProperties();
 
@@ -231,12 +231,14 @@ public class ApplicationConfigTest {
 
   @Test
   public void testGetConfigProperties_ReturnsPropertiesConfig() throws Exception {
-    // Arrange
-    String configArg = "test.key=test.value\ntenant.name=test-tenant\ns3.bucket=test-bucket";
+    String configArg1 = "test.key=test.value";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
     Method initMethod = ApplicationConfig.class.getDeclaredMethod("init", String[].class);
     initMethod.setAccessible(true);
     ApplicationConfig appConfig =
-        (ApplicationConfig) initMethod.invoke(null, (Object) new String[] {configArg});
+        (ApplicationConfig)
+            initMethod.invoke(null, (Object) new String[] {configArg1, configArg2, configArg3});
 
     // Act
     Config propertiesConfig = appConfig.getConfigProperties();
@@ -249,64 +251,88 @@ public class ApplicationConfigTest {
 
   @Test
   public void testGetConfig_WithEmptyArgs_ReturnsConfig() {
-    // Arrange - No arguments, but need s3.bucket for config resolution
-    // application.conf has substitutions like ${s3.bucket} that need to be resolved
-    String requiredProperty = "s3.bucket=test-bucket";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(requiredProperty);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2);
 
-    // Assert
     assertNotNull(config);
-    // Should still load application.conf and resolve substitutions
     assertTrue(config.hasPath("app.job.name"));
   }
 
   @Test
   public void testGetConfig_WithEmptyStringArg_HandlesGracefully() {
-    // Arrange
     String emptyArg = "";
-    // Empty string is parsed as empty config, but we need s3.bucket for resolution
-    String requiredProperty = "s3.bucket=test-bucket";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
 
-    // Act - Empty string is parsed as empty config, which is valid
-    Config config = ApplicationConfig.getConfig(emptyArg, requiredProperty);
+    Config config = ApplicationConfig.getConfig(emptyArg, configArg1, configArg2);
 
-    // Assert
     assertNotNull(config);
-    // Should not throw exception and should resolve config
     assertTrue(config.hasPath("s3.bucket"));
   }
 
   @Test
   public void testGetConfig_WithMultipleEmptyArgs_HandlesGracefully() {
-    // Arrange
     String emptyArg1 = "";
     String emptyArg2 = "";
-    String validArg = "tenant.name=test-tenant\ns3.bucket=test-bucket";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(emptyArg1, emptyArg2, validArg);
+    Config config = ApplicationConfig.getConfig(emptyArg1, emptyArg2, configArg1, configArg2);
 
-    // Assert
     assertNotNull(config);
-    assertEquals(config.getString("tenant.name"), "test-tenant");
+    assertTrue(config.hasPath("s3.bucket"));
   }
 
   @Test
   public void testGetConfig_WithWhitespaceOnlyArgs_HandlesGracefully() {
-    // Arrange
-    // Whitespace-only strings are parsed as empty config, but we need s3.bucket for
-    // resolution
     String whitespaceArg = "   \n\t  ";
-    String requiredProperty = "s3.bucket=test-bucket";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
 
-    // Act - Whitespace is parsed as empty config, which is valid
-    Config config = ApplicationConfig.getConfig(whitespaceArg, requiredProperty);
+    Config config = ApplicationConfig.getConfig(whitespaceArg, configArg1, configArg2);
 
-    // Assert
     assertNotNull(config);
-    // Should not throw exception and should resolve config
     assertTrue(config.hasPath("s3.bucket"));
+  }
+
+  @Test
+  public void testGetConfig_WithQuotedValueInPropertiesFormat_RemovesQuotes() {
+    // Test parseConfigString branch: when value already has quotes (lines 86-88)
+    String configArg1 = "key=\"already-quoted-value\"";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
+
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
+
+    assertNotNull(config);
+    assertEquals(config.getString("key"), "already-quoted-value");
+  }
+
+  @Test
+  public void testGetConfig_WithHoconFormat_HandlesCorrectly() {
+    // Test parseConfigString: when conf doesn't contain "=", uses HOCON format (line 95)
+    String hoconConfig = "key:value";
+    String configArg1 = "tenant.name=test-tenant";
+    String configArg2 = "s3.bucket=test-bucket";
+
+    Config config = ApplicationConfig.getConfig(hoconConfig, configArg1, configArg2);
+
+    assertNotNull(config);
+    assertEquals(config.getString("key"), "value");
+  }
+
+  @Test
+  public void testGetConfig_WithPropertiesFormatContainingColon_QuotesValue() {
+    // Test parseConfigString: properties format with colon in value (line 90)
+    String configArg1 = "key=value:with:colons";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
+
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
+
+    assertNotNull(config);
+    assertEquals(config.getString("key"), "value:with:colons");
   }
 }

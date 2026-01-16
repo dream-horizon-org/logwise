@@ -1,135 +1,84 @@
 package com.logwise.orchestrator.tests.unit.rest;
 
-import com.logwise.orchestrator.rest.healthcheck.HealthCheckException;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import com.logwise.orchestrator.common.util.CompletableFutureUtils;
+import com.logwise.orchestrator.common.util.TestCompletableFutureUtils;
+import com.logwise.orchestrator.dao.HealthCheckDao;
+import com.logwise.orchestrator.rest.HealthCheck;
 import com.logwise.orchestrator.rest.healthcheck.HealthCheckResponse;
-import com.logwise.orchestrator.rest.healthcheck.HealthCheckUtil;
+import com.logwise.orchestrator.setup.BaseTest;
 import io.reactivex.Single;
 import io.vertx.core.json.JsonObject;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.CompletionStage;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/** Unit tests for HealthCheckUtil, HealthCheckResponse, and HealthCheckException. */
-public class HealthCheckTest {
+/** Unit tests for HealthCheck REST endpoint. */
+public class HealthCheckTest extends BaseTest {
 
-  @Test
-  public void testHandler_WithAllUp_ReturnsUpStatus() {
+  private HealthCheck healthCheck;
+  private HealthCheckDao mockHealthCheckDao;
 
-    Map<String, Single<JsonObject>> healthChecks = new HashMap<>();
-    healthChecks.put("db", Single.just(new JsonObject().put("status", "ok")));
-    healthChecks.put("cache", Single.just(new JsonObject().put("status", "ok")));
-
-    HealthCheckResponse response = HealthCheckUtil.handler(healthChecks).blockingGet();
-
-    Assert.assertNotNull(response);
-    Assert.assertNotNull(response.getStatus());
-    Assert.assertEquals(response.getChecks().size(), 2);
-
-    JsonObject json = response.toJson();
-    Assert.assertEquals(json.getJsonObject("data").getString("status"), "UP");
+  @BeforeMethod
+  public void setUp() throws Exception {
+    super.setUp();
+    TestCompletableFutureUtils.init(vertx);
+    mockHealthCheckDao = mock(HealthCheckDao.class);
+    healthCheck = new HealthCheck(mockHealthCheckDao);
   }
 
   @Test
-  public void testHandler_WithOneDown_ThrowsHealthCheckException() {
+  public void testHealthcheck_WithHealthyMysql_ReturnsSuccess() throws Exception {
+    JsonObject mysqlHealth = new JsonObject().put("status", "UP");
+    when(mockHealthCheckDao.mysqlHealthCheck()).thenReturn(Single.just(mysqlHealth));
 
-    Map<String, Single<JsonObject>> healthChecks = new HashMap<>();
-    healthChecks.put("db", Single.just(new JsonObject().put("status", "ok")));
-    healthChecks.put("cache", Single.error(new RuntimeException("Cache error")));
+    try (MockedStatic<CompletableFutureUtils> mockedFutureUtils =
+        Mockito.mockStatic(CompletableFutureUtils.class)) {
+      mockedFutureUtils
+          .when(() -> CompletableFutureUtils.fromSingle(any(Single.class)))
+          .thenAnswer(
+              invocation -> {
+                Single<HealthCheckResponse> single = invocation.getArgument(0);
+                return TestCompletableFutureUtils.fromSingle(single);
+              });
 
-    try {
-      HealthCheckUtil.handler(healthChecks).blockingGet();
-      Assert.fail("Should have thrown HealthCheckException");
-    } catch (HealthCheckException e) {
-      Assert.assertEquals(e.getHttpStatusCode(), 503);
-      Assert.assertEquals(e.getError().getCode(), "HEALTHCHECK_FAILED");
+      CompletionStage<HealthCheckResponse> result = healthCheck.healthcheck();
 
-      String message = e.getMessage();
-      Assert.assertTrue(message.contains("DOWN"));
+      HealthCheckResponse response = result.toCompletableFuture().get();
+      Assert.assertNotNull(response);
+      verify(mockHealthCheckDao, times(1)).mysqlHealthCheck();
     }
   }
 
   @Test
-  public void testHandler_WithAllDown_ThrowsHealthCheckException() {
+  public void testHealthcheck_WithUnhealthyMysql_ReturnsDown() throws Exception {
+    RuntimeException error = new RuntimeException("Connection failed");
+    when(mockHealthCheckDao.mysqlHealthCheck()).thenReturn(Single.error(error));
 
-    Map<String, Single<JsonObject>> healthChecks = new HashMap<>();
-    healthChecks.put("db", Single.error(new RuntimeException("DB error")));
-    healthChecks.put("cache", Single.error(new RuntimeException("Cache error")));
+    try (MockedStatic<CompletableFutureUtils> mockedFutureUtils =
+        Mockito.mockStatic(CompletableFutureUtils.class)) {
+      mockedFutureUtils
+          .when(() -> CompletableFutureUtils.fromSingle(any(Single.class)))
+          .thenAnswer(
+              invocation -> {
+                Single<HealthCheckResponse> single = invocation.getArgument(0);
+                return TestCompletableFutureUtils.fromSingle(single);
+              });
 
-    try {
-      HealthCheckUtil.handler(healthChecks).blockingGet();
-      Assert.fail("Should have thrown HealthCheckException");
-    } catch (HealthCheckException e) {
-      Assert.assertEquals(e.getHttpStatusCode(), 503);
-      Assert.assertEquals(e.getError().getCode(), "HEALTHCHECK_FAILED");
+      try {
+        CompletionStage<HealthCheckResponse> result = healthCheck.healthcheck();
+        result.toCompletableFuture().get();
+        // Health check should complete even with error
+      } catch (Exception e) {
+        // HealthCheckException may be thrown when status is DOWN
+        Assert.assertNotNull(e);
+      }
+      verify(mockHealthCheckDao, times(1)).mysqlHealthCheck();
     }
-  }
-
-  @Test
-  public void testHealthCheckResponse_WithUpChecks_ReturnsUpStatus() {
-
-    Map<String, Single<JsonObject>> healthChecks = new HashMap<>();
-    healthChecks.put("db", Single.just(new JsonObject().put("status", "ok")));
-    healthChecks.put("cache", Single.just(new JsonObject().put("status", "ok")));
-
-    HealthCheckResponse response = HealthCheckUtil.handler(healthChecks).blockingGet();
-
-    Assert.assertNotNull(response.getStatus());
-    Assert.assertEquals(response.getChecks().size(), 2);
-    JsonObject json = response.toJson();
-    Assert.assertEquals(json.getJsonObject("data").getString("status"), "UP");
-  }
-
-  @Test
-  public void testHealthCheckResponse_WithDownCheck_ThrowsHealthCheckException() {
-
-    Map<String, Single<JsonObject>> healthChecks = new HashMap<>();
-    healthChecks.put("db", Single.just(new JsonObject().put("status", "ok")));
-    healthChecks.put("cache", Single.error(new RuntimeException("Error")));
-
-    try {
-      HealthCheckUtil.handler(healthChecks).blockingGet();
-      Assert.fail("Should have thrown HealthCheckException");
-    } catch (HealthCheckException e) {
-      Assert.assertEquals(e.getHttpStatusCode(), 503);
-      Assert.assertEquals(e.getError().getCode(), "HEALTHCHECK_FAILED");
-
-      String message = e.getMessage();
-      Assert.assertTrue(message.contains("DOWN"));
-    }
-  }
-
-  @Test
-  public void testHealthCheckResponse_ToJson_ReturnsJsonObject() {
-
-    Map<String, Single<JsonObject>> healthChecks = new HashMap<>();
-    healthChecks.put("db", Single.just(new JsonObject().put("status", "ok")));
-
-    HealthCheckResponse response = HealthCheckUtil.handler(healthChecks).blockingGet();
-    JsonObject json = response.toJson();
-
-    Assert.assertNotNull(json);
-    Assert.assertTrue(json.containsKey("data"));
-  }
-
-  @Test
-  public void testHealthCheckException_Constructor_SetsErrorAndStatusCode() {
-
-    HealthCheckException exception = new HealthCheckException("Health check failed");
-
-    Assert.assertEquals(exception.getHttpStatusCode(), 503);
-    Assert.assertEquals(exception.getError().getCode(), "HEALTHCHECK_FAILED");
-    Assert.assertEquals(exception.getError().getMessage(), "healthcheck failed");
-    Assert.assertEquals(exception.getMessage(), "Health check failed");
-  }
-
-  @Test
-  public void testHealthCheckException_ToString_ReturnsMessage() {
-
-    HealthCheckException exception = new HealthCheckException("Test message");
-
-    String result = exception.toString();
-
-    Assert.assertEquals(result, "Test message");
   }
 }

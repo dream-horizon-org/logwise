@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logwise-config
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "your-managed-kafka-bootstrap:9092"
+
+

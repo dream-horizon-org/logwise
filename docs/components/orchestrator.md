@@ -1,6 +1,6 @@
 # Orchestrator
 
-The Orchestrator Service acts as the control plane for the Logwise system, managing critical operations including metadata synchronization, log sync delay tracking, and Spark job monitoring. Currently supports AWS for component sync and delay metrics.
+The Orchestrator Service acts as the control plane for the Logwise system, managing critical operations including metadata synchronization, log sync delay tracking, Spark job monitoring, and Spark cluster scaling. Currently supports AWS for component sync and delay metrics.
 
 ## Architecture in Logwise
 
@@ -16,6 +16,7 @@ The Orchestrator Service enables:
 - **Metadata Synchronization** - Syncs service metadata between object storage and database
 - **Log Sync Delay Tracking** - Monitors delay between log generation and storage
 - **Spark Job Monitoring** - Monitors and auto-submits Spark jobs for log processing
+- **Spark Cluster Scaling** - Scales Spark workers up and down based on workload patterns
 
 ## Key Features
 
@@ -31,6 +32,14 @@ The Orchestrator Service enables:
 - **State Management**: Handles Spark state cleanup and recovery scenarios
 - **Timestamp-based Processing**: Supports submitting jobs with specific Kafka offsets for historical processing
 - **Fault Tolerance**: Automatically recovers from Spark driver failures
+
+### 4. Spark Cluster Scaling
+- **Intelligent Auto-Scaling**: Automatically scales Spark workers based on workload patterns and stage history
+- **Upscaling & Downscaling**: Supports both scale-up and scale-down operations with configurable thresholds
+- **Scale Override**: Provides API to enable/disable upscaling and downscaling independently per tenant
+- **Workload-Based Calculation**: Calculates optimal worker count based on input records, processing capacity, and growth patterns
+- **Multi-Platform Support**: Works with both Kubernetes deployments and AWS Auto Scaling Groups
+- **Safety Mechanisms**: Includes WAL file checks, proportional downscaling limits, and minimum threshold enforcement
 
 ### 3. Log Sync Delay Metrics
 - **Delay Calculation**: Computes delay between log generation and storage in S3
@@ -104,6 +113,44 @@ if (driver is not running) {
 - Cleans Spark metadata files
 - Required before timestamp-based job submissions
 
+## Spark Scaling
+
+The Orchestrator provides auto-scaling capabilities for Spark clusters, dynamically adjusting worker nodes based on workload patterns.
+
+### How It Works
+
+Scaling decisions are based on Spark stage history, WAL file status, and current worker count:
+
+1. **Calculates expected workers** from stage history: `ceil((maxInputRecords + buffer) / perCoreLogsProcess) / executorCoresPerMachine`
+2. **Compares** expected vs actual workers
+3. **Scales** if difference exceeds thresholds (min upscale: 1, min downscale: 2)
+4. **Supports** Kubernetes deployments and AWS Auto Scaling Groups
+
+**Safety**: WAL file checks prevent scaling during critical operations. Downscaling limited to 25% of current workers.
+
+### Spark Scale Override API
+
+`POST /update-spark-scale-override` - Enable/disable upscaling or downscaling per tenant
+
+**Headers**: `X-Tenant-Name` (required)
+
+**Request Body**:
+```json
+{
+  "enableUpScale": true,    // null = no override
+  "enableDownScale": false  // null = no override
+}
+```
+
+Override persists in database and takes precedence over API-level flags.
+
+**Examples**:
+- Enable upscaling only: `{"enableUpScale": true, "enableDownScale": false}`
+- Disable all scaling: `{"enableUpScale": false, "enableDownScale": false}`
+- Clear override: `{"enableUpScale": null, "enableDownScale": null}`
+
+**Configuration**: Controlled via `tenantConfig.spark` (minWorkerCount, maxWorkerCount, perCoreLogsProcess, executorCoresPerMachine)
+
 ## Metrics & Monitoring
 
 ### Log Sync Delay Metrics
@@ -136,6 +183,19 @@ The Orchestrator computes and reports log processing delays:
   - **Headers**: `X-Tenant-Name` (required)
   - **Request Body**: `MonitorSparkJobRequest` (optional driverCores, driverMemoryInGb)
   - **Response**: `DefaultSuccessResponse` with success message
+
+- `POST /update-spark-scale-override` - Update Spark scaling override configuration
+  - **Headers**: `X-Tenant-Name` (required)
+  - **Request Body**: `UpdateSparkScaleOverrideRequest` with optional `enableUpScale` and `enableDownScale` (Boolean, null to clear override)
+  - **Response**: `DefaultSuccessResponse` with success message
+  - **Description**: Sets persistent override flags for enabling/disabling upscaling and downscaling. Override takes precedence over API-level flags in scaling operations.
+
+- `POST /scale-spark-cluster` - Trigger Spark cluster scaling operation
+  - **Headers**: `X-Tenant-Name` (required)
+  - **Request Body**: `ScaleSparkClusterRequest` with `enableUpScale`, `enableDownScale` (Boolean, default: true), and `sparkStageHistory` (required)
+  - **Response**: `DefaultSuccessResponse` with success message
+  - **Timeout**: 60 seconds
+  - **Description**: Performs immediate scaling operation based on provided stage history. Respects scale override settings if configured.
 
 ### Metrics
 - `GET /api/v1/metric/sync-delay` - Get log sync delay metrics (AWS only)

@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: orchestrator
+  namespace: logwise
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: orchestrator-spark-scaler
+  namespace: logwise
+rules:
+  # Your code calls GET /scale first (readNamespacedDeploymentScale),
+  # so "get" is required. Scaling usually uses patch/update.
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "patch", "update"]
+
+  # Optional but commonly needed for reading the deployment status/spec
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: orchestrator-spark-scaler-binding
+  namespace: logwise
+subjects:
+  - kind: ServiceAccount
+    name: orchestrator
+    namespace: logwise
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: orchestrator-spark-scaler

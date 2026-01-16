@@ -1,0 +1,92 @@
+# Image registry configuration for LogWise
+# Defines image names, tags, and registry settings
+
+images:
+  orchestrator:
+    name: logwise-orchestrator
+    dockerfile: orchestrator/docker/Dockerfile
+    context: orchestrator
+    description: "LogWise Orchestrator service"
+    
+  spark:
+    name: logwise-spark
+    dockerfile: spark/docker/Dockerfile
+    context: spark
+    description: "LogWise Spark service"
+    
+  healthcheck:
+    name: logwise-healthcheck-dummy
+    dockerfile: deploy/healthcheck-dummy/Dockerfile
+    context: deploy/healthcheck-dummy
+    description: "Health check dummy service"
+    
+  vector:
+    name: logwise-vector
+    dockerfile: vector/Dockerfile
+    context: vector
+    description: "Vector log collection service"
+
+# Registry configurations
+registries:
+  # Docker Hub
+  dockerhub:
+    prefix: ""
+    auth_required: false
+    push_command: "docker push"
+    
+  # GitHub Container Registry
+  ghcr:
+    prefix: "ghcr.io"
+    auth_required: true
+    auth_env: "GITHUB_TOKEN"
+    push_command: "docker push"
+    
+  # AWS ECR
+  ecr:
+    prefix: ""  # Will be set dynamically based on AWS account and region
+    auth_required: true
+    auth_command: "aws ecr get-login-password"
+    push_command: "docker push"
+    login_command: "aws ecr get-login-password --region {region} | docker login --username AWS --password-stdin {registry}"
+    
+  # Google Container Registry
+  gcr:
+    prefix: "gcr.io"
+    auth_required: true
+    auth_command: "gcloud auth print-access-token"
+    push_command: "docker push"
+    
+  # Azure Container Registry
+  acr:
+    prefix: ""  # Will be set dynamically
+    auth_required: true
+    auth_command: "az acr login"
+    push_command: "docker push"
+
+# Default tag strategy
+tagging:
+  default: "latest"
+  strategies:
+    - type: "semantic"
+      pattern: "{major}.{minor}.{patch}"
+      example: "1.0.0"
+    - type: "git-sha"
+      pattern: "{sha}"
+      example: "abc1234"
+    - type: "git-tag"
+      pattern: "{tag}"
+      example: "v1.0.0"
+    - type: "timestamp"
+      pattern: "{timestamp}"
+      example: "20240101120000"
+
+# Build configuration
+build:
+  parallel: true
+  cache: true
+  cache_from: []
+  cache_to: []
+  platform: "linux/amd64"
+  build_args: {}
+
+

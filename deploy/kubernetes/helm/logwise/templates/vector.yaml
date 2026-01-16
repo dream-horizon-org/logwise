@@ -1,0 +1,114 @@
+{{- if .Values.components.vector.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: vector-logs
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app: vector-logs
+spec:
+  {{- if eq .Values.services.type "NodePort" }}
+  type: NodePort
+  ports:
+    - name: api
+      port: {{ .Values.config.vectorApiPort | int }}
+      targetPort: {{ .Values.config.vectorApiPort | int }}
+    - name: otlp-grpc
+      port: {{ .Values.config.vectorOtlpGrpcPort | int }}
+      targetPort: {{ .Values.config.vectorOtlpGrpcPort | int }}
+    - name: otlp-http
+      port: {{ .Values.config.vectorOtlpHttpPort | int }}
+      targetPort: {{ .Values.config.vectorOtlpHttpPort | int }}
+      {{- if .Values.services.nodePorts.vectorOtlp }}
+      nodePort: {{ .Values.services.nodePorts.vectorOtlp }}
+      {{- end }}
+  {{- else }}
+  ports:
+    - name: api
+      port: {{ .Values.config.vectorApiPort | int }}
+      targetPort: {{ .Values.config.vectorApiPort | int }}
+    - name: otlp-grpc
+      port: {{ .Values.config.vectorOtlpGrpcPort | int }}
+      targetPort: {{ .Values.config.vectorOtlpGrpcPort | int }}
+    - name: otlp-http
+      port: {{ .Values.config.vectorOtlpHttpPort | int }}
+      targetPort: {{ .Values.config.vectorOtlpHttpPort | int }}
+  {{- end }}
+  selector:
+    app: vector-logs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # Additional service to support the healthcheck-dummy OTEL config,
+  # which expects to reach Vector at http://vector:4318.
+  name: vector
+  namespace: {{ include "logwise.namespace" . }}
+spec:
+  selector:
+    app: vector-logs
+  ports:
+    - name: otlp-http
+      port: {{ .Values.config.vectorOtlpHttpPort | int }}
+      targetPort: {{ .Values.config.vectorOtlpHttpPort | int }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-logs
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app: vector-logs
+spec:
+  replicas: {{ .Values.vector.replicas }}
+  selector:
+    matchLabels:
+      app: vector-logs
+  template:
+    metadata:
+      labels:
+        app: vector-logs
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Kafka at kafka-bootstrap:9092..."
+              until nc -z kafka-bootstrap 9092; do
+                echo "Kafka not ready, sleeping..."
+                sleep 3
+              done
+              echo "Kafka is up."
+      containers:
+        - name: vector
+          image: {{ include "logwise.image" (dict "root" . "repository" .Values.vector.image.repository "tag" .Values.vector.image.tag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: KAFKA_BROKERS
+            - name: VECTOR_API_VERSION
+              value: {{ .Values.vector.apiVersion | quote }}
+            - name: VECTOR_API_ADDRESS
+              value: {{ .Values.vector.apiAddress | quote }}
+            - name: VECTOR_WATCH_CONFIG
+              value: {{ .Values.vector.watchConfig | quote }}
+          ports:
+            - containerPort: {{ .Values.config.vectorApiPort | int }}
+            - containerPort: {{ .Values.config.vectorOtlpGrpcPort | int }}
+            - containerPort: {{ .Values.config.vectorOtlpHttpPort | int }}
+          resources:
+            {{- toYaml .Values.vector.resources | nindent 12 }}
+{{- end }}

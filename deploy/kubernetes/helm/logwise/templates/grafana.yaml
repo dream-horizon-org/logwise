@@ -1,0 +1,198 @@
+{{- if .Values.components.grafana.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app: grafana
+spec:
+  {{- if eq .Values.services.type "NodePort" }}
+  type: NodePort
+  ports:
+    - name: http
+      port: {{ .Values.config.grafanaPort | int }}
+      targetPort: {{ .Values.config.grafanaPort | int }}
+      {{- if .Values.services.nodePorts.grafana }}
+      nodePort: {{ .Values.services.nodePorts.grafana }}
+      {{- end }}
+  {{- else }}
+  ports:
+    - name: http
+      port: {{ .Values.config.grafanaPort | int }}
+      targetPort: {{ .Values.config.grafanaPort | int }}
+  {{- end }}
+  selector:
+    app: grafana
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app: grafana
+spec:
+  replicas: {{ .Values.grafana.replicas }}
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-grafana-mysql
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for grafana-mysql:3306..."
+              until nc -z grafana-mysql 3306; do
+                echo "grafana-mysql not ready, sleeping..."
+                sleep 3
+              done
+              echo "grafana-mysql is up."
+        - name: process-dashboard
+          image: alpine:3.20
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ATHENA_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: ATHENA_DATABASE
+          command:
+            - sh
+            - -c
+            - |
+              # Copy dashboard JSON from ConfigMap
+              cp /dashboard-source/application-logs.json /dashboards/application-logs.json
+              
+              # Process dashboard JSON with ATHENA_DATABASE
+              if [ -n "$ATHENA_DATABASE" ]; then
+                echo "Processing dashboard with ATHENA_DATABASE: $ATHENA_DATABASE"
+                sed -i "s/\"value\": \"logwise\"/\"value\": \"$ATHENA_DATABASE\"/g" /dashboards/application-logs.json
+                sed -i "s/\"text\": \"logwise\"/\"text\": \"$ATHENA_DATABASE\"/g" /dashboards/application-logs.json
+                sed -i "s/\"query\": \"logwise\"/\"query\": \"$ATHENA_DATABASE\"/g" /dashboards/application-logs.json
+                echo "Dashboard ATHENA_DATABASE variable set to: $ATHENA_DATABASE"
+              else
+                echo "WARNING: ATHENA_DATABASE not set, using default 'logwise'"
+              fi
+              
+              # Copy dashboards.yml configuration
+              cp /dashboards-config/dashboards.yml /dashboards/dashboards.yml
+              echo "Dashboard provisioning files ready"
+          volumeMounts:
+            - name: dashboard-source
+              mountPath: /dashboard-source
+            - name: dashboards-config
+              mountPath: /dashboards-config
+            - name: dashboards-processed
+              mountPath: /dashboards
+      containers:
+        - name: grafana
+          image: {{ include "logwise.image" (dict "root" . "repository" .Values.grafana.image.repository "tag" .Values.grafana.image.tag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: {{ .Values.grafana.admin.user | quote }}
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: {{ .Values.grafana.admin.password | quote }}
+            - name: GF_INSTALL_PLUGINS
+              value: {{ .Values.grafana.plugins | quote }}
+            - name: GF_DATABASE_TYPE
+              value: "mysql"
+            - name: GF_DATABASE_HOST
+              value: "grafana-mysql:3306"
+            - name: GF_DATABASE_NAME
+              value: {{ .Values.mysql.grafana.database | quote }}
+            - name: GF_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-db-secret
+                  key: username
+            - name: GF_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-db-secret
+                  key: password
+            - name: GF_DATABASE_SSL_MODE
+              value: "disable"
+
+            # AWS / Athena configuration (used by datasources)
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: AWS_REGION
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
+            # Optional session token for temporary STS credentials
+            - name: AWS_SESSION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: AWS_SESSION_TOKEN
+                  optional: true
+            - name: ATHENA_WORKGROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: ATHENA_WORKGROUP
+            - name: ATHENA_CATALOG
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: ATHENA_CATALOG
+            - name: ATHENA_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: ATHENA_DATABASE
+            - name: S3_ATHENA_OUTPUT
+              valueFrom:
+                configMapKeyRef:
+                  name: logwise-config
+                  key: S3_ATHENA_OUTPUT
+
+          ports:
+            - containerPort: {{ .Values.config.grafanaPort | int }}
+              name: http
+          volumeMounts:
+            - name: grafana-datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: dashboards-processed
+              mountPath: /etc/grafana/provisioning/dashboards
+          resources:
+            {{- toYaml .Values.grafana.resources | nindent 12 }}
+      volumes:
+        - name: grafana-datasources
+          configMap:
+            name: grafana-datasources
+        - name: dashboards-config
+          configMap:
+            name: grafana-dashboards-config
+        - name: dashboard-source
+          configMap:
+            name: grafana-dashboard-application-logs
+        - name: dashboards-processed
+          emptyDir: {}
+{{- end }}

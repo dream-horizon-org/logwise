@@ -1,62 +1,57 @@
 package com.logwise.orchestrator.tests.unit.util;
 
+import static org.mockito.Mockito.*;
+
 import com.logwise.orchestrator.config.ApplicationConfig;
 import com.logwise.orchestrator.config.ApplicationConfigProvider;
 import com.logwise.orchestrator.enums.Tenant;
-import com.logwise.orchestrator.setup.BaseTest;
-import com.logwise.orchestrator.testconfig.ApplicationTestConfig;
 import com.logwise.orchestrator.util.ApplicationConfigUtil;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/** Unit tests for ApplicationConfigUtil. */
-public class ApplicationConfigUtilTest extends BaseTest {
+public class ApplicationConfigUtilTest {
+
+  private ApplicationConfig mockApplicationConfig;
+  private ApplicationConfig.TenantConfig mockTenantConfig;
 
   @BeforeMethod
-  public void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    BaseTest.cleanup();
+  public void setUp() {
+    mockApplicationConfig = mock(ApplicationConfig.class);
+    mockTenantConfig = mock(ApplicationConfig.TenantConfig.class);
   }
 
   @Test
   public void testGetTenantConfig_WithValidTenant_ReturnsConfig() {
-    Tenant tenant = Tenant.ABC;
+    when(mockTenantConfig.getName()).thenReturn("ABC");
+    when(mockApplicationConfig.getTenants()).thenReturn(java.util.Arrays.asList(mockTenantConfig));
 
     try (MockedStatic<ApplicationConfigProvider> mockedProvider =
-        Mockito.mockStatic(ApplicationConfigProvider.class)) {
-      ApplicationConfig mockConfig = new ApplicationConfig();
-      ApplicationConfig.TenantConfig tenantConfig =
-          ApplicationTestConfig.createMockTenantConfig("ABC");
-      mockConfig.setTenants(java.util.Arrays.asList(tenantConfig));
-      mockedProvider.when(ApplicationConfigProvider::getApplicationConfig).thenReturn(mockConfig);
+        mockStatic(ApplicationConfigProvider.class)) {
+      mockedProvider
+          .when(ApplicationConfigProvider::getApplicationConfig)
+          .thenReturn(mockApplicationConfig);
 
-      ApplicationConfig.TenantConfig result = ApplicationConfigUtil.getTenantConfig(tenant);
+      ApplicationConfig.TenantConfig result = ApplicationConfigUtil.getTenantConfig(Tenant.ABC);
 
       Assert.assertNotNull(result);
-      Assert.assertEquals(result.getName(), tenant.getValue());
+      Assert.assertEquals(result.getName(), "ABC");
     }
   }
 
   @Test
-  public void testGetTenantConfig_WithNonExistentTenant_ReturnsNull() {
-    Tenant tenant = Tenant.ABC;
+  public void testGetTenantConfig_WithInvalidTenant_ReturnsNull() {
+    when(mockTenantConfig.getName()).thenReturn("XYZ");
+    when(mockApplicationConfig.getTenants()).thenReturn(java.util.Arrays.asList(mockTenantConfig));
 
     try (MockedStatic<ApplicationConfigProvider> mockedProvider =
-        Mockito.mockStatic(ApplicationConfigProvider.class)) {
-      ApplicationConfig mockConfig = new ApplicationConfig();
-      // Remove the tenant from config
-      mockConfig.setTenants(java.util.Collections.emptyList());
-      mockedProvider.when(ApplicationConfigProvider::getApplicationConfig).thenReturn(mockConfig);
+        mockStatic(ApplicationConfigProvider.class)) {
+      mockedProvider
+          .when(ApplicationConfigProvider::getApplicationConfig)
+          .thenReturn(mockApplicationConfig);
 
-      ApplicationConfig.TenantConfig result = ApplicationConfigUtil.getTenantConfig(tenant);
+      ApplicationConfig.TenantConfig result = ApplicationConfigUtil.getTenantConfig(Tenant.ABC);
 
       Assert.assertNull(result);
     }
@@ -64,23 +59,255 @@ public class ApplicationConfigUtilTest extends BaseTest {
 
   @Test
   public void testIsAwsObjectStore_WithAwsConfig_ReturnsTrue() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
+    ApplicationConfig.ObjectStoreConfig mockObjectStoreConfig =
+        mock(ApplicationConfig.ObjectStoreConfig.class);
+    ApplicationConfig.S3Config mockAwsConfig = mock(ApplicationConfig.S3Config.class);
 
-    boolean result = ApplicationConfigUtil.isAwsObjectStore(tenantConfig);
+    when(mockTenantConfig.getObjectStore()).thenReturn(mockObjectStoreConfig);
+    when(mockObjectStoreConfig.getAws()).thenReturn(mockAwsConfig);
+
+    boolean result = ApplicationConfigUtil.isAwsObjectStore(mockTenantConfig);
 
     Assert.assertTrue(result);
   }
 
   @Test
-  public void testIsAwsObjectStore_WithNullAwsConfig_ReturnsFalse() {
-    ApplicationConfig.TenantConfig tenantConfig =
-        ApplicationTestConfig.createMockTenantConfig("ABC");
-    // Set AWS config to null
-    tenantConfig.getObjectStore().setAws(null);
+  public void testIsAwsObjectStore_WithoutAwsConfig_ReturnsFalse() {
+    ApplicationConfig.ObjectStoreConfig mockObjectStoreConfig =
+        mock(ApplicationConfig.ObjectStoreConfig.class);
 
-    boolean result = ApplicationConfigUtil.isAwsObjectStore(tenantConfig);
+    when(mockTenantConfig.getObjectStore()).thenReturn(mockObjectStoreConfig);
+    when(mockObjectStoreConfig.getAws()).thenReturn(null);
+
+    boolean result = ApplicationConfigUtil.isAwsObjectStore(mockTenantConfig);
 
     Assert.assertFalse(result);
+  }
+
+  @Test
+  public void testIsAwsSparkCluster_WithAsgClusterType_ReturnsTrue() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn("asg");
+
+    boolean result = ApplicationConfigUtil.isAwsSparkCluster(mockTenantConfig);
+
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testIsAwsSparkCluster_WithAsgConfigFallback_ReturnsTrue() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+    ApplicationConfig.AsgConfig mockAsgConfig = mock(ApplicationConfig.AsgConfig.class);
+    ApplicationConfig.AsgAwsConfig mockAwsAsgConfig = mock(ApplicationConfig.AsgAwsConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn(null);
+    when(mockClusterConfig.getAsg()).thenReturn(mockAsgConfig);
+    when(mockAsgConfig.getAws()).thenReturn(mockAwsAsgConfig);
+
+    boolean result = ApplicationConfigUtil.isAwsSparkCluster(mockTenantConfig);
+
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testIsKubernetesSparkCluster_WithKubernetesClusterType_ReturnsTrue() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn("kubernetes");
+
+    boolean result = ApplicationConfigUtil.isKubernetesSparkCluster(mockTenantConfig);
+
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testIsKubernetesSparkCluster_WithK8sClusterType_ReturnsTrue() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn("k8s");
+
+    boolean result = ApplicationConfigUtil.isKubernetesSparkCluster(mockTenantConfig);
+
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testIsKubernetesSparkCluster_WithKubernetesConfigFallback_ReturnsTrue() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+    ApplicationConfig.KubernetesConfig mockKubernetesConfig =
+        mock(ApplicationConfig.KubernetesConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn(null);
+    when(mockClusterConfig.getKubernetes()).thenReturn(mockKubernetesConfig);
+
+    boolean result = ApplicationConfigUtil.isKubernetesSparkCluster(mockTenantConfig);
+
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testGetVmConfigFromAsgConfig_WithAwsConfig_ReturnsVmConfig() {
+    ApplicationConfig.AsgConfig mockAsgConfig = mock(ApplicationConfig.AsgConfig.class);
+    ApplicationConfig.AsgAwsConfig mockAwsAsgConfig = mock(ApplicationConfig.AsgAwsConfig.class);
+
+    when(mockAsgConfig.getAws()).thenReturn(mockAwsAsgConfig);
+    when(mockAwsAsgConfig.getRegion()).thenReturn("us-east-1");
+
+    ApplicationConfig.VMConfig result =
+        ApplicationConfigUtil.getVmConfigFromAsgConfig(mockAsgConfig);
+
+    Assert.assertNotNull(result);
+    Assert.assertNotNull(result.getAws());
+    Assert.assertEquals(result.getAws().getRegion(), "us-east-1");
+  }
+
+  @Test
+  public void testGetVmConfigFromAsgConfig_WithoutAwsConfig_ReturnsVmConfig() {
+    ApplicationConfig.AsgConfig mockAsgConfig = mock(ApplicationConfig.AsgConfig.class);
+
+    when(mockAsgConfig.getAws()).thenReturn(null);
+
+    ApplicationConfig.VMConfig result =
+        ApplicationConfigUtil.getVmConfigFromAsgConfig(mockAsgConfig);
+
+    Assert.assertNotNull(result);
+  }
+
+  @Test
+  public void testIsAwsSparkCluster_WithNullClusterType_ChecksAsgConfig() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+    ApplicationConfig.AsgConfig mockAsgConfig = mock(ApplicationConfig.AsgConfig.class);
+    ApplicationConfig.AsgAwsConfig mockAwsAsgConfig = mock(ApplicationConfig.AsgAwsConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn(null);
+    when(mockClusterConfig.getAsg()).thenReturn(mockAsgConfig);
+    when(mockAsgConfig.getAws()).thenReturn(mockAwsAsgConfig);
+
+    boolean result = ApplicationConfigUtil.isAwsSparkCluster(mockTenantConfig);
+
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testIsAwsSparkCluster_WithNullClusterTypeAndNoAsg_ReturnsFalse() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn(null);
+    when(mockClusterConfig.getAsg()).thenReturn(null);
+
+    boolean result = ApplicationConfigUtil.isAwsSparkCluster(mockTenantConfig);
+
+    Assert.assertFalse(result);
+  }
+
+  @Test
+  public void testIsAwsSparkCluster_WithNullClusterTypeAndAsgWithoutAws_ReturnsFalse() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+    ApplicationConfig.AsgConfig mockAsgConfig = mock(ApplicationConfig.AsgConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn(null);
+    when(mockClusterConfig.getAsg()).thenReturn(mockAsgConfig);
+    when(mockAsgConfig.getAws()).thenReturn(null);
+
+    boolean result = ApplicationConfigUtil.isAwsSparkCluster(mockTenantConfig);
+
+    Assert.assertFalse(result);
+  }
+
+  @Test
+  public void testIsKubernetesSparkCluster_WithNullClusterType_ChecksKubernetesConfig() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+    ApplicationConfig.KubernetesConfig mockKubernetesConfig =
+        mock(ApplicationConfig.KubernetesConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn(null);
+    when(mockClusterConfig.getKubernetes()).thenReturn(mockKubernetesConfig);
+
+    boolean result = ApplicationConfigUtil.isKubernetesSparkCluster(mockTenantConfig);
+
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testIsKubernetesSparkCluster_WithNullClusterTypeAndNoKubernetes_ReturnsFalse() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn(null);
+    when(mockClusterConfig.getKubernetes()).thenReturn(null);
+
+    boolean result = ApplicationConfigUtil.isKubernetesSparkCluster(mockTenantConfig);
+
+    Assert.assertFalse(result);
+  }
+
+  @Test
+  public void testIsAwsSparkCluster_WithCaseInsensitiveAsg_ReturnsTrue() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn("ASG");
+
+    boolean result = ApplicationConfigUtil.isAwsSparkCluster(mockTenantConfig);
+
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testIsKubernetesSparkCluster_WithCaseInsensitiveKubernetes_ReturnsTrue() {
+    ApplicationConfig.SparkConfig mockSparkConfig = mock(ApplicationConfig.SparkConfig.class);
+    ApplicationConfig.SparkClusterConfig mockClusterConfig =
+        mock(ApplicationConfig.SparkClusterConfig.class);
+
+    when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+    when(mockSparkConfig.getCluster()).thenReturn(mockClusterConfig);
+    when(mockClusterConfig.getClusterType()).thenReturn("KUBERNETES");
+
+    boolean result = ApplicationConfigUtil.isKubernetesSparkCluster(mockTenantConfig);
+
+    Assert.assertTrue(result);
   }
 }

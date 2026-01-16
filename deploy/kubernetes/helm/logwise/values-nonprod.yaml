@@ -1,0 +1,34 @@
+# Non-production environment values
+# This file overrides values.yaml for non-production deployments
+
+# Use ClusterIP services (or LoadBalancer if needed)
+services:
+  type: ClusterIP
+
+# Standard resources for non-production
+# (Can be adjusted based on nonprod cluster capacity)
+
+# Non-production environment settings
+otel:
+  serviceName: "nonprod-service"
+  environment: "nonprod"
+
+healthcheck:
+  environment: "nonprod"
+
+# Enable ingress for non-production
+ingress:
+  enabled: true
+  className: nginx
+  orchestrator:
+    host: orchestrator.nonprod.example.com
+  grafana:
+    host: grafana.nonprod.example.com
+  sparkMaster:
+    host: spark-master.nonprod.example.com
+  sparkWorker:
+    host: spark-worker.nonprod.example.com
+
+# Image pull policy for remote registry
+global:
+  imagePullPolicy: Always

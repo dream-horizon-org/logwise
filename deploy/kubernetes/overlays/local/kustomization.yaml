@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - spark-worker-ui-service.yaml
+
+patches:
+  - path: services-nodeport.yaml
+  - path: otel-collector-resources.yaml
+  - path: configmap-kafka-patch.yaml
+  - path: metrics-server-patch.yaml

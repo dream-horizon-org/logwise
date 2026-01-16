@@ -106,14 +106,18 @@ export default defineConfig({
                     text: 'Setup Guides',
                     items: [
                         {
-                            text: 'Docker Logwise',
-                            items: [
-                                { text: 'Docker Setup Guide', link: '/setup-guides/docker/index' }
-                            ]
+                            text: 'Docker',
+                            link: '/setup-guides/docker/'
                         },
                         {
-                            text: 'Self-Host Logwise',
+                            text: 'Kubernetes',
+                            link: '/setup-guides/kubernetes/'
+                        },
+                        {
+                            text: 'Self-Host',
+                            collapsed: false,
                             items: [
+                                { text: 'Production Setup Guide', link: '/setup-guides/self-host/production-setup' },
                                 { text: 'Kafka', link: '/setup-guides/self-host/kafka-setup' },
                                 { text: 'Vector', link: '/setup-guides/self-host/vector-setup' },
                                 { text: 'S3 + Athena', link: '/setup-guides/self-host/s3-athena-setup' },
@@ -122,7 +126,6 @@ export default defineConfig({
                                 { text: 'Orchestrator Service', link: '/setup-guides/self-host/orchestrator-service-setup' },
                             ]
                         },
-                        { text: 'Production Setup Guide', link: '/setup-guides/production-setup' },
                     ]
                 },
                 {
@@ -130,12 +133,12 @@ export default defineConfig({
                     items: [
                         {
                             text: 'Log collectors',
-                            link: '/send-logs/collectors/index',
+                            link: '/send-logs/collectors/',
                             collapsed: false,
                             items: [
                                 {
                                     text: 'OpenTelemetry',
-                                    link: '/send-logs/collectors/otel/index',
+                                    link: '/send-logs/collectors/otel/',
                                     collapsed: true,
                                     items: [
                                         { text: 'EC2', link: '/send-logs/collectors/otel/ec2/opentelemetry' },

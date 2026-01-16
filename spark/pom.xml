@@ -71,7 +71,8 @@
         <sonar.coverage.exclusions>
             **/com/logwise/constants/**,
             **/com/logwise/feign/exceptions/**,
-            **/com/logwise/feign/logger/**,
+            **/com/logwise/feign/logger/**
+            **/com/logwise/feign/logger/Log4jLogger*,
             **/com/logwise/guice/**,
             **/com/logwise/schema/**,
             **/com/logwise/spark/MainApplication*,

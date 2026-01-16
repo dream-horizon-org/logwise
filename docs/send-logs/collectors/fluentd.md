@@ -42,7 +42,7 @@ Example Fluentd config that tails a log file and forwards records to Vector:
 
 To receive logs from Fluentd, Vector needs a **TCP socket source**:
 
-```30:40:vector/vector.yaml
+```yaml
   fluentd_logs:
     type: "socket"
     address: "0.0.0.0:24224"

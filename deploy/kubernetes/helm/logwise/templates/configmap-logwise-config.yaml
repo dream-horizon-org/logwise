@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logwise-config
+  namespace: {{ include "logwise.namespace" . }}
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "{{ .Values.kafka.bootstrapServers }}"
+  AWS_REGION: "{{ .Values.aws.region }}"
+  S3_BUCKET_NAME: "{{ .Values.aws.s3BucketName }}"
+  S3_ATHENA_OUTPUT: "{{ .Values.aws.s3AthenaOutput }}"
+  ATHENA_WORKGROUP: "{{ .Values.aws.athenaWorkgroup }}"
+  ATHENA_CATALOG: "{{ .Values.aws.athenaCatalog }}"
+  ATHENA_DATABASE: "{{ .Values.aws.athenaDatabase }}"
+  KAFKA_BROKERS: "{{ .Values.config.kafkaBrokers }}"
+  KAFKA_BROKERS_HOST: "{{ .Values.config.kafkaBrokersHost }}"
+  KAFKA_CLUSTER_ID: "{{ .Values.config.kafkaClusterId }}"
+  MYSQL_DATABASE: "{{ .Values.config.mysqlDatabase }}"
+  MYSQL_USER: "{{ .Values.config.mysqlUser }}"
+  GRAFANA_DB_HOST: "{{ .Values.config.grafanaDbHost }}"
+  GRAFANA_DB_NAME: "{{ .Values.config.grafanaDbName }}"
+  GRAFANA_DB_USER: "{{ .Values.config.grafanaDbUser }}"
+  ORCH_PORT: "{{ .Values.config.orchPort }}"
+  GRAFANA_PORT: "{{ .Values.config.grafanaPort }}"
+  VECTOR_API_PORT: "{{ .Values.config.vectorApiPort }}"
+  VECTOR_OTLP_GRPC_PORT: "{{ .Values.config.vectorOtlpGrpcPort }}"
+  VECTOR_OTLP_HTTP_PORT: "{{ .Values.config.vectorOtlpHttpPort }}"
+  SPARK_MASTER_HOST: "{{ .Values.config.sparkMasterHost }}"
+  SPARK_JAR_PATH: "{{ .Values.config.sparkJarPath }}"
+  LOG4J_PROPERTIES_FILE_PATH: "{{ .Values.config.log4jPropertiesFilePath }}"
+  VECTOR_HOST: "{{ .Values.config.vectorHost }}"
+

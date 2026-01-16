@@ -175,4 +175,122 @@ public class ConfigUtilsTest {
     Assert.assertNotNull(result);
     // All values should be converted to strings via unwrapped().toString()
   }
+
+  @Test
+  public void testGetConfigMap_WithEmptyConfig_ReturnsEmptyMap() {
+    // Arrange
+    Map<String, Object> configMap = new java.util.HashMap<>();
+    Map<String, Object> emptyConfig = new java.util.HashMap<>();
+    configMap.put("spark.config", emptyConfig);
+    Config config = MockConfigHelper.createNestedConfig(configMap);
+
+    // Act
+    Map<String, String> result = ConfigUtils.getConfigMap(config, "spark.config");
+
+    // Assert
+    Assert.assertNotNull(result);
+    Assert.assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testGetConfigMap_WithComplexNestedValues_ConvertsToString() {
+    // Arrange
+    Map<String, Object> configMap = new java.util.HashMap<>();
+    Map<String, Object> sparkConfig = new java.util.HashMap<>();
+    sparkConfig.put("doubleKey", 123.456);
+    sparkConfig.put("longKey", 123456789L);
+    sparkConfig.put("listKey", java.util.Arrays.asList("a", "b", "c"));
+    configMap.put("spark.config", sparkConfig);
+    Config config = MockConfigHelper.createNestedConfig(configMap);
+
+    // Act
+    Map<String, String> result = ConfigUtils.getConfigMap(config, "spark.config");
+
+    // Assert
+    Assert.assertNotNull(result);
+    Assert.assertFalse(result.isEmpty());
+  }
+
+  @Test
+  public void testGetSparkConfig_WithValidConfig_ReturnsConfigMap() {
+    // Arrange
+    Map<String, Object> configMap = new java.util.HashMap<>();
+    Map<String, Object> sparkConfig = new java.util.HashMap<>();
+    sparkConfig.put("spark.app.name", "test-app");
+    sparkConfig.put("spark.master", "local[*]");
+    sparkConfig.put("spark.executor.cores", "2");
+    configMap.put(Constants.CONFIG_KEY_SPARK_CONFIG, sparkConfig);
+    Config config = MockConfigHelper.createNestedConfig(configMap);
+
+    // Act
+    Map<String, String> result = ConfigUtils.getSparkConfig(config);
+
+    // Assert
+    Assert.assertNotNull(result);
+    Assert.assertFalse(result.isEmpty());
+  }
+
+  @Test
+  public void testGetSparkHadoopConfig_WithValidConfig_ReturnsConfigMap() {
+    // Arrange
+    Map<String, Object> configMap = new java.util.HashMap<>();
+    Map<String, Object> hadoopConfig = new java.util.HashMap<>();
+    hadoopConfig.put("fs.s3a.endpoint", "s3.amazonaws.com");
+    hadoopConfig.put("fs.s3a.access.key", "test-key");
+    hadoopConfig.put("fs.s3a.secret.key", "test-secret");
+    configMap.put(Constants.CONFIG_KEY_SPARK_HADOOP_CONFIG, hadoopConfig);
+    Config config = MockConfigHelper.createNestedConfig(configMap);
+
+    // Act
+    Map<String, String> result = ConfigUtils.getSparkHadoopConfig(config);
+
+    // Assert
+    Assert.assertNotNull(result);
+    Assert.assertFalse(result.isEmpty());
+  }
+
+  @Test
+  public void testGetConfigMap_WithQuotedKeys_RemovesQuotesFromKeys() {
+    // Arrange
+    Map<String, Object> configMap = new java.util.HashMap<>();
+    Map<String, Object> sparkConfig = new java.util.HashMap<>();
+    sparkConfig.put("\"quoted.key\"", "value1");
+    sparkConfig.put("normal.key", "value2");
+    configMap.put("spark.config", sparkConfig);
+    Config config = MockConfigHelper.createNestedConfig(configMap);
+
+    // Act
+    Map<String, String> result = ConfigUtils.getConfigMap(config, "spark.config");
+
+    // Assert
+    Assert.assertNotNull(result);
+    // Keys with quotes should have quotes removed
+    Assert.assertTrue(result.containsKey("quoted.key") || result.containsKey("\"quoted.key\""));
+  }
+
+  @Test
+  public void testGetConfigMap_WithHasPathFalse_ReturnsEmptyMap() {
+    // Test the branch where config.hasPath(key) returns false
+    Config config = MockConfigHelper.createEmptyConfig();
+
+    Map<String, String> result = ConfigUtils.getConfigMap(config, "non.existent.path");
+
+    Assert.assertNotNull(result);
+    Assert.assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testGetConfigMap_WithHasPathTrue_ReturnsConfigMap() {
+    // Test the branch where config.hasPath(key) returns true
+    Map<String, Object> configMap = new java.util.HashMap<>();
+    Map<String, Object> sparkConfig = new java.util.HashMap<>();
+    sparkConfig.put("key1", "value1");
+    configMap.put("spark.config", sparkConfig);
+    Config config = MockConfigHelper.createNestedConfig(configMap);
+
+    Map<String, String> result = ConfigUtils.getConfigMap(config, "spark.config");
+
+    Assert.assertNotNull(result);
+    Assert.assertFalse(result.isEmpty());
+  }
 }

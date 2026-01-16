@@ -220,21 +220,6 @@ public class ServiceManagerServiceTest extends BaseTest {
   }
 
   @Test
-  public void testGetServiceDetailsFromCache_WithValidTenant_ReturnsCachedResponse() {
-    Tenant tenant = Tenant.ABC;
-    GetServiceDetailsResponse cachedResponse =
-        GetServiceDetailsResponse.builder()
-            .serviceDetails(
-                Arrays.asList(ServiceDetails.builder().serviceName("cached-service").build()))
-            .build();
-
-    // The cache is created in constructor, so we need to mock the cache behavior
-    // This is complex due to AsyncLoadingCache, so we'll test the method exists
-    Assert.assertNotNull(serviceManagerService);
-    // The actual cache test would require more complex setup
-  }
-
-  @Test
   public void testSyncServices_WithBothNewAndRemovedServices_HandlesBoth() {
     Tenant tenant = Tenant.ABC;
 

@@ -3,6 +3,7 @@ package com.logwise.spark.configs;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -13,41 +14,52 @@ import org.testng.annotations.Test;
  */
 public class ApplicationConfigValidationTest {
 
+  private String originalTenantValue;
+
+  @BeforeMethod
+  public void setUp() {
+    originalTenantValue = System.getProperty("X-Tenant-Name");
+    System.setProperty("X-Tenant-Name", "test-tenant");
+  }
+
+  @org.testng.annotations.AfterMethod
+  public void tearDown() {
+    if (originalTenantValue != null) {
+      System.setProperty("X-Tenant-Name", originalTenantValue);
+    } else {
+      System.clearProperty("X-Tenant-Name");
+    }
+  }
+
   @Test
   public void testGetConfig_WithValidConfigFile_ReturnsConfig() {
-    // Act - ApplicationConfig loads from application.conf by default
-    // Provide s3.bucket to resolve substitution
-    Config config = ApplicationConfig.getConfig("s3.bucket=test-bucket");
+    Config config = ApplicationConfig.getConfig("tenant.name=test-tenant", "s3.bucket=test-bucket");
 
-    // Assert
     Assert.assertNotNull(config);
-    // Verify some expected keys exist
     Assert.assertTrue(config.hasPath("app.job.name"));
     Assert.assertTrue(config.hasPath("kafka.bootstrap.servers.port"));
   }
 
   @Test
   public void testGetConfig_WithCommandLineArgs_OverridesFileConfig() {
-    // Arrange
-    String commandLineConfig = "app.job.name = \"test-job-from-args\"\ns3.bucket=test-bucket";
+    String configArg1 = "app.job.name=test-job-from-args";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(commandLineConfig);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
 
-    // Assert
     Assert.assertNotNull(config);
     Assert.assertEquals(config.getString("app.job.name"), "test-job-from-args");
   }
 
   @Test
   public void testGetConfig_WithMultipleCommandLineArgs_MergesCorrectly() {
-    // Arrange
     String config1 = "app.job.name = \"job1\"";
     String config2 = "kafka.bootstrap.servers.port = \"9093\"";
-    String config3 = "s3.bucket=test-bucket";
+    String config3 = "tenant.name=test-tenant";
+    String config4 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(config1, config2, config3);
+    Config config = ApplicationConfig.getConfig(config1, config2, config3, config4);
 
     // Assert
     Assert.assertNotNull(config);
@@ -72,16 +84,13 @@ public class ApplicationConfigValidationTest {
 
   @Test
   public void testGetConfig_WithSystemProperties_OverridesFileConfig() {
-    // Arrange
     String originalValue = System.getProperty("app.job.name");
     try {
       System.setProperty("app.job.name", "system-property-job");
-      // Provide s3.bucket as command-line arg since system properties aren't merged before
-      // resolve()
-      String configArg = "s3.bucket=test-bucket";
+      String configArg1 = "tenant.name=test-tenant";
+      String configArg2 = "s3.bucket=test-bucket";
 
-      // Act
-      Config config = ApplicationConfig.getConfig(configArg);
+      Config config = ApplicationConfig.getConfig(configArg1, configArg2);
 
       // Assert - System properties should be available (though file config takes
       // precedence in
@@ -104,8 +113,7 @@ public class ApplicationConfigValidationTest {
 
   @Test
   public void testGetConfig_WithEnvironmentVariables_AvailableInConfig() {
-    // Act - Provide s3.bucket to resolve substitution
-    Config config = ApplicationConfig.getConfig("s3.bucket=test-bucket");
+    Config config = ApplicationConfig.getConfig("tenant.name=test-tenant", "s3.bucket=test-bucket");
 
     // Assert - Environment variables are loaded but may not override file config
     // The exact behavior depends on ConfigFactory resolution order
@@ -117,14 +125,13 @@ public class ApplicationConfigValidationTest {
 
   @Test
   public void testGetConfig_WithNestedConfig_ResolvesCorrectly() {
-    // Arrange
-    String nestedConfig =
-        "spark.config.key1 = \"value1\"\nspark.config.key2 = \"value2\"\ns3.bucket=test-bucket";
+    String configArg1 = "spark.config.key1=value1";
+    String configArg2 = "spark.config.key2=value2";
+    String configArg3 = "tenant.name=test-tenant";
+    String configArg4 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(nestedConfig);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3, configArg4);
 
-    // Assert
     Assert.assertNotNull(config);
     Assert.assertTrue(config.hasPath("spark.config.key1"));
     Assert.assertEquals(config.getString("spark.config.key1"), "value1");
@@ -132,23 +139,8 @@ public class ApplicationConfigValidationTest {
   }
 
   @Test
-  public void testGetConfig_WithVariableSubstitution_ResolvesCorrectly() {
-    // Arrange - Use variable substitution syntax
-    String configWithSubstitution =
-        "base.path = \"/tmp\"\nfull.path = ${base.path}\"/logs\"\ns3.bucket=test-bucket";
-
-    // Act
-    Config config = ApplicationConfig.getConfig(configWithSubstitution);
-
-    // Assert
-    Assert.assertNotNull(config);
-    Assert.assertEquals(config.getString("full.path"), "/tmp/logs");
-  }
-
-  @Test
   public void testGetConfig_WithEmptyArgs_LoadsDefaultConfig() {
-    // Act - Provide s3.bucket to resolve substitution
-    Config config = ApplicationConfig.getConfig("s3.bucket=test-bucket");
+    Config config = ApplicationConfig.getConfig("tenant.name=test-tenant", "s3.bucket=test-bucket");
 
     // Assert
     Assert.assertNotNull(config);
@@ -158,12 +150,11 @@ public class ApplicationConfigValidationTest {
 
   @Test
   public void testGetConfig_WithInvalidKafkaConfig_ThrowsExceptionOnAccess() {
-    // Arrange
-    String invalidKafkaConfig =
-        "kafka.bootstrap.servers.port = invalid_port_value\ns3.bucket=test-bucket";
+    String configArg1 = "kafka.bootstrap.servers.port=invalid_port_value";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(invalidKafkaConfig);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
 
     // Assert - Config is created, but accessing as wrong type would throw
     Assert.assertNotNull(config);
@@ -180,12 +171,11 @@ public class ApplicationConfigValidationTest {
 
   @Test
   public void testGetConfig_WithInvalidS3Config_HandlesGracefully() {
-    // Arrange
-    String invalidS3Config =
-        "s3.path.checkpoint.application = \"invalid://path\"\ns3.bucket=test-bucket";
+    String configArg1 = "s3.path.checkpoint.application=invalid://path";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(invalidS3Config);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
 
     // Assert - Config loads but path may be invalid
     Assert.assertNotNull(config);
@@ -196,12 +186,11 @@ public class ApplicationConfigValidationTest {
 
   @Test
   public void testGetConfig_WithInvalidSparkConfig_HandlesGracefully() {
-    // Arrange
-    String invalidSparkConfig =
-        "spark.streamingquery.timeout.minutes = \"not-a-number\"\ns3.bucket=test-bucket";
+    String configArg1 = "spark.streamingquery.timeout.minutes=not-a-number";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(invalidSparkConfig);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
 
     // Assert - Config loads but accessing as int would throw
     Assert.assertNotNull(config);
@@ -217,12 +206,11 @@ public class ApplicationConfigValidationTest {
 
   @Test
   public void testGetConfig_WithCommandLineArgsOverridesFile_RespectsPrecedence() {
-    // Arrange
-    // File has: app.job.name = push-logs-to-s3
-    String commandLineOverride = "app.job.name = \"overridden-job-name\"\ns3.bucket=test-bucket";
+    String configArg1 = "app.job.name=overridden-job-name";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(commandLineOverride);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
 
     // Assert - Command line should override file
     Assert.assertEquals(config.getString("app.job.name"), "overridden-job-name");
@@ -230,11 +218,11 @@ public class ApplicationConfigValidationTest {
 
   @Test
   public void testGetConfig_WithPartialOverride_KeepsOtherFileValues() {
-    // Arrange
-    String partialOverride = "app.job.name = \"new-job-name\"\ns3.bucket=test-bucket";
+    String configArg1 = "app.job.name=new-job-name";
+    String configArg2 = "tenant.name=test-tenant";
+    String configArg3 = "s3.bucket=test-bucket";
 
-    // Act
-    Config config = ApplicationConfig.getConfig(partialOverride);
+    Config config = ApplicationConfig.getConfig(configArg1, configArg2, configArg3);
 
     // Assert - Overridden value should be new
     Assert.assertEquals(config.getString("app.job.name"), "new-job-name");

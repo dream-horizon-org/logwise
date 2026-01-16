@@ -40,7 +40,7 @@ public class MetricsTest extends BaseTest {
   public void setUp() throws Exception {
     super.setUp();
     MockitoAnnotations.openMocks(this);
-
+    TestResponseWrapper.init(vertx);
     metrics = new MetricSyncDelay(metricsService);
   }
 

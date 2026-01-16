@@ -41,6 +41,7 @@ public class PushLogsToS3SparkJobTest {
 
   @BeforeMethod
   public void setUp() {
+    resetApplicationInjector();
     mockSparkSession = MockSparkSessionHelper.createMockSparkSession();
     mockConfig = createTestConfig();
     ApplicationInjector.initInjection(new MainModule(mockConfig));
@@ -71,6 +72,7 @@ public class PushLogsToS3SparkJobTest {
     configMap.put("tenant.name", "test-tenant");
     configMap.put("kafka.bootstrap.servers.port", "9092");
     configMap.put("logCentral.orchestrator.url", "http://localhost:8081");
+    configMap.put("spark.master.host", "localhost:7077");
     configMap.put("spark.offsetPerTrigger.default", 10000L);
     configMap.put("kafka.cluster.dns", "test-kafka.local");
     configMap.put("kafka.startingOffsetsTimestamp", 0L);

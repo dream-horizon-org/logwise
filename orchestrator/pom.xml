@@ -99,6 +99,11 @@
       <artifactId>guice</artifactId>
       <version>${guice.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-assistedinject</artifactId>
+      <version>${guice.version}</version>
+    </dependency>
 
     <!-- Vert.x core -->
     <dependency>
@@ -303,6 +308,31 @@
       <artifactId>ssm</artifactId>
       <version>${aws.sdk.v2.version}</version>
     </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>kafka</artifactId>
+      <version>${aws.sdk.v2.version}</version>
+    </dependency>
+
+    <!-- Kafka -->
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>3.5.0</version>
+    </dependency>
+    <!-- MSK IAM Authentication -->
+    <dependency>
+      <groupId>software.amazon.msk</groupId>
+      <artifactId>aws-msk-iam-auth</artifactId>
+      <version>1.1.5</version>
+    </dependency>
+
+    <!-- Kubernetes Java Client -->
+    <dependency>
+      <groupId>io.kubernetes</groupId>
+      <artifactId>client-java</artifactId>
+      <version>20.0.0</version>
+    </dependency>
 
     <!-- Google Cloud -->
     <dependency>
@@ -441,6 +471,12 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>localstack</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>kafka</artifactId>
       <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
@@ -690,6 +726,19 @@
             <exclude>com/logwise/orchestrator/rest/AbstractRestVerticle.class</exclude>
             <exclude>com/logwise/orchestrator/CaffeineCacheFactory.class</exclude>
             <exclude>com/logwise/orchestrator/CaffeineConfig.class</exclude>
+            <exclude>**com/logwise/orchestrator/dto/**</exclude>
+            <exclude>**com/logwise/orchestrator/enums/**</exclude>
+            <exclude>com/logwise/orchestrator/rest/HttpMethod.class</exclude>
+            <exclude>**com/logwise/orchestrator/module/**</exclude>
+            <exclude>**com/logwise/orchestrator/common/guice/**</exclude>
+            <exclude>com/logwise/orchestrator/config/utils/ConfigUtils.class</exclude>
+            <exclude>com/logwise/orchestrator/common/util/ConfigProvider.class</exclude>
+            <exclude>com/logwise/orchestrator/util/ResponseWrapper.class</exclude>
+            <exclude>com/logwise/orchestrator/MainApplication.class</exclude>
+            <exclude>com/logwise/orchestrator/common/entity/VertxEntity.class</exclude>
+            <exclude>com/logwise/orchestrator/common/util/StackUtils.class</exclude>
+            <exclude>com/logwise/orchestrator/common/lib/HoconProcessor.class</exclude>
+            <exclude>com/logwise/orchestrator/config/ApplicationConfigProvider.class</exclude>
           </excludes>
         </configuration>
         <executions>
@@ -721,35 +770,35 @@
             </goals>
           </execution>
           <execution>
-              <id>jacoco-check</id>
-              <phase>verify</phase>
-              <goals>
-                  <goal>check</goal>
-              </goals>
-              <configuration>
-                  <rules>
-                      <rule>
-                          <element>BUNDLE</element>
-                          <limits>
-                              <limit>
-                                  <counter>LINE</counter>
-                                  <value>COVEREDRATIO</value>
-                                  <minimum>0.70</minimum>
-                              </limit>
-                              <limit>
-                                  <counter>BRANCH</counter>
-                                  <value>COVEREDRATIO</value>
-                                  <minimum>0.70</minimum>
-                              </limit>
-                              <limit>
-                                  <counter>METHOD</counter>
-                                  <value>COVEREDRATIO</value>
-                                  <minimum>0.70</minimum>
-                              </limit>
-                          </limits>
-                      </rule>
-                  </rules>
-              </configuration>
+            <id>jacoco-check</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.80</minimum>
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.80</minimum>
+                    </limit>
+                    <limit>
+                      <counter>METHOD</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.80</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
           </execution>
         </executions>
       </plugin>
