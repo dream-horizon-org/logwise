@@ -27,9 +27,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -1219,8 +1217,6 @@ public class SparkServiceTest extends BaseTest {
 
   // ========== Comprehensive Tests for getActualSparkWorkers ==========
 
-
-
   // ========== Comprehensive Tests for getWalFileList ==========
 
   @Test
@@ -1980,8 +1976,7 @@ public class SparkServiceTest extends BaseTest {
           .when(() -> com.logwise.orchestrator.factory.KubernetesFactory.getSparkClient(tenant))
           .thenReturn(mockK8sClient);
 
-      Method method =
-          SparkService.class.getDeclaredMethod("upscaleSpark", Tenant.class, int.class);
+      Method method = SparkService.class.getDeclaredMethod("upscaleSpark", Tenant.class, int.class);
       method.setAccessible(true);
 
       Completable result = (Completable) method.invoke(sparkService, tenant, 10);
@@ -2021,8 +2016,7 @@ public class SparkServiceTest extends BaseTest {
           .when(() -> com.logwise.orchestrator.factory.KubernetesFactory.getSparkClient(tenant))
           .thenReturn(null);
 
-      Method method =
-          SparkService.class.getDeclaredMethod("upscaleSpark", Tenant.class, int.class);
+      Method method = SparkService.class.getDeclaredMethod("upscaleSpark", Tenant.class, int.class);
       method.setAccessible(true);
 
       Completable result = (Completable) method.invoke(sparkService, tenant, 10);
@@ -2072,8 +2066,7 @@ public class SparkServiceTest extends BaseTest {
           .when(() -> com.logwise.orchestrator.factory.AsgFactory.getSparkClient(tenant))
           .thenReturn(mockAsgClient);
 
-      Method method =
-          SparkService.class.getDeclaredMethod("upscaleSpark", Tenant.class, int.class);
+      Method method = SparkService.class.getDeclaredMethod("upscaleSpark", Tenant.class, int.class);
       method.setAccessible(true);
 
       Completable result = (Completable) method.invoke(sparkService, tenant, 10);
@@ -2111,10 +2104,11 @@ public class SparkServiceTest extends BaseTest {
 
       mockedConfigUtil
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
-          .thenAnswer(invocation -> {
-            // Always return the configured tenantConfig
-            return tenantConfig;
-          });
+          .thenAnswer(
+              invocation -> {
+                // Always return the configured tenantConfig
+                return tenantConfig;
+              });
       mockedConfigUtil
           .when(() -> ApplicationConfigUtil.isKubernetesSparkCluster(tenantConfig))
           .thenReturn(false);
@@ -2123,8 +2117,7 @@ public class SparkServiceTest extends BaseTest {
           .when(() -> com.logwise.orchestrator.factory.AsgFactory.getSparkClient(tenant))
           .thenReturn(null);
 
-      Method method =
-          SparkService.class.getDeclaredMethod("upscaleSpark", Tenant.class, int.class);
+      Method method = SparkService.class.getDeclaredMethod("upscaleSpark", Tenant.class, int.class);
       method.setAccessible(true);
 
       Completable result = (Completable) method.invoke(sparkService, tenant, 10);
@@ -2134,7 +2127,6 @@ public class SparkServiceTest extends BaseTest {
   }
 
   // ========== Comprehensive Tests for getNonDriverWorkerIps ==========
-
 
   @Test
   public void testGetSparkSubmitRequestBody_WithNullS3aKeys_HandlesGracefully() throws Exception {
@@ -2238,7 +2230,8 @@ public class SparkServiceTest extends BaseTest {
           mockGetRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
       io.vertx.reactivex.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer>
           mockGetResponse = mock(io.vertx.reactivex.ext.web.client.HttpResponse.class);
-      when(mockGetResponse.bodyAsString()).thenReturn("{\"activedrivers\":[{\"state\":\"RUNNING\"}]}");
+      when(mockGetResponse.bodyAsString())
+          .thenReturn("{\"activedrivers\":[{\"state\":\"RUNNING\"}]}");
       when(reactiveWebClient.getAbs(anyString())).thenReturn(mockGetRequest);
       when(mockGetRequest.rxSend()).thenReturn(Single.just(mockGetResponse));
       try {
@@ -2256,10 +2249,6 @@ public class SparkServiceTest extends BaseTest {
 
   // ========== Additional Edge Case Tests ==========
 
-
-
-
-
   @Test
   public void testGetLatestWalFile_WithEmptyList_ThrowsException() throws Exception {
     Method method = SparkService.class.getDeclaredMethod("getLatestWalFile", List.class);
@@ -2274,7 +2263,6 @@ public class SparkServiceTest extends BaseTest {
       Assert.assertTrue(e.getCause() instanceof IndexOutOfBoundsException);
     }
   }
-
 
   @Test
   public void testGetSparkSubmitRequestBody_WithNullAwsRegion_UsesDefault() throws Exception {
@@ -2299,7 +2287,4 @@ public class SparkServiceTest extends BaseTest {
     Assert.assertNotNull(regionObj);
     Assert.assertEquals(regionObj, "us-east-1");
   }
-
-
 }
-
