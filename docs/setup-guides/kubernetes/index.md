@@ -1250,7 +1250,7 @@ The deployments support horizontal scaling:
 
 ## Additional Resources
 
-- [Production Setup Guide](../production-setup.md)
+- [Production Setup Guide](../self-host/production-setup.md)
 - [Component Documentation](../../components/)
 - [Architecture Overview](../../architecture-overview.md)
 
