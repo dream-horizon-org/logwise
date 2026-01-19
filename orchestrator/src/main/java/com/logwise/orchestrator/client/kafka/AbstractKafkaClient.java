@@ -2,11 +2,10 @@ package com.logwise.orchestrator.client.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logwise.orchestrator.config.ApplicationConfig.KafkaConfig;
-import com.logwise.orchestrator.dto.kafka.ClusterInfo;
-import com.logwise.orchestrator.dto.kafka.SparkCheckpointOffsets;
-import com.logwise.orchestrator.dto.kafka.TopicPartitionMetrics;
+import com.logwise.orchestrator.dto.kafka.TopicOffsetInfo;
 import com.logwise.orchestrator.enums.KafkaType;
 import io.reactivex.Completable;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -14,10 +13,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.*;
-import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.TopicPartitionInfo;
-import org.apache.kafka.common.config.ConfigResource;
 
 /**
  * Abstract base class for Kafka client implementations. Provides common functionality that works
@@ -91,7 +88,7 @@ public abstract class AbstractKafkaClient implements KafkaClient {
   }
 
   @Override
-  public Single<Map<String, TopicPartitionMetrics>> getPartitionMetrics(List<String> topics) {
+  public Single<Map<String, TopicOffsetInfo>> getEndOffsetSum(List<String> topics) {
     return createAdminClient()
         .flatMap(
             adminClient -> {
@@ -100,64 +97,62 @@ public abstract class AbstractKafkaClient implements KafkaClient {
                 DescribeTopicsResult topicsResult = adminClient.describeTopics(topics);
                 Map<String, TopicDescription> topicDescriptions = topicsResult.all().get();
 
-                // Get all partitions
-                List<TopicPartition> allPartitions = new ArrayList<>();
-                for (String topic : topics) {
-                  TopicDescription desc = topicDescriptions.get(topic);
-                  if (desc != null) {
-                    for (TopicPartitionInfo partitionInfo : desc.partitions()) {
-                      allPartitions.add(new TopicPartition(topic, partitionInfo.partition()));
-                    }
-                  }
-                }
+                // Process each topic separately
+                return Observable.fromIterable(topics)
+                    .flatMapSingle(
+                        topic -> {
+                          TopicDescription desc = topicDescriptions.get(topic);
 
-                // Get end offsets for all partitions
-                return getEndOffsets(allPartitions)
-                    .map(
-                        endOffsets -> {
-                          Map<String, TopicPartitionMetrics> metricsMap = new HashMap<>();
-
-                          for (String topic : topics) {
-                            TopicDescription desc = topicDescriptions.get(topic);
-                            if (desc == null) continue;
-
-                            int partitionCount = desc.partitions().size();
-                            Map<Integer, Long> partitionOffsets = new HashMap<>();
-                            long totalMessages = 0;
-
-                            for (TopicPartitionInfo partitionInfo : desc.partitions()) {
-                              int partitionId = partitionInfo.partition();
-                              TopicPartition tp = new TopicPartition(topic, partitionId);
-                              Long offset = endOffsets.get(tp);
-                              if (offset != null) {
-                                partitionOffsets.put(partitionId, offset);
-                                totalMessages += offset;
-                              }
-                            }
-
-                            long avgMessagesPerPartition =
-                                partitionCount > 0 ? totalMessages / partitionCount : 0;
-
-                            // Estimate size (rough calculation: assume 1KB per message)
-                            long estimatedSizeBytes = totalMessages * 1024;
-
-                            TopicPartitionMetrics metrics =
-                                TopicPartitionMetrics.builder()
-                                    .topic(topic)
-                                    .partitionCount(partitionCount)
-                                    .totalMessages(totalMessages)
-                                    .avgMessagesPerPartition(avgMessagesPerPartition)
-                                    .estimatedSizeBytes(estimatedSizeBytes)
-                                    .partitionOffsets(partitionOffsets)
+                          // If topic doesn't exist, return default values
+                          if (desc == null) {
+                            TopicOffsetInfo defaultInfo =
+                                TopicOffsetInfo.builder()
+                                    .sumOfEndOffsets(0L)
+                                    .currentNumberOfPartitions(0)
                                     .build();
-
-                            metricsMap.put(topic, metrics);
+                            return Single.just(new AbstractMap.SimpleEntry<>(topic, defaultInfo));
                           }
 
-                          return metricsMap;
+                          // Get current number of partitions
+                          int partitionCount = desc.partitions().size();
+
+                          // Get partitions for this topic
+                          List<TopicPartition> topicPartitions = new ArrayList<>();
+                          for (TopicPartitionInfo partitionInfo : desc.partitions()) {
+                            topicPartitions.add(
+                                new TopicPartition(topic, partitionInfo.partition()));
+                          }
+
+                          // Get end offsets for this topic's partitions
+                          return getEndOffsets(topicPartitions)
+                              .map(
+                                  endOffsets -> {
+                                    // Sum offsets for this topic
+                                    long topicSum = 0L;
+                                    for (Long offset : endOffsets.values()) {
+                                      if (offset != null) {
+                                        topicSum += offset;
+                                      }
+                                    }
+                                    TopicOffsetInfo offsetInfo =
+                                        TopicOffsetInfo.builder()
+                                            .sumOfEndOffsets(topicSum)
+                                            .currentNumberOfPartitions(partitionCount)
+                                            .build();
+                                    return new AbstractMap.SimpleEntry<>(topic, offsetInfo);
+                                  });
+                        })
+                    .toList()
+                    .map(
+                        entries -> {
+                          Map<String, TopicOffsetInfo> result = new HashMap<>();
+                          for (AbstractMap.SimpleEntry<String, TopicOffsetInfo> entry : entries) {
+                            result.put(entry.getKey(), entry.getValue());
+                          }
+                          return result;
                         });
               } catch (InterruptedException | ExecutionException e) {
-                log.error("Error getting partition metrics", e);
+                log.error("Error getting end offset sum", e);
                 return Single.error(e);
               }
             });
@@ -206,41 +201,6 @@ public abstract class AbstractKafkaClient implements KafkaClient {
   }
 
   @Override
-  public Single<SparkCheckpointOffsets> getSparkCheckpointOffsets(String checkpointPath) {
-    // This is a placeholder - actual implementation will be in SparkCheckpointService
-    // This method is here for interface compliance but should delegate to the service
-    log.warn(
-        "getSparkCheckpointOffsets called directly on KafkaClient - should use SparkCheckpointService");
-    return Single.just(
-        SparkCheckpointOffsets.builder()
-            .checkpointPath(checkpointPath)
-            .offsets(Collections.emptyMap())
-            .available(false)
-            .lastUpdatedTimestamp(System.currentTimeMillis())
-            .build());
-  }
-
-  @Override
-  public Single<Map<TopicPartition, Long>> calculateLag(
-      Map<TopicPartition, Long> endOffsets, Map<TopicPartition, Long> checkpointOffsets) {
-    return Single.fromCallable(
-        () -> {
-          Map<TopicPartition, Long> lagMap = new HashMap<>();
-
-          for (Map.Entry<TopicPartition, Long> entry : endOffsets.entrySet()) {
-            TopicPartition tp = entry.getKey();
-            Long endOffset = entry.getValue();
-            Long checkpointOffset = checkpointOffsets.getOrDefault(tp, 0L);
-
-            long lag = Math.max(0, endOffset - checkpointOffset);
-            lagMap.put(tp, lag);
-          }
-
-          return lagMap;
-        });
-  }
-
-  @Override
   public Completable increasePartitions(Map<String, Integer> topicPartitionsMap) {
     return createAdminClient()
         .flatMapCompletable(
@@ -267,83 +227,6 @@ public abstract class AbstractKafkaClient implements KafkaClient {
               } catch (InterruptedException | ExecutionException e) {
                 log.error("Error increasing partitions", e);
                 return Completable.error(e);
-              }
-            });
-  }
-
-  @Override
-  public Completable deleteTopics(List<String> topics) {
-    return createAdminClient()
-        .flatMapCompletable(
-            adminClient -> {
-              try {
-                log.info("Deleting topics: {}", topics);
-                adminClient.deleteTopics(topics).all().get();
-                log.info("Successfully deleted topics");
-                return Completable.complete();
-              } catch (InterruptedException | ExecutionException e) {
-                log.error("Error deleting topics", e);
-                return Completable.error(e);
-              }
-            });
-  }
-
-  @Override
-  public Single<Integer> getDefaultPartitions() {
-    return createAdminClient()
-        .flatMap(
-            adminClient -> {
-              try {
-                Node controllerNode = adminClient.describeCluster().controller().get();
-                ConfigResource brokerResource =
-                    new ConfigResource(ConfigResource.Type.BROKER, controllerNode.idString());
-                DescribeConfigsResult configsResult =
-                    adminClient.describeConfigs(Collections.singleton(brokerResource));
-                Config configs = configsResult.all().get().get(brokerResource);
-                ConfigEntry numPartitionsEntry = configs.get("num.partitions");
-
-                if (numPartitionsEntry != null && numPartitionsEntry.value() != null) {
-                  return Single.just(Integer.valueOf(numPartitionsEntry.value()));
-                }
-                return Single.just(3); // Default fallback
-              } catch (InterruptedException | ExecutionException e) {
-                log.error("Error getting default partitions", e);
-                return Single.just(3); // Default fallback
-              }
-            });
-  }
-
-  @Override
-  public Single<ClusterInfo> getClusterInfo() {
-    return createAdminClient()
-        .flatMap(
-            adminClient -> {
-              try {
-                String clusterId = adminClient.describeCluster().clusterId().get();
-                Collection<Node> nodes = adminClient.describeCluster().nodes().get();
-
-                List<ClusterInfo.BrokerInfo> brokers =
-                    nodes.stream()
-                        .map(
-                            node ->
-                                ClusterInfo.BrokerInfo.builder()
-                                    .id(node.id())
-                                    .host(node.host())
-                                    .port(node.port())
-                                    .build())
-                        .collect(Collectors.toList());
-
-                ClusterInfo clusterInfo =
-                    ClusterInfo.builder()
-                        .clusterId(clusterId)
-                        .brokerCount(brokers.size())
-                        .brokers(brokers)
-                        .build();
-
-                return Single.just(clusterInfo);
-              } catch (InterruptedException | ExecutionException e) {
-                log.error("Error getting cluster info", e);
-                return Single.error(e);
               }
             });
   }

@@ -1,32 +1,50 @@
 package com.logwise.orchestrator.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.google.inject.Inject;
+import com.logwise.orchestrator.CaffeineCacheFactory;
 import com.logwise.orchestrator.client.kafka.KafkaClient;
 import com.logwise.orchestrator.config.ApplicationConfig.KafkaConfig;
 import com.logwise.orchestrator.config.ApplicationConfig.SparkConfig;
-import com.logwise.orchestrator.dto.kafka.ScalingDecision;
-import com.logwise.orchestrator.dto.kafka.TopicPartitionMetrics;
+import com.logwise.orchestrator.dto.kafka.TopicOffsetInfo;
 import com.logwise.orchestrator.enums.Tenant;
 import com.logwise.orchestrator.factory.KafkaClientFactory;
 import com.logwise.orchestrator.util.ApplicationConfigUtil;
 import io.reactivex.Single;
+import io.vertx.reactivex.core.Vertx;
 import java.util.*;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.TopicPartition;
 
 /**
  * Service for scaling Kafka partitions based on metrics and Spark checkpoint lag. Orchestrates the
  * scaling flow: get metrics, calculate lag, make decisions, scale partitions.
  */
 @Slf4j
-@RequiredArgsConstructor(onConstructor = @__(@Inject))
 public class KafkaService {
 
   private final KafkaClientFactory kafkaClientFactory;
-  private final SparkCheckpointService sparkCheckpointService;
-  private final KafkaScalingService kafkaScalingService;
+  private final Cache<String, Single<OffsetWithTimestamp>> topicOffsetSumCache;
+
+  /** Data class to hold offset sum and timestamp together. */
+  @Getter
+  private static class OffsetWithTimestamp {
+    private final long offsetSum;
+    private final long timestamp;
+
+    public OffsetWithTimestamp(long offsetSum, long timestamp) {
+      this.offsetSum = offsetSum;
+      this.timestamp = timestamp;
+    }
+  }
+
+  @Inject
+  public KafkaService(Vertx vertx, KafkaClientFactory kafkaClientFactory) {
+    this.kafkaClientFactory = kafkaClientFactory;
+    this.topicOffsetSumCache =
+        CaffeineCacheFactory.createCache(vertx, "kafka-topic-offset-sum-cache");
+  }
 
   /**
    * Scale Kafka partitions for a tenant based on metrics and lag.
@@ -34,7 +52,7 @@ public class KafkaService {
    * @param tenant Tenant to scale partitions for
    * @return Single that emits the list of scaling decisions made
    */
-  public Single<List<ScalingDecision>> scaleKafkaPartitions(Tenant tenant) {
+  public Single<Map<String, Integer>> scaleKafkaPartitions(Tenant tenant) {
     log.info("Starting Kafka partition scaling for tenant: {}", tenant);
 
     try {
@@ -45,7 +63,7 @@ public class KafkaService {
       if (kafkaConfig.getEnablePartitionScaling() == null
           || !kafkaConfig.getEnablePartitionScaling()) {
         log.info("Partition scaling is disabled for tenant: {}", tenant);
-        return Single.just(Collections.emptyList());
+        return Single.just(Collections.emptyMap());
       }
 
       SparkConfig sparkConfig = tenantConfig.getSpark();
@@ -71,7 +89,7 @@ public class KafkaService {
     }
   }
 
-  private Single<List<ScalingDecision>> performScaling(
+  private Single<Map<String, Integer>> performScaling(
       KafkaClient kafkaClient, KafkaConfig kafkaConfig, SparkConfig sparkConfig, Tenant tenant) {
 
     long startTime = System.currentTimeMillis();
@@ -91,7 +109,7 @@ public class KafkaService {
                     "No topics found matching pattern: {} for tenant: {}",
                     sparkConfig.getSubscribePattern(),
                     tenant);
-                return Single.just(Collections.<ScalingDecision>emptyList());
+                return Single.just(Collections.emptyMap());
               }
 
               List<String> topicList = new ArrayList<>(topics);
@@ -101,142 +119,142 @@ public class KafkaService {
                   tenant,
                   topicList);
 
-              // 2. Get partition metrics (replaces Kafka Manager producer rate)
+              // 2. get end offset sum for each topic
               return kafkaClient
-                  .getPartitionMetrics(topicList)
+                  .getEndOffsetSum(topicList)
                   .flatMap(
-                      metricsMap -> {
-                        // 3. Get Spark checkpoint offsets
-                        return sparkCheckpointService
-                            .getSparkCheckpointOffsets(tenant)
-                            .flatMap(
-                                checkpointOffsets -> {
-                                  // 4. Get end offsets from Kafka
-                                  List<TopicPartition> allPartitions = new ArrayList<>();
-                                  for (TopicPartitionMetrics metrics : metricsMap.values()) {
-                                    for (int partitionId = 0;
-                                        partitionId < metrics.getPartitionCount();
-                                        partitionId++) {
-                                      allPartitions.add(
-                                          new TopicPartition(metrics.getTopic(), partitionId));
-                                    }
-                                  }
+                      offsetsSum -> {
+                        Map<String, Integer> scalingMap =
+                            calculateScalingDecisions(offsetsSum, kafkaConfig);
 
-                                  return kafkaClient
-                                      .getEndOffsets(allPartitions)
-                                      .flatMap(
-                                          endOffsets -> {
-                                            // 5. Calculate lag
-                                            Single<Map<TopicPartition, Long>> lagMapSingle;
-                                            if (checkpointOffsets.isAvailable()
-                                                && !checkpointOffsets.getOffsets().isEmpty()) {
-                                              lagMapSingle =
-                                                  kafkaClient.calculateLag(
-                                                      endOffsets, checkpointOffsets.getOffsets());
-                                            } else {
-                                              log.warn(
-                                                  "Spark checkpoint offsets not available, using zero lag");
-                                              Map<TopicPartition, Long> lagMap = new HashMap<>();
-                                              for (TopicPartition tp : allPartitions) {
-                                                lagMap.put(tp, 0L);
-                                              }
-                                              lagMapSingle = Single.just(lagMap);
-                                            }
+                        if (scalingMap.isEmpty()) {
+                          log.info("No partitions to increase");
+                          return Single.just(Collections.emptyMap());
+                        }
 
-                                            return lagMapSingle.flatMap(
-                                                lagMap -> {
-                                                  // 6. Identify topics needing scaling
-                                                  List<ScalingDecision> scalingDecisions =
-                                                      kafkaScalingService
-                                                          .identifyTopicsNeedingScaling(
-                                                              metricsMap, lagMap, kafkaConfig);
-
-                                                  if (scalingDecisions.isEmpty()) {
-                                                    long duration =
-                                                        System.currentTimeMillis() - startTime;
-                                                    log.info(
-                                                        "No topics need scaling for tenant: {} (checked in {}ms)",
-                                                        tenant,
-                                                        duration);
-                                                    return Single.just(scalingDecisions);
-                                                  }
-
-                                                  log.info(
-                                                      "Found {} topics needing scaling for tenant: {}: {}",
-                                                      scalingDecisions.size(),
-                                                      tenant,
-                                                      scalingDecisions.stream()
-                                                          .map(
-                                                              d ->
-                                                                  d.getTopic()
-                                                                      + "("
-                                                                      + d.getCurrentPartitions()
-                                                                      + "->"
-                                                                      + d.getNewPartitions()
-                                                                      + ")")
-                                                          .collect(
-                                                              java.util.stream.Collectors.joining(
-                                                                  ", ")));
-
-                                                  // 7. Increase partitions
-                                                  Map<String, Integer> scalingMap =
-                                                      scalingDecisions.stream()
-                                                          .collect(
-                                                              Collectors.toMap(
-                                                                  ScalingDecision::getTopic,
-                                                                  ScalingDecision
-                                                                      ::getNewPartitions));
-
-                                                  return kafkaClient
-                                                      .increasePartitions(scalingMap)
-                                                      .doOnComplete(
-                                                          () -> {
-                                                            long duration =
-                                                                System.currentTimeMillis()
-                                                                    - startTime;
-                                                            int totalPartitionsAdded =
-                                                                scalingDecisions.stream()
-                                                                    .mapToInt(
-                                                                        d ->
-                                                                            d.getNewPartitions()
-                                                                                - d
-                                                                                    .getCurrentPartitions())
-                                                                    .sum();
-
-                                                            log.info(
-                                                                "Successfully scaled {} topics for tenant: {} in {}ms. Total partitions added: {}",
-                                                                scalingDecisions.size(),
-                                                                tenant,
-                                                                duration,
-                                                                totalPartitionsAdded);
-
-                                                            for (ScalingDecision decision :
-                                                                scalingDecisions) {
-                                                              log.info(
-                                                                  "Scaled topic {} from {} to {} partitions (factors: {}, reason: {})",
-                                                                  decision.getTopic(),
-                                                                  decision.getCurrentPartitions(),
-                                                                  decision.getNewPartitions(),
-                                                                  decision.getFactors(),
-                                                                  decision.getReason());
-                                                            }
-                                                          })
-                                                      .doOnError(
-                                                          th -> {
-                                                            long duration =
-                                                                System.currentTimeMillis()
-                                                                    - startTime;
-                                                            log.error(
-                                                                "Error increasing partitions for tenant: {} after {}ms",
-                                                                tenant,
-                                                                duration,
-                                                                th);
-                                                          })
-                                                      .toSingle(() -> scalingDecisions);
-                                                });
-                                          });
-                                });
+                        return kafkaClient
+                            .increasePartitions(scalingMap)
+                            .doOnComplete(
+                                () -> {
+                                  log.info(
+                                      "Successfully scaled the partitions for {} topics",
+                                      scalingMap.size());
+                                })
+                            .doOnError(
+                                th -> {
+                                  long duration = System.currentTimeMillis() - startTime;
+                                  log.error(
+                                      "Error increasing partitions for tenant: {} after {}ms",
+                                      tenant,
+                                      duration,
+                                      th);
+                                })
+                            .toSingle(() -> scalingMap);
                       });
             });
+  }
+
+  /**
+   * Calculates scaling decisions for each topic based on ingestion rate and current partition
+   * count.
+   *
+   * @param offsetsSum Map of topic names to their offset information
+   * @param kafkaConfig Kafka configuration containing partition rate per second
+   * @return Map of topic names to required partition counts (only includes topics that need
+   *     scaling)
+   */
+  private Map<String, Integer> calculateScalingDecisions(
+      Map<String, TopicOffsetInfo> offsetsSum, KafkaConfig kafkaConfig) {
+    return offsetsSum.entrySet().stream()
+        .map(
+            entry -> {
+              String topic = entry.getKey();
+              int requiredPartitions =
+                  calculateRequiredPartitions(topic, entry.getValue(), kafkaConfig);
+              return new AbstractMap.SimpleEntry<>(topic, requiredPartitions);
+            })
+        .filter(entry -> entry.getValue() > 0)
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+  }
+
+  /**
+   * Calculates the required number of partitions for a topic based on ingestion rate.
+   *
+   * @param topic Topic name
+   * @param offsetInfo Current offset information for the topic
+   * @param kafkaConfig Kafka configuration containing partition rate per second
+   * @return Required number of partitions, or -1 if no scaling is needed
+   */
+  private int calculateRequiredPartitions(
+      String topic, TopicOffsetInfo offsetInfo, KafkaConfig kafkaConfig) {
+    long currentOffsetSum = offsetInfo.getSumOfEndOffsets();
+
+    OffsetWithTimestamp lastOffsetData = getLastTimeOffsetSumFromCache(topic);
+
+    if (lastOffsetData == null) {
+      updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
+
+      log.info(
+          "Skipping the kafka partition scaling due to lastOffsetData is not available in cache");
+
+      // No previous data, store current and return -1 (no scaling)
+      return -1;
+    }
+
+    long currentTimestamp = System.currentTimeMillis();
+    long timeDifferenceSeconds = (currentTimestamp - lastOffsetData.getTimestamp()) / 1000;
+
+    if (timeDifferenceSeconds <= 30 || timeDifferenceSeconds > 300) {
+      // Time difference is invalid or too long return -1
+      updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
+      log.info(
+          "Skipping the kafka partition scaling due to cache is {} second old",
+          timeDifferenceSeconds);
+      return -1;
+    }
+
+    long offsetDifference = currentOffsetSum - lastOffsetData.getOffsetSum();
+    long ingestionRate = offsetDifference / timeDifferenceSeconds;
+    int requiredPartitions =
+        (int) Math.ceil((double) ingestionRate / kafkaConfig.getPartitionRatePerSecond());
+    int currentPartitions = offsetInfo.getCurrentNumberOfPartitions();
+
+    updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
+
+    // Only scale if required partitions exceed current partitions
+    if (requiredPartitions <= currentPartitions) {
+      log.info(
+          "Skipping the kafka partition scaling because requiredPartitions is less then currentPartitions");
+      return -1;
+    }
+
+    return requiredPartitions;
+  }
+
+  /**
+   * Get the last time offset sum from cache for a given topic.
+   *
+   * @param topic Topic name
+   * @return OffsetWithTimestamp containing last offset sum and timestamp, or null if not found in
+   *     cache
+   */
+  private OffsetWithTimestamp getLastTimeOffsetSumFromCache(String topic) {
+    Single<OffsetWithTimestamp> cachedValue = topicOffsetSumCache.getIfPresent(topic);
+    if (cachedValue != null) {
+      return cachedValue.blockingGet();
+    }
+    return null;
+  }
+
+  /**
+   * Update the last time offset sum in cache for a given topic.
+   *
+   * @param topic Topic name
+   * @param offsetSum Offset sum to store
+   */
+  private void updateLastTimeOffsetSumInCache(String topic, Long offsetSum) {
+    long currentTimestamp = System.currentTimeMillis();
+    topicOffsetSumCache.put(
+        topic, Single.just(new OffsetWithTimestamp(offsetSum, currentTimestamp)));
   }
 }
