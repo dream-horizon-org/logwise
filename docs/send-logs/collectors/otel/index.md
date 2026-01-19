@@ -17,7 +17,7 @@ The OTEL Collector:
 
 Vector’s OTLP listener is already configured in `vector/vector.yaml`:
 
-```1:9:vector/vector.yaml
+```yaml
 sources:
   otlp_logs:
     type: "opentelemetry"
@@ -40,7 +40,7 @@ For Logwise we recommend **OTLP HTTP**.
 
 Below is a minimal example that tails log files and exports them to Vector over OTLP HTTP:
 
-```8:40:deploy/healthcheck-dummy/otel-collector-config.yaml
+```yaml
 receivers:
   filelog/healthcheck:
     include: 

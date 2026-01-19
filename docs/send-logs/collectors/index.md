@@ -32,7 +32,7 @@ This section explains:
 
 Vector’s OTLP listener is defined in `vector/vector.yaml`:
 
-```1:9:vector/vector.yaml
+```yaml
 sources:
   otlp_logs:
     type: "opentelemetry"
