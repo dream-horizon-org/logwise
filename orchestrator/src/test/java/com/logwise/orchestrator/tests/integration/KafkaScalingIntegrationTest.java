@@ -20,7 +20,6 @@ import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -186,29 +185,6 @@ public class KafkaScalingIntegrationTest extends BaseTest {
   }
 
   @Test
-  public void testGetPartitionMetrics_WithTopic_ReturnsMetrics() throws Exception {
-    String topicName = "metrics-topic-" + System.currentTimeMillis();
-    NewTopic newTopic = new NewTopic(topicName, 3, (short) 1);
-    adminClient.createTopics(Collections.singletonList(newTopic)).all().get(5, TimeUnit.SECONDS);
-
-    // Produce some messages
-    for (int i = 0; i < 100; i++) {
-      producer.send(new ProducerRecord<>(topicName, "key-" + i, "value-" + i));
-    }
-    producer.flush();
-
-    Single<Map<String, TopicPartitionMetrics>> metrics =
-        ec2KafkaClient.getPartitionMetrics(Collections.singletonList(topicName));
-    Map<String, TopicPartitionMetrics> result = metrics.blockingGet();
-
-    assertNotNull(result);
-    assertTrue(result.containsKey(topicName));
-    TopicPartitionMetrics topicMetrics = result.get(topicName);
-    assertEquals(topicMetrics.getPartitionCount(), 3);
-    assertTrue(topicMetrics.getTotalMessages() > 0);
-  }
-
-  @Test
   public void testIncreasePartitions_WithTopic_IncreasesPartitions() throws Exception {
     String topicName = "scale-topic-" + System.currentTimeMillis();
     NewTopic newTopic = new NewTopic(topicName, 3, (short) 1);
@@ -252,49 +228,6 @@ public class KafkaScalingIntegrationTest extends BaseTest {
     ScalingDecision decision = decisions.get(0);
     assertEquals(decision.getTopic(), topic);
     assertTrue(decision.getNewPartitions() > decision.getCurrentPartitions());
-  }
-
-  @Test
-  public void testEndToEndScaling_WithHighLag_ScalesPartitions() throws Exception {
-    String topicName = "e2e-topic-" + System.currentTimeMillis();
-    NewTopic newTopic = new NewTopic(topicName, 3, (short) 1);
-    adminClient.createTopics(Collections.singletonList(newTopic)).all().get(5, TimeUnit.SECONDS);
-
-    // Produce messages to create lag
-    for (int i = 0; i < 200_000; i++) {
-      producer.send(new ProducerRecord<>(topicName, "key-" + i, "value-" + i));
-    }
-    producer.flush();
-
-    // Get metrics
-    Single<Map<String, TopicPartitionMetrics>> metrics =
-        ec2KafkaClient.getPartitionMetrics(Collections.singletonList(topicName));
-    Map<String, TopicPartitionMetrics> metricsMap = metrics.blockingGet();
-
-    // Simulate high lag
-    Map<org.apache.kafka.common.TopicPartition, Long> lagMap = new HashMap<>();
-    for (int i = 0; i < 3; i++) {
-      lagMap.put(new org.apache.kafka.common.TopicPartition(topicName, i), 100_000L);
-    }
-
-    // Identify scaling needs
-    KafkaScalingService scalingService = new KafkaScalingService();
-    List<ScalingDecision> decisions =
-        scalingService.identifyTopicsNeedingScaling(metricsMap, lagMap, kafkaConfig);
-
-    if (!decisions.isEmpty()) {
-      ScalingDecision decision = decisions.get(0);
-      Map<String, Integer> scalingMap = Map.of(decision.getTopic(), decision.getNewPartitions());
-
-      // Scale partitions
-      ec2KafkaClient.increasePartitions(scalingMap).blockingAwait();
-
-      // Verify scaling
-      var topicDescription =
-          adminClient.describeTopics(Collections.singletonList(topicName)).all().get();
-      assertEquals(
-          topicDescription.get(topicName).partitions().size(), decision.getNewPartitions());
-    }
   }
 
   @AfterClass

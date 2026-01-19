@@ -14,6 +14,7 @@ import io.reactivex.Single;
 import io.vertx.reactivex.core.Vertx;
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -27,6 +28,7 @@ public class KafkaService {
   private final Cache<String, Single<OffsetWithTimestamp>> topicOffsetSumCache;
 
   /** Data class to hold offset sum and timestamp together. */
+  @Getter
   private static class OffsetWithTimestamp {
     private final long offsetSum;
     private final long timestamp;
@@ -34,14 +36,6 @@ public class KafkaService {
     public OffsetWithTimestamp(long offsetSum, long timestamp) {
       this.offsetSum = offsetSum;
       this.timestamp = timestamp;
-    }
-
-    public long getOffsetSum() {
-      return offsetSum;
-    }
-
-    public long getTimestamp() {
-      return timestamp;
     }
   }
 
@@ -200,6 +194,9 @@ public class KafkaService {
     if (lastOffsetData == null) {
       updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
 
+      log.info(
+          "Skipping the kafka partition scaling due to lastOffsetData is not available in cache");
+
       // No previous data, store current and return -1 (no scaling)
       return -1;
     }
@@ -207,9 +204,12 @@ public class KafkaService {
     long currentTimestamp = System.currentTimeMillis();
     long timeDifferenceSeconds = (currentTimestamp - lastOffsetData.getTimestamp()) / 1000;
 
-    if (timeDifferenceSeconds <= 0 || timeDifferenceSeconds > 300) {
+    if (timeDifferenceSeconds <= 30 || timeDifferenceSeconds > 300) {
       // Time difference is invalid or too long return -1
       updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
+      log.info(
+          "Skipping the kafka partition scaling due to cache is {} second old",
+          timeDifferenceSeconds);
       return -1;
     }
 
@@ -219,16 +219,12 @@ public class KafkaService {
         (int) Math.ceil((double) ingestionRate / kafkaConfig.getPartitionRatePerSecond());
     int currentPartitions = offsetInfo.getCurrentNumberOfPartitions();
 
-    log.info("performScaling: Ingestion rate for topic {} is {}/sec", topic, ingestionRate);
-    log.info("performScaling: Required partitions for topic {} is {}", topic, requiredPartitions);
-    log.info(
-        "performScaling: Current number of partitions for topic {} is {}",
-        topic,
-        currentPartitions);
     updateLastTimeOffsetSumInCache(topic, offsetInfo.getSumOfEndOffsets());
 
     // Only scale if required partitions exceed current partitions
     if (requiredPartitions <= currentPartitions) {
+      log.info(
+          "Skipping the kafka partition scaling because requiredPartitions is less then currentPartitions");
       return -1;
     }
 

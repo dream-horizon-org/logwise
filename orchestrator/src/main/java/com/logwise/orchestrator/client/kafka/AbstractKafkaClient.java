@@ -3,7 +3,6 @@ package com.logwise.orchestrator.client.kafka;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logwise.orchestrator.config.ApplicationConfig.KafkaConfig;
 import com.logwise.orchestrator.dto.kafka.TopicOffsetInfo;
-import com.logwise.orchestrator.dto.kafka.TopicPartitionMetrics;
 import com.logwise.orchestrator.enums.KafkaType;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -83,79 +82,6 @@ public abstract class AbstractKafkaClient implements KafkaClient {
                 return Single.just(matchingTopics);
               } catch (InterruptedException | ExecutionException e) {
                 log.error("Error listing topics", e);
-                return Single.error(e);
-              }
-            });
-  }
-
-  @Override
-  public Single<Map<String, TopicPartitionMetrics>> getPartitionMetrics(List<String> topics) {
-    return createAdminClient()
-        .flatMap(
-            adminClient -> {
-              try {
-                // Get topic descriptions
-                DescribeTopicsResult topicsResult = adminClient.describeTopics(topics);
-                Map<String, TopicDescription> topicDescriptions = topicsResult.all().get();
-
-                // Get all partitions
-                List<TopicPartition> allPartitions = new ArrayList<>();
-                for (String topic : topics) {
-                  TopicDescription desc = topicDescriptions.get(topic);
-                  if (desc != null) {
-                    for (TopicPartitionInfo partitionInfo : desc.partitions()) {
-                      allPartitions.add(new TopicPartition(topic, partitionInfo.partition()));
-                    }
-                  }
-                }
-
-                // Get end offsets for all partitions
-                return getEndOffsets(allPartitions)
-                    .map(
-                        endOffsets -> {
-                          Map<String, TopicPartitionMetrics> metricsMap = new HashMap<>();
-
-                          for (String topic : topics) {
-                            TopicDescription desc = topicDescriptions.get(topic);
-                            if (desc == null) continue;
-
-                            int partitionCount = desc.partitions().size();
-                            Map<Integer, Long> partitionOffsets = new HashMap<>();
-                            long totalMessages = 0;
-
-                            for (TopicPartitionInfo partitionInfo : desc.partitions()) {
-                              int partitionId = partitionInfo.partition();
-                              TopicPartition tp = new TopicPartition(topic, partitionId);
-                              Long offset = endOffsets.get(tp);
-                              if (offset != null) {
-                                partitionOffsets.put(partitionId, offset);
-                                totalMessages += offset;
-                              }
-                            }
-
-                            long avgMessagesPerPartition =
-                                partitionCount > 0 ? totalMessages / partitionCount : 0;
-
-                            // Estimate size (rough calculation: assume 1KB per message)
-                            long estimatedSizeBytes = totalMessages * 1024;
-
-                            TopicPartitionMetrics metrics =
-                                TopicPartitionMetrics.builder()
-                                    .topic(topic)
-                                    .partitionCount(partitionCount)
-                                    .totalMessages(totalMessages)
-                                    .avgMessagesPerPartition(avgMessagesPerPartition)
-                                    .estimatedSizeBytes(estimatedSizeBytes)
-                                    .partitionOffsets(partitionOffsets)
-                                    .build();
-
-                            metricsMap.put(topic, metrics);
-                          }
-
-                          return metricsMap;
-                        });
-              } catch (InterruptedException | ExecutionException e) {
-                log.error("Error getting partition metrics", e);
                 return Single.error(e);
               }
             });
@@ -300,23 +226,6 @@ public abstract class AbstractKafkaClient implements KafkaClient {
                 return Completable.complete();
               } catch (InterruptedException | ExecutionException e) {
                 log.error("Error increasing partitions", e);
-                return Completable.error(e);
-              }
-            });
-  }
-
-  @Override
-  public Completable deleteTopics(List<String> topics) {
-    return createAdminClient()
-        .flatMapCompletable(
-            adminClient -> {
-              try {
-                log.info("Deleting topics: {}", topics);
-                adminClient.deleteTopics(topics).all().get();
-                log.info("Successfully deleted topics");
-                return Completable.complete();
-              } catch (InterruptedException | ExecutionException e) {
-                log.error("Error deleting topics", e);
                 return Completable.error(e);
               }
             });
