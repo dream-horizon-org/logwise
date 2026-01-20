@@ -84,7 +84,7 @@ A complete end-to-end logging system that streams logs from Vector → Kafka →
 The easiest way to get started is with our one-click setup script:
 
 ```bash
-cd deploy
+cd deploy/docker/scripts
 ./setup.sh
 ```
 
