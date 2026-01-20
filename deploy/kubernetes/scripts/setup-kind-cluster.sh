@@ -184,6 +184,26 @@ fi
 if [ "$BUILD_IMAGES" = "true" ] || [ "$LOAD_IMAGES" = "true" ]; then
   log_info "Building and loading Docker images..."
   echo ""
+
+  # Detect the actual node architecture so we build the right platform for kind.
+  # This prevents "no match for platform" errors on Apple Silicon (arm64) when
+  # images are accidentally built as linux/amd64.
+  KIND_NODE_ARCH="$(kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}' 2>/dev/null || true)"
+  case "$KIND_NODE_ARCH" in
+    arm64|aarch64) TARGET_PLATFORM="linux/arm64" ;;
+    amd64|x86_64)  TARGET_PLATFORM="linux/amd64" ;;
+    *)
+      TARGET_PLATFORM=""
+      if [ -n "$KIND_NODE_ARCH" ]; then
+        log_warn "Unknown kind node architecture '$KIND_NODE_ARCH'; building without explicit --platform."
+      else
+        log_warn "Could not detect kind node architecture; building without explicit --platform."
+      fi
+      ;;
+  esac
+  if [ -n "${TARGET_PLATFORM:-}" ]; then
+    log_info "Kind node architecture: ${KIND_NODE_ARCH} (building images for ${TARGET_PLATFORM})"
+  fi
   
   # Image specifications: "build_path:image_name:tag"
   IMAGES=(
@@ -211,7 +231,24 @@ if [ "$BUILD_IMAGES" = "true" ] || [ "$LOAD_IMAGES" = "true" ]; then
       
       # Build image if needed
       if [ "$SKIP_BUILD" != "true" ]; then
-        if docker build -t "$full_image_name" "$PROJECT_ROOT/$build_path" >/dev/null 2>&1; then
+        # Prefer buildx so we can force the correct platform and still --load locally.
+        if command -v docker >/dev/null 2>&1 && docker buildx version >/dev/null 2>&1 && [ -n "${TARGET_PLATFORM:-}" ]; then
+          if docker buildx build --platform "$TARGET_PLATFORM" -t "$full_image_name" "$PROJECT_ROOT/$build_path" --load >/dev/null 2>&1; then
+            echo -e "${GREEN}built${NC}"
+          else
+            echo -e "${RED}failed${NC}"
+            log_warn "Failed to build $full_image_name for platform $TARGET_PLATFORM. You may need to build it manually."
+            continue
+          fi
+        elif [ -n "${TARGET_PLATFORM:-}" ]; then
+          if docker build --platform "$TARGET_PLATFORM" -t "$full_image_name" "$PROJECT_ROOT/$build_path" >/dev/null 2>&1; then
+            echo -e "${GREEN}built${NC}"
+          else
+            echo -e "${RED}failed${NC}"
+            log_warn "Failed to build $full_image_name for platform $TARGET_PLATFORM. You may need to build it manually."
+            continue
+          fi
+        elif docker build -t "$full_image_name" "$PROJECT_ROOT/$build_path" >/dev/null 2>&1; then
           echo -e "${GREEN}built${NC}"
         else
           echo -e "${RED}failed${NC}"

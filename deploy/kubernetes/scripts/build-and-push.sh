@@ -21,10 +21,59 @@ ENV="${ENV:-local}"
 CLUSTER_TYPE="${CLUSTER_TYPE:-docker-desktop}"
 PARALLEL_BUILD="${PARALLEL_BUILD:-true}"
 PUSH_IMAGES="${PUSH_IMAGES:-true}"
-PLATFORM="${PLATFORM:-linux/amd64}"  # Default to linux/amd64 for Kubernetes
+# PLATFORM controls the build target for docker buildx/build.
+# IMPORTANT:
+# - For local kind clusters on Apple Silicon, the node is often linux/arm64.
+# - If we build linux/amd64 images and load them into a linux/arm64 kind node,
+#   pods will fail with "no match for platform" / ErrImagePull / ImagePullBackOff.
+# We therefore auto-detect a sane default when PLATFORM is not explicitly set.
+PLATFORM="${PLATFORM:-}"
 
 # Image registry config
 IMAGE_REGISTRY_CONFIG="$REPO_ROOT/deploy/shared/config/image-registry.yaml"
+
+# Resolve a default platform if PLATFORM is not set by the caller.
+# - Prefer reading the actual cluster node architecture when CLUSTER_TYPE=kind.
+# - Fallback to the local Docker daemon architecture.
+resolve_default_platform() {
+  # If user explicitly set it (including multi-platform), respect it.
+  if [ -n "${PLATFORM:-}" ]; then
+    return 0
+  fi
+
+  local arch=""
+
+  if [ "${CLUSTER_TYPE:-}" = "kind" ] && command -v kubectl >/dev/null 2>&1; then
+    # Try to read node arch from the active kube-context.
+    arch="$(kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}' 2>/dev/null || true)"
+  fi
+
+  if [ -z "$arch" ] && command -v docker >/dev/null 2>&1; then
+    arch="$(docker info --format '{{.Architecture}}' 2>/dev/null || true)"
+  fi
+
+  # Normalize common values
+  case "$arch" in
+    arm64|aarch64) PLATFORM="linux/arm64" ;;
+    amd64|x86_64)  PLATFORM="linux/amd64" ;;
+    "")
+      # Conservative fallback. For non-kind clusters, linux/amd64 is still the
+      # most common; kind on Apple Silicon will generally be caught above.
+      PLATFORM="linux/amd64"
+      ;;
+    *)
+      # Unknown architecture; don't force a platform flag.
+      log_warn "Unknown architecture '$arch'; building without explicit --platform."
+      PLATFORM=""
+      ;;
+  esac
+
+  if [ -n "${PLATFORM:-}" ]; then
+    log_info "Auto-selected build platform: ${PLATFORM}"
+  else
+    log_info "No explicit build platform selected; relying on Docker default."
+  fi
+}
 
 # Helper to get image name from config
 get_image_name() {
@@ -232,6 +281,7 @@ load_kind_image() {
 
 # Main build function
 main() {
+  resolve_default_platform
   log_info "Building images with TAG=$TAG REGISTRY='${REGISTRY}' (env=$ENV, cluster=$CLUSTER_TYPE)"
   
   # Define images to build (using space-separated format for bash 3.2 compatibility)
