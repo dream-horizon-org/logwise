@@ -1,6 +1,7 @@
 package com.logwise.orchestrator.rest;
 
 import com.google.inject.Inject;
+import com.logwise.orchestrator.config.ApplicationConfig.TenantConfig;
 import com.logwise.orchestrator.constant.ApplicationConstants;
 import com.logwise.orchestrator.dto.request.ScaleSparkClusterRequest;
 import com.logwise.orchestrator.dto.response.DefaultErrorResponse;
@@ -8,6 +9,7 @@ import com.logwise.orchestrator.dto.response.DefaultSuccessResponse;
 import com.logwise.orchestrator.enums.Tenant;
 import com.logwise.orchestrator.rest.io.Response;
 import com.logwise.orchestrator.service.SparkService;
+import com.logwise.orchestrator.util.ApplicationConfigUtil;
 import io.reactivex.Completable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -70,6 +72,25 @@ public class ScaleSparkCluster {
     request.getSparkStageHistory().setTenant(tenant.getValue());
 
     log.info("request here is {}", request);
+
+    // Skip insert and scaling for Docker cluster type
+    TenantConfig tenantConfig = ApplicationConfigUtil.getTenantConfig(tenant);
+    if (ApplicationConfigUtil.isDockerSparkCluster(tenantConfig)) {
+      log.info(
+          "Ignoring spark stage history insert and scaling for tenant: {} as cluster type is docker (scaling not supported)",
+          tenantName);
+      CompletableFuture<Response<DefaultSuccessResponse>> future = new CompletableFuture<>();
+      DefaultSuccessResponse response =
+          DefaultSuccessResponse.builder()
+              .message(
+                  "Skipped spark cluster scaling for tenant: "
+                      + tenantName
+                      + " (Docker cluster type)")
+              .build();
+      future.complete(Response.successfulResponse(response, HttpStatus.SC_OK));
+      return future;
+    }
+
     if (sparkService == null) {
       log.info("sparkService is null");
     }

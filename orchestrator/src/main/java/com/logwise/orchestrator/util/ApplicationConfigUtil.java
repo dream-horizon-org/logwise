@@ -42,6 +42,14 @@ public class ApplicationConfigUtil {
     return tenantConfig.getSpark().getCluster().getKubernetes() != null;
   }
 
+  public boolean isDockerSparkCluster(TenantConfig tenantConfig) {
+    String clusterType = tenantConfig.getSpark().getCluster().getClusterType();
+    if (clusterType != null) {
+      return "docker".equalsIgnoreCase(clusterType);
+    }
+    return false;
+  }
+
   public ApplicationConfig.VMConfig getVmConfigFromAsgConfig(
       ApplicationConfig.AsgConfig asgConfig) {
     ApplicationConfig.VMConfig.VMConfigBuilder vmConfig = ApplicationConfig.VMConfig.builder();

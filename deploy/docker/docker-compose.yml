@@ -76,8 +76,8 @@ services:
       - VECTOR_API_ADDRESS=0.0.0.0:8686
       - VECTOR_WATCH_CONFIG=true
     volumes:
-      - ../vector/vector.yaml:/etc/vector/vector.yaml:ro
-      - ../vector/logwise-vector.desc:/etc/vector/logwise-vector.desc:ro
+      - ../../vector/vector.yaml:/etc/vector/vector.yaml:ro
+      - ../../vector/logwise-vector.desc:/etc/vector/logwise-vector.desc:ro
     ports:
       - "${VECTOR_API_PORT:-8686}:8686" # Vector API (health checks and monitoring)
       - "${VECTOR_OTLP_GRPC_PORT:-4317}:4317" # OTLP gRPC endpoint for log ingestion
@@ -115,7 +115,7 @@ services:
       - lc_net
     volumes:
       - db_data:/var/lib/mysql
-      - ../orchestrator/db/init:/docker-entrypoint-initdb.d:ro
+      - ../../orchestrator/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root_pass}"]
       interval: 5s
@@ -128,7 +128,7 @@ services:
   orchestrator:
     # Uses existing Dockerfile in module: log-central-orchestror
     build:
-      context: ../orchestrator
+      context: ../../orchestrator
       dockerfile: docker/Dockerfile
     container_name: logwise_orchestrator
     env_file:
@@ -152,12 +152,13 @@ services:
       - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
       - KAFKA_BROKERS_HOST=${KAFKA_BROKERS_HOST:-kafka:9092}
-      - SPARK_MASTER_HOST=${SPARK_MASTER_HOST:-spark://spark-master:7077}
-      - SPARK_JAR_PATH=${SPARK_JAR_PATH:-/tmp/spark.jar}
+      - SPARK_MASTER_HOST=${SPARK_MASTER_HOST:-spark-master}
+      - SPARK_JAR_PATH=${SPARK_JAR_PATH:-/opt/app/app.jar}
       - LOG4J_PROPERTIES_FILE_PATH=${LOG4J_PROPERTIES_FILE_PATH:-/tmp/log4j.properties}
       - VECTOR_HOST=${VECTOR_HOST:-vector}
       - VECTOR_API_PORT=${VECTOR_API_PORT:-8686}
       - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://orchestrator:8080}
+      - SPARK_CLUSTER_TYPE=docker
     ports:
       - "${ORCH_PORT:-8080}:8080" # user-facing (optional for local dev)
     networks:
@@ -179,7 +180,7 @@ services:
 
   spark-master:
     build:
-      context: ../spark
+      context: ../../spark
       dockerfile: docker/Dockerfile
     image: logwise-spark:latest
     container_name: logwise_spark_master
@@ -197,7 +198,7 @@ services:
       - "${SPARK_MASTER_UI_PORT:-18080}:8080"
       - 6066:6066
     volumes:
-      - ../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
+      - ../../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
       - spark_master_logs:/opt/spark/logs
     networks:
       - lc_net
@@ -227,7 +228,7 @@ services:
     networks:
       - lc_net
     volumes:
-      - ../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
+      - ../../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
       - spark_worker_logs:/opt/spark/logs
     depends_on:
       spark-master:
@@ -257,7 +258,7 @@ services:
     networks:
       - lc_net
     volumes:
-      - ../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
+      - ../../spark/log4j.properties:/opt/spark/conf/log4j.properties:ro
       - spark_worker_logs:/opt/spark/logs
     depends_on:
       spark-master:
@@ -277,7 +278,7 @@ services:
 
   healthcheck-dummy:
     build:
-      context: ./healthcheck-dummy
+      context: ../healthcheck-dummy
       dockerfile: Dockerfile
     container_name: logwise_healthcheck_dummy
     environment:
@@ -434,8 +435,8 @@ services:
     environment:
       TZ: Asia/Kolkata
     volumes:
-      - ./cron:/app/cron:ro
-      - ./cron/entrypoint.sh:/entrypoint.sh:ro
+      - ../cron:/app/cron:ro
+      - ../cron/entrypoint.sh:/entrypoint.sh:ro
     networks:
       - lc_net
     entrypoint: ["/entrypoint.sh"]

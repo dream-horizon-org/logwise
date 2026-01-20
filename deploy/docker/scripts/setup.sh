@@ -190,13 +190,13 @@ main() {
   print_step "Step 2: Environment Configuration"
   
   if [ ! -f ".env" ]; then
-    if [ ! -f "../shared/templates/env.template" ]; then
-      print_error "env.template not found. Cannot create .env file."
+    if [ ! -f ".env.example" ]; then
+      print_error "env.example not found. Cannot create .env file."
       exit 1
     fi
     
     print_substep "Creating .env file from template..."
-    cp ../shared/templates/env.template .env
+    cp .env.example .env
     print_success ".env file created"
     
     echo ""

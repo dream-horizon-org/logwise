@@ -396,6 +396,16 @@ public class SparkService {
 
   public Completable scaleSpark(Tenant tenant, boolean enableUpScale, boolean enableDownScale) {
     log.info("scaling spark for tenant: {}", tenant.getValue());
+
+    // Skip scaling for Docker cluster type - check before any database queries
+    TenantConfig tenantConfig = ApplicationConfigUtil.getTenantConfig(tenant);
+    if (ApplicationConfigUtil.isDockerSparkCluster(tenantConfig)) {
+      log.info(
+          "Ignoring spark scaling for tenant: {} as cluster type is docker (scaling not supported)",
+          tenant.getValue());
+      return Completable.complete();
+    }
+
     return sparkScaleOverrideDao
         .getSparkScaleOverride(tenant)
         .map(
