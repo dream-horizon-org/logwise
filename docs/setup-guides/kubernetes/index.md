@@ -101,32 +101,6 @@ Before deploying Logwise on Kubernetes, ensure you have:
 
 Kustomize uses a base configuration with environment-specific overlays, plus helper scripts to make local/nonprod/prod deployments consistent and repeatable.
 
-### Directory Structure
-
-```
-deploy/kubernetes/
-├── base/                    # Base manifests for all components
-│   ├── kustomization.yaml
-│   ├── orchestrator/
-│   ├── spark/
-│   ├── kafka/
-│   ├── vector/
-│   ├── grafana/
-│   └── ...
-├── overlays/                # Environment-specific overlays
-│   ├── local/              # Local development
-│   ├── nonprod/            # Non-production
-│   └── prod/               # Production
-├── scripts/                 # Deployment automation (recommended)
-│   ├── setup-k8s.sh         # End-to-end deployment (local/nonprod/prod)
-│   ├── setup-kind-cluster.sh# Common kind cluster setup (Kustomize & Helm)
-│   ├── sync-config.sh       # Sync .env -> ConfigMaps/Secrets manifests
-│   ├── build-and-push.sh    # Build images (and push/load depending on env)
-│   ├── deploy.sh            # Apply manifests + wait/validate
-│   └── destroy-k8s.sh       # Teardown
-└── config/                  # Configuration templates (examples)
-    └── secrets.example.yaml
-```
 
 ### Quick Deployment (Recommended)
 
@@ -169,13 +143,12 @@ This will:
 
 ```bash
 # From repository root
-cd deploy
-./scripts/create-env.sh --kubernetes
+./deploy/scripts/create-env.sh --kubernetes
 
 # Edit deploy/kubernetes/.env with your configuration values
 
 # Sync .env to Kubernetes ConfigMaps/Secrets manifests
-./kubernetes/scripts/sync-config.sh kubernetes/.env
+./deploy/kubernetes/scripts/sync-config.sh kubernetes/.env
 ```
 
 **Step 2: Deploy to Kubernetes**
@@ -244,19 +217,20 @@ gcloud auth configure-docker
 Use the build-and-push script to build all required images and push them to your registry:
 
 ```bash
-cd deploy/kubernetes
+# IMPORTANT: run this from the repository root (the directory that contains `deploy/`)
+cd /path/to/logwise
 
-# For non-production
-ENV=nonprod \
-  REGISTRY=ghcr.io/your-org \
-  TAG=1.0.0 \
-  ./scripts/build-and-push.sh
+# For Docker Hub: login + set your Docker Hub namespace (not literally "your-username")
+docker login
+ENV=nonprod REGISTRY=dockerhub DOCKERHUB_USERNAME=your-dockerhub-username TAG=1.0.0 PLATFORM=linux/amd64 \
+  ./deploy/kubernetes/scripts/build-and-push.sh
 
 # For production (use semantic versioning)
 ENV=prod \
   REGISTRY=ghcr.io/your-org \
   TAG=v1.2.3 \
-  ./scripts/build-and-push.sh
+  PLATFORM=linux/amd64 \
+  ./deploy/kubernetes/scripts/build-and-push.sh
 ```
 
 **What gets built:**
@@ -408,46 +382,6 @@ kustomize edit set image logwise-spark=ghcr.io/your-org/logwise-spark:v1.0.0
 kustomize edit set image logwise-vector=ghcr.io/your-org/logwise-vector:v1.0.0
 kubectl apply -k .
 ```
-
-#### Creating Custom Overlays
-
-1. Create a new overlay directory:
-   ```bash
-   mkdir -p deploy/kubernetes/overlays/custom-env
-   ```
-
-2. Create `kustomization.yaml`:
-   ```yaml
-   apiVersion: kustomize.config.k8s.io/v1beta1
-   kind: Kustomization
-   
-   resources:
-     - ../../base
-   
-   patchesStrategicMerge:
-     - custom-patch.yaml
-   
-   images:
-     - name: logwise-orchestrator
-       newName: your-registry/logwise-orchestrator
-       newTag: v1.0.0
-   ```
-
-3. Create patches as needed:
-   ```yaml
-   # custom-patch.yaml
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: orchestrator
-   spec:
-     replicas: 3
-   ```
-
-4. Deploy:
-   ```bash
-   kubectl apply -k deploy/kubernetes/overlays/custom-env
-   ```
 
 ### Using Deployment Scripts
 
@@ -894,76 +828,6 @@ ENV=local CLUSTER_TYPE=kind TAG=latest ./build-and-push.sh
 # No build-and-push needed, just deploy with values-local.yaml
 ```
 
----
-
-## Configuration
-
-### Secrets Management
-
-#### For Kustomize
-
-1. **Create secrets from example:**
-   ```bash
-   cd deploy/kubernetes/config
-   cp secrets.example.yaml secrets.yaml
-   # Edit secrets.yaml with your actual values
-   ```
-
-2. **Apply secrets:**
-   ```bash
-   kubectl apply -f secrets.yaml
-   ```
-
-3. **For production**, use one of:
-   - External Secrets Operator
-   - AWS Secrets Manager with External Secrets
-   - HashiCorp Vault
-   - Sealed Secrets
-
-#### For Helm
-
-**DO NOT** use `--set` flags for secrets in production. Use one of:
-
-1. **External Secrets Operator:**
-   ```yaml
-   # See deploy/kubernetes/config/secrets.example.yaml
-   ```
-
-2. **HashiCorp Vault:**
-   ```bash
-   # Use vault-secrets-operator or similar
-   ```
-
-3. **Sealed Secrets:**
-   ```bash
-   kubectl create secret generic aws-credentials \
-     --from-literal=accessKeyId=KEY \
-     --from-literal=secretAccessKey=SECRET \
-     --dry-run=client -o yaml | kubeseal -o yaml > sealed-secret.yaml
-   ```
-
-### AWS Configuration
-
-Both methods require AWS credentials for S3 and Athena access:
-
-**Required:**
-- AWS Access Key ID
-- AWS Secret Access Key
-- S3 Bucket Name
-- S3 Athena Output location
-
-**Optional:**
-- AWS Session Token (for temporary credentials)
-- AWS Region (defaults to us-east-1)
-
-### Database Configuration
-
-Logwise uses two MySQL instances:
-1. **Orchestrator DB**: Stores service metadata, job history, scaling decisions
-2. **Grafana DB**: Stores Grafana dashboards and metadata
-
-Both can be configured with custom usernames, passwords, and storage options.
-
 ### Resource Requirements
 
 **Minimum (Local Development):**
@@ -1086,52 +950,6 @@ The Vector component uses HPA with both CPU and memory metrics:
 
 HPA automatically scales Vector pods based on resource usage, ensuring optimal performance under varying load conditions.
 
-
-## Upgrading
-
-### Kustomize
-
-1. **Update manifests:**
-   ```bash
-   cd deploy/kubernetes/overlays/prod
-   # Update kustomization.yaml or patches as needed
-   ```
-
-2. **Apply changes:**
-   ```bash
-   kubectl apply -k .
-   ```
-
-3. **Update images:**
-   ```bash
-   kustomize edit set image logwise-orchestrator=ghcr.io/your-org/logwise-orchestrator:v1.1.0
-   kubectl apply -k .
-   ```
-
-### Helm
-
-1. **Upgrade existing release:**
-   ```bash
-   helm upgrade logwise . \
-     --namespace logwise \
-     --values values-prod.yaml \
-     --set aws.accessKeyId=NEW_KEY
-   ```
-
-2. **Upgrade with new values file:**
-   ```bash
-   helm upgrade logwise . \
-     --namespace logwise \
-     --values values-prod.yaml \
-     --reuse-values  # Keep existing values not in new file
-   ```
-
-3. **Check upgrade status:**
-   ```bash
-   helm status logwise -n logwise
-   kubectl get pods -n logwise
-   ```
-
 ---
 
 ## Troubleshooting
@@ -1212,19 +1030,6 @@ If pods are being evicted or not scheduling:
 
 2. **Reduce resources** in values file (Helm) or patches (Kustomize)
 
-### AWS Credentials Issues
-
-1. **Verify secrets:**
-   ```bash
-   kubectl get secret aws-credentials -n logwise -o jsonpath='{.data}' | base64 -d
-   ```
-
-2. **Check IAM permissions:**
-   - S3 read/write access
-   - Athena query execution
-   - Glue catalog access (if using)
-
----
 
 ## Production Considerations
 
@@ -1287,24 +1092,6 @@ The deployments support horizontal scaling:
 
 **Note**: Vector HPA requires Metrics Server to function. Metrics Server is automatically deployed with Logwise, but if you're using a managed cluster that already has Metrics Server, ensure it's properly configured and accessible.
 
-### Security
-
-1. **Network Security:**
-   - Use NetworkPolicies to restrict pod-to-pod communication
-   - Configure TLS for ingress
-   - Use private networks where possible
-
-2. **Access Control:**
-   - Use RBAC for Kubernetes access
-   - Configure IAM roles for AWS services
-   - Use secrets management for sensitive data
-
-3. **Image Security:**
-   - Use private image registries
-   - Scan images for vulnerabilities
-   - Use image pull secrets
-
----
 
 ## Support
 

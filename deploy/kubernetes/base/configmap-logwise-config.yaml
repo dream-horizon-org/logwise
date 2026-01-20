@@ -24,6 +24,7 @@ data:
   VECTOR_OTLP_GRPC_PORT: "4317"
   VECTOR_OTLP_HTTP_PORT: "4318"
   SPARK_MASTER_HOST: "spark://spark-master:7077"
+  ORCHESTRATOR_URL: "http://orchestrator:8080"
   SPARK_JAR_PATH: "/tmp/spark.jar"
   LOG4J_PROPERTIES_FILE_PATH: "/tmp/log4j.properties"
   VECTOR_HOST: "vector"

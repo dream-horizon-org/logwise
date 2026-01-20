@@ -1,6 +1,6 @@
-# Image pull policy and secrets patch for all services
-# This patch ensures all containers use Docker Hub authentication and Always pull policy
-# to avoid rate limiting issues when pulling from remote registries
+# Image pull policy patch for all services
+# NOTE: We intentionally avoid imagePullPolicy: Always here because it causes repeated
+# pulls (and makes Docker Hub rate limits much more likely). Use IfNotPresent.
 
 apiVersion: apps/v1
 kind: Deployment
@@ -10,11 +10,9 @@ metadata:
 spec:
   template:
     spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
       containers:
       - name: vector
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -24,11 +22,9 @@ metadata:
 spec:
   template:
     spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
       containers:
       - name: orchestrator
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -38,11 +34,9 @@ metadata:
 spec:
   template:
     spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
       containers:
       - name: spark-master
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -52,11 +46,9 @@ metadata:
 spec:
   template:
     spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
       containers:
       - name: spark-worker
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -66,11 +58,9 @@ metadata:
 spec:
   template:
     spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
       containers:
       - name: healthcheck-dummy
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -80,11 +70,9 @@ metadata:
 spec:
   template:
     spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
       containers:
       - name: kafka
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         image: confluentinc/cp-kafka:7.6.0
 ---
 apiVersion: apps/v1
@@ -95,11 +83,9 @@ metadata:
 spec:
   template:
     spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
       containers:
       - name: mysql
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         image: mysql:8.0
 ---
 apiVersion: apps/v1
@@ -110,11 +96,9 @@ metadata:
 spec:
   template:
     spec:
-      imagePullSecrets:
-      - name: dockerhub-secret
       containers:
       - name: mysql
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         image: mysql:8.0
 ---
 apiVersion: batch/v1
@@ -127,9 +111,7 @@ spec:
     spec:
       template:
         spec:
-          imagePullSecrets:
-          - name: dockerhub-secret
           containers:
           - name: curl
-            imagePullPolicy: Always
+            imagePullPolicy: IfNotPresent
             image: curlimages/curl:8.8.0

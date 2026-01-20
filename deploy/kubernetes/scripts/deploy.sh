@@ -81,6 +81,7 @@ validate_environment() {
 
 # Ensure namespace exists
 ensure_namespace() {
+  # Check if namespace exists
   if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
     log_info "Creating namespace: $NAMESPACE"
     if kubectl create namespace "$NAMESPACE" 2>/dev/null; then
@@ -88,6 +89,90 @@ ensure_namespace() {
     else
       log_warn "Namespace $NAMESPACE may already exist or creation failed"
     fi
+    return 0
+  fi
+  
+  # Check if namespace is in Terminating state
+  local namespace_phase
+  namespace_phase=$(kubectl get namespace "$NAMESPACE" -o jsonpath='{.status.phase}' 2>/dev/null || echo "Active")
+  
+  if [ "$namespace_phase" = "Terminating" ]; then
+    log_warn "Namespace $NAMESPACE is in Terminating state, waiting for deletion to complete..."
+    
+    # Wait for namespace to be fully deleted (max 60 seconds)
+    local max_wait=60
+    local wait_count=0
+    local interval=2
+    
+    while kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; do
+      if [ $wait_count -ge $max_wait ]; then
+        log_error "Namespace termination timed out after ${max_wait}s"
+        log_error "The namespace may be stuck. You can force delete it with:"
+        log_error "  kubectl delete namespace $NAMESPACE --force --grace-period=0"
+        log_info "Attempting to force delete the namespace..."
+        
+        # Try to force delete
+        if kubectl delete namespace "$NAMESPACE" --force --grace-period=0 2>/dev/null; then
+          log_info "Force delete requested, waiting for completion..."
+          # Wait a bit more after force delete
+          sleep 5
+          wait_count=0
+          max_wait=30
+          continue
+        else
+          log_error "Failed to force delete namespace. Please delete it manually and retry."
+          return 1
+        fi
+      fi
+      sleep "$interval"
+      wait_count=$((wait_count + interval))
+      if [ $((wait_count % 10)) -eq 0 ]; then
+        log_info "Still waiting for namespace deletion... (${wait_count}s elapsed)"
+      fi
+    done
+    
+    log_success "Namespace $NAMESPACE has been deleted"
+    log_info "Creating namespace: $NAMESPACE"
+    if kubectl create namespace "$NAMESPACE" 2>/dev/null; then
+      log_success "Created namespace: $NAMESPACE"
+    else
+      log_error "Failed to create namespace: $NAMESPACE"
+      return 1
+    fi
+  else
+    log_info "Namespace $NAMESPACE exists and is active (phase: $namespace_phase)"
+  fi
+}
+
+# Ensure the namespace default ServiceAccount uses dockerhub-secret (so all pods can pull).
+# This avoids having to inject imagePullSecrets into every workload manifest.
+ensure_default_serviceaccount_pull_secret() {
+  if [ "$REGISTRY" != "dockerhub" ]; then
+    return 0
+  fi
+  if [ -z "${DOCKERHUB_USERNAME:-}" ]; then
+    return 0
+  fi
+
+  ensure_namespace
+
+  # Ensure the default ServiceAccount exists (it should, but be defensive).
+  if ! kubectl get serviceaccount default -n "$NAMESPACE" >/dev/null 2>&1; then
+    log_warn "Default ServiceAccount not found in namespace $NAMESPACE; skipping imagePullSecrets patch"
+    return 0
+  fi
+
+  # If already present, do nothing.
+  if kubectl get serviceaccount default -n "$NAMESPACE" -o jsonpath='{.imagePullSecrets[*].name}' 2>/dev/null | grep -q '\bdockerhub-secret\b'; then
+    log_info "Default ServiceAccount already references dockerhub-secret"
+    return 0
+  fi
+
+  log_info "Patching default ServiceAccount to include dockerhub-secret for image pulls..."
+  if kubectl patch serviceaccount default -n "$NAMESPACE" --type merge -p '{"imagePullSecrets":[{"name":"dockerhub-secret"}]}' >/dev/null; then
+    log_success "Patched default ServiceAccount with dockerhub-secret"
+  else
+    log_warn "Failed to patch default ServiceAccount with dockerhub-secret (pods may still pull unauthenticated)"
   fi
 }
 
@@ -135,6 +220,39 @@ ensure_dockerhub_secret() {
     else
       log_info "Docker Hub secret already exists"
     fi
+
+    # Attach to default ServiceAccount so all pods can use it automatically.
+    ensure_default_serviceaccount_pull_secret
+  fi
+}
+
+# Clean up existing metrics-server Deployment if it has incompatible selectors
+cleanup_metrics_server() {
+  log_info "Checking for existing metrics-server Deployment"
+  
+  if kubectl get deployment metrics-server -n kube-system >/dev/null 2>&1; then
+    # Check if the selector has app.kubernetes.io labels (incompatible with our manifest)
+    local current_selector
+    current_selector=$(kubectl get deployment metrics-server -n kube-system -o jsonpath='{.spec.selector.matchLabels}' 2>/dev/null || echo "")
+    
+    if echo "$current_selector" | grep -q "app.kubernetes.io"; then
+      log_warn "Existing metrics-server Deployment has incompatible selector (contains app.kubernetes.io labels)"
+      log_info "Deleting existing metrics-server Deployment to allow recreation with correct selector"
+      
+      if kubectl delete deployment metrics-server -n kube-system --timeout=60s; then
+        log_success "Deleted existing metrics-server Deployment"
+        # Wait a moment for the deletion to complete
+        sleep 2
+      else
+        log_error "Failed to delete metrics-server Deployment"
+        log_error "You may need to manually delete it: kubectl delete deployment metrics-server -n kube-system"
+        return 1
+      fi
+    else
+      log_info "Existing metrics-server Deployment has compatible selector, keeping it"
+    fi
+  else
+    log_info "No existing metrics-server Deployment found"
   fi
 }
 
@@ -153,6 +271,11 @@ pre_deploy_validation() {
   
   # Ensure Docker Hub secret exists if using Docker Hub
   if ! ensure_dockerhub_secret; then
+    return 1
+  fi
+  
+  # Clean up metrics-server if needed
+  if ! cleanup_metrics_server; then
     return 1
   fi
   
@@ -270,6 +393,9 @@ deploy() {
     kubectl apply --dry-run=client -k "$overlay_dir"
     return 0
   fi
+  
+  # Clean up metrics-server if needed (in case validation was skipped)
+  cleanup_metrics_server
   
   # Apply manifests
   if kubectl apply -k "$overlay_dir"; then
