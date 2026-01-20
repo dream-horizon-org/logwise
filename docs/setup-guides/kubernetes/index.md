@@ -99,7 +99,7 @@ Before deploying Logwise on Kubernetes, ensure you have:
 
 ## Kustomize Deployment
 
-Kustomize uses a base configuration with environment-specific overlays to manage deployments across different environments.
+Kustomize uses a base configuration with environment-specific overlays, plus helper scripts to make local/nonprod/prod deployments consistent and repeatable.
 
 ### Directory Structure
 
@@ -117,39 +117,97 @@ deploy/kubernetes/
 │   ├── local/              # Local development
 │   ├── nonprod/            # Non-production
 │   └── prod/               # Production
-└── config/                 # Configuration templates
+├── scripts/                 # Deployment automation (recommended)
+│   ├── setup-k8s.sh         # End-to-end deployment (local/nonprod/prod)
+│   ├── setup-kind-cluster.sh# Common kind cluster setup (Kustomize & Helm)
+│   ├── sync-config.sh       # Sync .env -> ConfigMaps/Secrets manifests
+│   ├── build-and-push.sh    # Build images (and push/load depending on env)
+│   ├── deploy.sh            # Apply manifests + wait/validate
+│   └── destroy-k8s.sh       # Teardown
+└── config/                  # Configuration templates (examples)
     └── secrets.example.yaml
 ```
 
-### Quick Start (Local Development)
+### Quick Deployment (Recommended)
 
-1. **Prepare secrets**:
-   ```bash
-   cd deploy/kubernetes/config
-   cp secrets.example.yaml secrets.yaml
-   # Edit secrets.yaml with your AWS credentials and database passwords
-   ```
+The recommended workflow is:
+- Create a Kubernetes-specific `.env`
+- Sync it into generated Kubernetes manifests (ConfigMap/Secret YAMLs in `deploy/kubernetes/base/`)
+- Run a single setup script per environment
 
-2. **Apply secrets**:
-   ```bash
-   kubectl apply -f secrets.yaml
-   ```
+#### Local Development (kind)
 
-3. **Deploy using local overlay**:
-   ```bash
-   cd ../overlays/local
-   kubectl apply -k .
-   ```
+**Step 1: Create environment and sync configuration**
 
-4. **Verify deployment**:
-   ```bash
-   kubectl get pods -n logwise
-   kubectl get services -n logwise
-   ```
+```bash
+# From repository root
+./deploy/scripts/create-env.sh --kubernetes
+
+# Edit deploy/kubernetes/.env with your configuration values
+
+# Sync .env to Kubernetes ConfigMaps/Secrets manifests
+./deploy/kubernetes/scripts/sync-config.sh ./deploy/kubernetes/.env
+```
+
+**Step 2: Deploy to Kubernetes**
+
+```bash
+./deploy/kubernetes/scripts/setup-k8s.sh local
+```
+
+This will:
+- Create a kind cluster (if needed)
+- Build all Docker images locally
+- **Load images directly into the kind cluster** (no registry required)
+- Deploy all services and wait for readiness
+
+> Note: For kind clusters, images are **loaded** into the cluster (not pulled). This is handled by `deploy/kubernetes/scripts/setup-kind-cluster.sh` and used by both Kustomize and Helm local workflows.
+
+#### Non-Production Environment
+
+**Step 1: Create environment and sync configuration** (same as local)
+
+```bash
+# From repository root
+cd deploy
+./scripts/create-env.sh --kubernetes
+
+# Edit deploy/kubernetes/.env with your configuration values
+
+# Sync .env to Kubernetes ConfigMaps/Secrets manifests
+./kubernetes/scripts/sync-config.sh kubernetes/.env
+```
+
+**Step 2: Deploy to Kubernetes**
+
+```bash
+cd deploy/kubernetes
+ENV=nonprod \
+  REGISTRY=ghcr.io/your-org \
+  TAG=1.0.0 \
+  ./scripts/setup-k8s.sh nonprod
+```
+
+#### Production Environment
+
+```bash
+cd deploy/kubernetes
+ENV=prod \
+  REGISTRY=ghcr.io/your-org \
+  TAG=v1.2.3 \
+  ./scripts/setup-k8s.sh prod
+```
 
 ### Building and Pushing Images
 
-**Important:** For **non-production** and **production** environments, you must build and push Docker images to a container registry before deployment. Local development with kind can load images directly without a registry.
+LogWise uses different image handling strategies depending on the environment:
+
+| Environment | Image Handling | Registry Required |
+|------------|----------------|-------------------|
+| **Local (kind)** | Build → **Load into kind** | ❌ No |
+| **Nonprod/Prod** | Build → **Push to registry** → Cluster pulls | ✅ Yes |
+
+**Important:** For **non-production** and **production** environments, your cluster must be able to pull images from the configured registry (and may require image pull secrets).
 
 #### For Non-Production and Production
 
@@ -186,19 +244,19 @@ gcloud auth configure-docker
 Use the build-and-push script to build all required images and push them to your registry:
 
 ```bash
-cd deploy/kubernetes/scripts
+cd deploy/kubernetes
 
 # For non-production
 ENV=nonprod \
   REGISTRY=ghcr.io/your-org \
   TAG=1.0.0 \
-  ./build-and-push.sh
+  ./scripts/build-and-push.sh
 
 # For production (use semantic versioning)
 ENV=prod \
   REGISTRY=ghcr.io/your-org \
   TAG=v1.2.3 \
-  ./build-and-push.sh
+  ./scripts/build-and-push.sh
 ```
 
 **What gets built:**
@@ -268,8 +326,8 @@ kustomize edit set image logwise-healthcheck-dummy=ghcr.io/your-org/logwise-heal
 For local development with kind, images are loaded directly into the cluster (no registry needed):
 
 ```bash
-cd deploy/kubernetes/scripts
-ENV=local CLUSTER_TYPE=kind TAG=latest ./build-and-push.sh
+cd deploy/kubernetes
+ENV=local CLUSTER_TYPE=kind TAG=latest ./scripts/build-and-push.sh
 ```
 
 This builds images locally and loads them into the kind cluster automatically.
@@ -397,11 +455,11 @@ The repository includes deployment scripts that simplify the process:
 
 ```bash
 # Using the unified deployment script
-cd deploy/kubernetes/scripts
-ENV=local ./deploy.sh
+cd deploy/kubernetes
+ENV=local ./scripts/deploy.sh
 
 # With custom registry
-ENV=prod REGISTRY=ghcr.io/your-org TAG=v1.0.0 ./deploy.sh
+ENV=prod REGISTRY=ghcr.io/your-org TAG=v1.0.0 ./scripts/deploy.sh
 ```
 
 The script handles:
