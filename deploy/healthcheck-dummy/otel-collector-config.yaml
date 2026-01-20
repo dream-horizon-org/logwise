@@ -13,9 +13,21 @@ receivers:
     include_file_path: true
     include_file_name_resolved: true
     operators:
+      # Recombine multiline logs (stack traces, long SQL, etc.) before parsing
+      - type: recombine
+        id: recombine-multiline
+        combine_field: body
+        is_first_entry: |
+          body matches "^\\d{4}[-/]\\d{2}[-/]\\d{2}[T\\s]\\d{2}:\\d{2}"
+        combine_with: "\n"
+        max_batch_size: 500
+        max_unmatched_batch_size: 1
+        source_identifier: attributes["log.file.path"]
+        force_flush_period: 5s
+
       - type: regex_parser
         id: parser-healthcheck
-        regex: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (?P<message>.*)$'
+        regex: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (?P<message>[\s\S]*)$'
 
 processors:
   memory_limiter:
