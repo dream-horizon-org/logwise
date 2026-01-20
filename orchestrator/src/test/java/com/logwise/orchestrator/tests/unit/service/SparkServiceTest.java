@@ -643,14 +643,30 @@ public class SparkServiceTest extends BaseTest {
     boolean enableUpScale = false;
     boolean enableDownScale = false;
 
+    // Create mock tenant config (non-docker cluster)
+    ApplicationConfig.TenantConfig tenantConfig =
+        ApplicationTestConfig.createMockTenantConfig("ABC");
+    // Ensure cluster type is not docker
+    tenantConfig.getSpark().getCluster().setClusterType("asg");
+
     SparkScaleOverride scaleOverride = SparkScaleOverride.builder().tenant("ABC").build();
     when(mockSparkScaleOverrideDao.getSparkScaleOverride(eq(tenant)))
         .thenReturn(Single.just(scaleOverride));
 
-    Completable result = sparkService.scaleSpark(tenant, enableUpScale, enableDownScale);
-    result.blockingAwait();
+    try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
+        Mockito.mockStatic(ApplicationConfigUtil.class)) {
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
+          .thenReturn(tenantConfig);
+      mockedConfigUtil
+          .when(() -> ApplicationConfigUtil.isDockerSparkCluster(tenantConfig))
+          .thenReturn(false);
 
-    verify(mockSparkScaleOverrideDao, times(1)).getSparkScaleOverride(eq(tenant));
+      Completable result = sparkService.scaleSpark(tenant, enableUpScale, enableDownScale);
+      result.blockingAwait();
+
+      verify(mockSparkScaleOverrideDao, times(1)).getSparkScaleOverride(eq(tenant));
+    }
   }
 
   @Test
