@@ -185,10 +185,13 @@ run_local() {
   # Setup kind cluster (will build and load images)
   create_kind_cluster_local
 
-  # Note: Images are already built and loaded by setup-kind-cluster.sh
-  # We still run build-and-push.sh to ensure consistency, but it will skip if images exist
+  # Note: Images are already built and loaded by setup-kind-cluster.sh.
+  # We still run build-and-push.sh to ensure the tags/names match the repo config,
+  # but it MUST build for the cluster's architecture (e.g., linux/arm64 on Apple Silicon).
   note "Applying kubernetes/overlays/local overlay to kind cluster..."
-  ENV=local CLUSTER_TYPE=kind REGISTRY="" TAG=latest KIND_CLUSTER_NAME=logwise-local \
+  # - REGISTRY=local: ensures the script does NOT attempt to push anywhere.
+  # - PLATFORM left unset: build-and-push.sh will auto-detect the kind node platform.
+  ENV=local CLUSTER_TYPE=kind REGISTRY=local TAG=latest PUSH_IMAGES=false PLATFORM="" KIND_CLUSTER_NAME=logwise-local \
     ./deploy/kubernetes/scripts/build-and-push.sh && \
   ENV=local ./deploy/kubernetes/scripts/deploy.sh
 
