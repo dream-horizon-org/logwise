@@ -139,6 +139,10 @@ COPY --from=jar-downloader /tmp/jars/*.jar ${SPARK_HOME}/jars/
 RUN mkdir -p /opt/app
 COPY --from=spark-app-builder /app/target/logwise-spark-*.jar /opt/app/app.jar
 
+# Copy log4j configuration into the Spark conf directory so the driver/executors
+# can load it via file:/opt/spark/conf/log4j.properties
+COPY log4j.properties ${SPARK_HOME}/conf/log4j.properties
+
 # Setup directories and permissions in a single layer
 RUN echo "Setting up directories and permissions..." && \
     # Ensure proper permissions

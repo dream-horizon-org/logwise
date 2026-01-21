@@ -7,6 +7,8 @@ import static org.testng.Assert.*;
 
 import com.logwise.spark.base.BaseSparkTest;
 import com.logwise.spark.services.KafkaService;
+import com.logwise.spark.services.SparkMasterService;
+import com.logwise.spark.services.SparkScaleService;
 import com.logwise.spark.utils.SparkUtils;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -35,6 +37,8 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
 
   private Config config;
   private KafkaService mockKafkaService;
+  private SparkMasterService mockSparkMasterService;
+  private SparkScaleService mockSparkScaleService;
   private SparkSession mockSparkSession;
   private TestApplicationLogsStream testStream;
 
@@ -43,8 +47,12 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     private StreamingQuery mockQuery;
 
     public TestApplicationLogsStream(
-        Config config, KafkaService kafkaService, StreamingQuery mockQuery) {
-      super(config, kafkaService);
+        Config config,
+        KafkaService kafkaService,
+        SparkMasterService sparkMasterService,
+        SparkScaleService sparkScaleService,
+        StreamingQuery mockQuery) {
+      super(config, kafkaService, sparkMasterService, sparkScaleService);
       this.mockQuery = mockQuery;
     }
 
@@ -62,6 +70,8 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
 
     // Mock KafkaService
     mockKafkaService = mock(KafkaService.class);
+    mockSparkMasterService = mock(SparkMasterService.class);
+    mockSparkScaleService = mock(SparkScaleService.class);
 
     // Mock SparkSession
     mockSparkSession = mock(SparkSession.class);
@@ -86,48 +96,46 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
 
   @Test
   public void testConstructor_WithValidParameters_CreatesInstance() {
-    // Arrange
     config = createTestConfig(0L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
 
-    // Act
-    testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
+    testStream =
+        new TestApplicationLogsStream(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery);
 
-    // Assert
     assertNotNull(testStream);
   }
 
   @Test
   public void testConstructor_WithNullConfig_CreatesInstance() {
-    // Arrange
     StreamingQuery mockQuery = mock(StreamingQuery.class);
 
-    // Act - Note: In production, Guice ensures config is not null
-    testStream = new TestApplicationLogsStream(null, mockKafkaService, mockQuery);
+    testStream =
+        new TestApplicationLogsStream(
+            null, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery);
 
-    // Assert
     assertNotNull(testStream);
   }
 
   @Test
   public void testConstructor_WithNullKafkaService_CreatesInstance() {
-    // Arrange
     config = createTestConfig(0L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
 
-    // Act - Note: In production, Guice ensures kafkaService is not null
-    testStream = new TestApplicationLogsStream(config, null, mockQuery);
+    testStream =
+        new TestApplicationLogsStream(
+            config, null, mockSparkMasterService, mockSparkScaleService, mockQuery);
 
-    // Assert
     assertNotNull(testStream);
   }
 
   @Test
   public void testStartStreams_CallsGetKafkaBootstrapServerIp_WhenStartingStreams() {
-    // Arrange
     config = createTestConfig(0L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
-    testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
+    testStream =
+        new TestApplicationLogsStream(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery);
 
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockValueDataset = mock(Dataset.class);
@@ -154,50 +162,46 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
 
   @Test
   public void testAbstractClass_CanBeExtended() {
-    // Arrange
     config = createTestConfig(0L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
 
-    // Act
     TestApplicationLogsStream concreteStream =
-        new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
+        new TestApplicationLogsStream(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery);
 
-    // Assert
     assertNotNull(concreteStream);
     assertTrue(concreteStream instanceof AbstractApplicationLogsStream);
   }
 
   @Test
   public void testAbstractMethod_GetVectorApplicationLogsStreamQuery_CanBeOverridden() {
-    // Arrange
     config = createTestConfig(0L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
-    testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
+    testStream =
+        new TestApplicationLogsStream(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery);
     Dataset<Row> mockDataset = mock(Dataset.class);
 
-    // Act
     StreamingQuery result = testStream.getVectorApplicationLogsStreamQuery(mockDataset);
 
-    // Assert
     assertNotNull(result);
     assertEquals(result, mockQuery);
   }
 
   @Test
   public void testMultipleInstances_CanBeCreatedWithDifferentConfigs() {
-    // Arrange
     Config config1 = createTestConfig(0L, "latest");
     Config config2 = createTestConfig(1609459200000L, "earliest");
     StreamingQuery mockQuery1 = mock(StreamingQuery.class);
     StreamingQuery mockQuery2 = mock(StreamingQuery.class);
 
-    // Act
     TestApplicationLogsStream stream1 =
-        new TestApplicationLogsStream(config1, mockKafkaService, mockQuery1);
+        new TestApplicationLogsStream(
+            config1, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery1);
     TestApplicationLogsStream stream2 =
-        new TestApplicationLogsStream(config2, mockKafkaService, mockQuery2);
+        new TestApplicationLogsStream(
+            config2, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery2);
 
-    // Assert
     assertNotNull(stream1);
     assertNotNull(stream2);
     assertNotSame(stream1, stream2);
@@ -205,10 +209,11 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
 
   @Test
   public void testStartStreams_WithStartingOffsetsTimestampZero_ReturnsStreamingQuery() {
-    // Arrange
     config = createTestConfig(0L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
-    testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
+    testStream =
+        new TestApplicationLogsStream(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery);
 
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockValueDataset = mock(Dataset.class);
@@ -234,10 +239,11 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
 
   @Test
   public void testStartStreams_WithStartingOffsetsTimestampNonZero_ReturnsStreamingQuery() {
-    // Arrange
     config = createTestConfig(1609459200000L, "latest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
-    testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
+    testStream =
+        new TestApplicationLogsStream(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery);
 
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockValueDataset = mock(Dataset.class);
@@ -274,7 +280,9 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
     config = ConfigFactory.parseMap(configMap);
 
     StreamingQuery mockQuery = mock(StreamingQuery.class);
-    testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
+    testStream =
+        new TestApplicationLogsStream(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery);
 
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockValueDataset = mock(Dataset.class);
@@ -300,10 +308,11 @@ public class AbstractApplicationLogsStreamTest extends BaseSparkTest {
 
   @Test
   public void testStartStreams_WithEarliestStartingOffsets_UsesEarliest() {
-    // Arrange
     config = createTestConfig(0L, "earliest");
     StreamingQuery mockQuery = mock(StreamingQuery.class);
-    testStream = new TestApplicationLogsStream(config, mockKafkaService, mockQuery);
+    testStream =
+        new TestApplicationLogsStream(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService, mockQuery);
 
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockValueDataset = mock(Dataset.class);

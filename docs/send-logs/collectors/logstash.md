@@ -45,7 +45,7 @@ output {
 
 To receive JSON logs from Logstash, Vector needs a **TCP socket source** with JSON decoding:
 
-```40:48:vector/vector.yaml
+```yaml
   logstash_logs:
     type: "socket"
     address: "0.0.0.0:24225"

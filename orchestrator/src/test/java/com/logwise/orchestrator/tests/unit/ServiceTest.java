@@ -12,6 +12,8 @@ import com.logwise.orchestrator.config.ApplicationConfig;
 import com.logwise.orchestrator.constant.ApplicationConstants;
 import com.logwise.orchestrator.constants.TestConstants;
 import com.logwise.orchestrator.dao.ServicesDao;
+import com.logwise.orchestrator.dao.SparkScaleOverrideDao;
+import com.logwise.orchestrator.dao.SparkStageHistoryDao;
 import com.logwise.orchestrator.dto.entity.ServiceDetails;
 import com.logwise.orchestrator.dto.request.SubmitSparkJobRequest;
 import com.logwise.orchestrator.dto.response.GetServiceDetailsResponse;
@@ -33,6 +35,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.reactivex.core.Vertx;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +68,8 @@ public class ServiceTest extends BaseTest {
   private ObjectMapper mockObjectMapper;
   private io.vertx.reactivex.ext.web.client.WebClient mockVertxWebClient;
   private ApplicationConfig.KafkaConfig mockKafkaConfig;
+  private SparkStageHistoryDao mockSparkStageHistoryDao;
+  private SparkScaleOverrideDao mockSparkScaleOverrideDao;
 
   @Mock private ServicesDao mockServicesDaoForManager;
   @Mock private ObjectStoreService mockObjectStoreServiceForManager;
@@ -101,7 +106,8 @@ public class ServiceTest extends BaseTest {
     mockObjectMapper = new ObjectMapper();
     mockVertxWebClient = mock(io.vertx.reactivex.ext.web.client.WebClient.class);
     mockKafkaConfig = mock(ApplicationConfig.KafkaConfig.class);
-    sparkService = new SparkService(mockWebClient, mockObjectMapper);
+    mockSparkStageHistoryDao = mock(SparkStageHistoryDao.class);
+    mockSparkScaleOverrideDao = mock(SparkScaleOverrideDao.class);
     doReturn(mockVertxWebClient).when(mockWebClient).getWebClient();
     when(mockTenantConfig.getKafka()).thenReturn(mockKafkaConfig);
 
@@ -110,6 +116,14 @@ public class ServiceTest extends BaseTest {
     } else {
       vertx = new io.vertx.reactivex.core.Vertx(io.vertx.core.Vertx.vertx());
     }
+
+    sparkService =
+        new SparkService(
+            vertx,
+            mockWebClient,
+            mockObjectMapper,
+            mockSparkStageHistoryDao,
+            mockSparkScaleOverrideDao);
 
     try (MockedStatic<CaffeineCacheFactory> mockedFactory =
         Mockito.mockStatic(CaffeineCacheFactory.class)) {
@@ -273,6 +287,16 @@ public class ServiceTest extends BaseTest {
     when(mockSparkConfig.getS3aAccessKey()).thenReturn("access-key");
     when(mockSparkConfig.getS3aSecretKey()).thenReturn("secret-key");
 
+    ApplicationConfig.Orchestrator mockOrchestrator = mock(ApplicationConfig.Orchestrator.class);
+    ApplicationConfig.ObjectStoreConfig mockObjectStoreConfig =
+        mock(ApplicationConfig.ObjectStoreConfig.class);
+    ApplicationConfig.S3Config mockS3Config = mock(ApplicationConfig.S3Config.class);
+    when(mockOrchestrator.getUrl()).thenReturn("http://orchestrator:8080");
+    when(mockS3Config.getBucket()).thenReturn("test-bucket");
+    when(mockObjectStoreConfig.getAws()).thenReturn(mockS3Config);
+    when(mockTenantConfig.getOrchestrator()).thenReturn(mockOrchestrator);
+    when(mockTenantConfig.getObjectStore()).thenReturn(mockObjectStoreConfig);
+
     try {
       Method method =
           SparkService.class.getDeclaredMethod(
@@ -295,6 +319,16 @@ public class ServiceTest extends BaseTest {
       Assert.assertNotNull(request.getSparkProperties());
       Assert.assertEquals(request.getSparkProperties().get("spark.driver.cores"), "4");
       Assert.assertEquals(request.getSparkProperties().get("spark.driver.memory"), "8G");
+    } catch (InvocationTargetException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof NullPointerException) {
+        Assert.fail(
+            "NullPointerException - tenant config may be missing required nested objects: "
+                + cause.getMessage(),
+            e);
+      } else {
+        Assert.fail("Should not throw exception", e);
+      }
     } catch (Exception e) {
       Assert.fail("Should not throw exception", e);
     }
@@ -520,8 +554,17 @@ public class ServiceTest extends BaseTest {
     try (MockedStatic<ApplicationConfigUtil> mockedConfigUtil =
             Mockito.mockStatic(ApplicationConfigUtil.class);
         MockedStatic<ObjectStoreFactory> mockedFactory =
-            Mockito.mockStatic(ObjectStoreFactory.class);
-        MockedStatic<ApplicationUtils> mockedUtils = Mockito.mockStatic(ApplicationUtils.class)) {
+            Mockito.mockStatic(ObjectStoreFactory.class)) {
+
+      // Ensure all required configs are mocked - set up in proper order
+      // Reset any previous mock behavior
+      reset(mockTenantConfig, mockSparkConfig, mockDelayMetricsConfig, mockAppDelayMetricsConfig);
+
+      when(mockTenantConfig.getSpark()).thenReturn(mockSparkConfig);
+      when(mockSparkConfig.getLogsDir()).thenReturn("logs");
+      when(mockTenantConfig.getDelayMetrics()).thenReturn(mockDelayMetricsConfig);
+      when(mockDelayMetricsConfig.getApp()).thenReturn(mockAppDelayMetricsConfig);
+      when(mockAppDelayMetricsConfig.getSampleServiceName()).thenReturn("test-service");
 
       mockedConfigUtil
           .when(() -> ApplicationConfigUtil.getTenantConfig(tenant))
@@ -531,13 +574,9 @@ public class ServiceTest extends BaseTest {
           .when(() -> ObjectStoreFactory.getClient(tenant))
           .thenReturn(mockObjectStoreClient);
 
+      // Mock listObjects to return empty list for any prefix
       Single<List<String>> listObjectsSingle = Single.just(emptyList);
       when(mockObjectStoreClient.listObjects(anyString())).thenReturn(listObjectsSingle);
-
-      Maybe<Integer> maybeDelay = Maybe.just(ApplicationConstants.MAX_LOGS_SYNC_DELAY_HOURS * 60);
-      mockedUtils
-          .when(() -> ApplicationUtils.executeBlockingCallable(any()))
-          .thenReturn(maybeDelay);
 
       Single<LogSyncDelayResponse> result = metricsService.computeLogSyncDelay(tenant);
       LogSyncDelayResponse response = result.blockingGet();

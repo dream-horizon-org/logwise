@@ -23,7 +23,7 @@ Vector receives these logs through the same OTLP source used by the OpenTelemetr
 
 Below is an example configuration (adapt it to your environment):
 
-```1:26:deploy/healthcheck-dummy/fluent-bit.conf
+```ini
 [SERVICE]
     Flush        1
     Daemon       off
@@ -82,7 +82,7 @@ You only need to ensure that:
 
 In a self-hosted setup, follow the **Self-Host → Vector** guide to install and configure Vector with the `otlp_logs` source enabled:
 
-```1:9:vector/vector.yaml
+```yaml
 sources:
   otlp_logs:
     type: "opentelemetry"

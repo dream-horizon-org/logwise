@@ -1,0 +1,84 @@
+{{- if and .Values.components.mysql.enabled .Values.mysql.orchestrator.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: orch-mysql
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app: orch-mysql
+spec:
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+  selector:
+    app: orch-mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: orch-mysql
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app: orch-mysql
+spec:
+  serviceName: orch-mysql
+  replicas: {{ .Values.mysql.orchestrator.replicas }}
+  selector:
+    matchLabels:
+      app: orch-mysql
+  template:
+    metadata:
+      labels:
+        app: orch-mysql
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.global.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      volumes:
+        - name: data
+          {{- if eq .Values.mysql.orchestrator.storage.type "persistentVolumeClaim" }}
+          persistentVolumeClaim:
+            claimName: orch-mysql-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: init-sql
+          configMap:
+            name: orch-mysql-init-sql
+            items:
+              - key: init-log_central.sql
+                path: init-log_central.sql
+      containers:
+        - name: mysql
+          image: {{ include "logwise.image" (dict "root" . "repository" .Values.mysql.orchestrator.image.repository "tag" .Values.mysql.orchestrator.image.tag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: MYSQL_DATABASE
+              value: {{ .Values.mysql.orchestrator.database | quote }}
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: orch-db-secret
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orch-db-secret
+                  key: password
+            - name: MYSQL_ROOT_PASSWORD
+              value: {{ .Values.mysql.orchestrator.rootPassword | quote }}
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            {{- toYaml .Values.mysql.orchestrator.resources | nindent 12 }}
+{{- end }}

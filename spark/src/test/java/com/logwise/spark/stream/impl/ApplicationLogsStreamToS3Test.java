@@ -8,6 +8,8 @@ import static org.testng.Assert.*;
 import com.logwise.spark.base.BaseSparkTest;
 import com.logwise.spark.constants.Constants;
 import com.logwise.spark.services.KafkaService;
+import com.logwise.spark.services.SparkMasterService;
+import com.logwise.spark.services.SparkScaleService;
 import com.logwise.spark.utils.ConfigUtils;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -47,6 +49,8 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
   private ApplicationLogsStreamToS3 stream;
   private Config config;
   private KafkaService mockKafkaService;
+  private SparkMasterService mockSparkMasterService;
+  private SparkScaleService mockSparkScaleService;
 
   @BeforeMethod
   @Override
@@ -54,7 +58,11 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
     super.setUp();
     config = createTestConfig();
     mockKafkaService = mock(KafkaService.class);
-    stream = new ApplicationLogsStreamToS3(config, mockKafkaService);
+    mockSparkMasterService = mock(SparkMasterService.class);
+    mockSparkScaleService = mock(SparkScaleService.class);
+    stream =
+        new ApplicationLogsStreamToS3(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService);
   }
 
   /**
@@ -148,34 +156,27 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
 
   @Test
   public void testConstructor_WithValidParameters_CreatesInstance() {
-    // Act
-    ApplicationLogsStreamToS3 newStream = new ApplicationLogsStreamToS3(config, mockKafkaService);
+    ApplicationLogsStreamToS3 newStream =
+        new ApplicationLogsStreamToS3(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService);
 
-    // Assert
     assertNotNull(newStream);
   }
 
   @Test
   public void testConstructor_WithNullConfig_CreatesInstance() {
-    // Note: Guice will ensure config is not null in production code
-    // This test verifies constructor signature works
+    ApplicationLogsStreamToS3 newStream =
+        new ApplicationLogsStreamToS3(
+            null, mockKafkaService, mockSparkMasterService, mockSparkScaleService);
 
-    // Act
-    ApplicationLogsStreamToS3 newStream = new ApplicationLogsStreamToS3(null, mockKafkaService);
-
-    // Assert
     assertNotNull(newStream);
   }
 
   @Test
   public void testConstructor_WithNullKafkaService_CreatesInstance() {
-    // Note: Guice will ensure kafkaService is not null in production code
-    // This test verifies constructor signature works
+    ApplicationLogsStreamToS3 newStream =
+        new ApplicationLogsStreamToS3(config, null, mockSparkMasterService, mockSparkScaleService);
 
-    // Act
-    ApplicationLogsStreamToS3 newStream = new ApplicationLogsStreamToS3(config, null);
-
-    // Assert
     assertNotNull(newStream);
   }
 
@@ -185,9 +186,9 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
     Config customConfig =
         createCustomTestConfig(120, "s3://another-bucket/checkpoints", "s3://another-bucket/logs");
 
-    // Act
     ApplicationLogsStreamToS3 newStream =
-        new ApplicationLogsStreamToS3(customConfig, mockKafkaService);
+        new ApplicationLogsStreamToS3(
+            customConfig, mockKafkaService, mockSparkMasterService, mockSparkScaleService);
 
     // Assert
     assertNotNull(newStream);
@@ -203,10 +204,15 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
 
   @Test
   public void testMultipleInstances_CanBeCreated() {
-    // Act - Create multiple instances
-    ApplicationLogsStreamToS3 stream1 = new ApplicationLogsStreamToS3(config, mockKafkaService);
-    ApplicationLogsStreamToS3 stream2 = new ApplicationLogsStreamToS3(config, mockKafkaService);
-    ApplicationLogsStreamToS3 stream3 = new ApplicationLogsStreamToS3(config, mockKafkaService);
+    ApplicationLogsStreamToS3 stream1 =
+        new ApplicationLogsStreamToS3(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService);
+    ApplicationLogsStreamToS3 stream2 =
+        new ApplicationLogsStreamToS3(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService);
+    ApplicationLogsStreamToS3 stream3 =
+        new ApplicationLogsStreamToS3(
+            config, mockKafkaService, mockSparkMasterService, mockSparkScaleService);
 
     // Assert - All should be non-null and independent
     assertNotNull(stream1);
@@ -278,7 +284,8 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
     Config customConfig =
         createCustomTestConfig(120, "s3://custom/checkpoints", "s3://custom/logs");
     ApplicationLogsStreamToS3 customStream =
-        new ApplicationLogsStreamToS3(customConfig, mockKafkaService);
+        new ApplicationLogsStreamToS3(
+            customConfig, mockKafkaService, mockSparkMasterService, mockSparkScaleService);
 
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockMappedDataset = setupDatasetTransformationMocks(mockKafkaDataset);
@@ -397,7 +404,8 @@ public class ApplicationLogsStreamToS3Test extends BaseSparkTest {
     // Arrange
     Config customConfig = createCustomTestConfig(30, DEFAULT_CHECKPOINT_PATH, DEFAULT_LOGS_PATH);
     ApplicationLogsStreamToS3 customStream =
-        new ApplicationLogsStreamToS3(customConfig, mockKafkaService);
+        new ApplicationLogsStreamToS3(
+            customConfig, mockKafkaService, mockSparkMasterService, mockSparkScaleService);
 
     Dataset<Row> mockKafkaDataset = mock(Dataset.class);
     Dataset<Row> mockMappedDataset = setupDatasetTransformationMocks(mockKafkaDataset);

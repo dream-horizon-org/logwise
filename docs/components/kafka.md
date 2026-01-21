@@ -43,6 +43,7 @@ This automatic topic creation enables organized log routing and processing.
 
 - Topics start with **3 partitions** (base count from `num.partitions` configuration)
 - Partitions can be manually adjusted if needed based on your throughput requirements
+- **Automatic Partition Scaling** - The orchestrator service can automatically scale partitions based on consumer lag
 
 ## Message Retention
 

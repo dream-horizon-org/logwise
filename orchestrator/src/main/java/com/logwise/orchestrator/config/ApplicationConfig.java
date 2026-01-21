@@ -1,10 +1,12 @@
 package com.logwise.orchestrator.config;
 
 import com.logwise.orchestrator.constant.ApplicationConstants;
+import com.logwise.orchestrator.enums.KafkaType;
 import com.typesafe.config.Optional;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.experimental.NonFinal;
@@ -22,6 +24,7 @@ public class ApplicationConfig {
     // defaultLogsRetentionDays is used to set default retention days for service
     // logs in db while
     // onboarding
+    @NonFinal @Optional Orchestrator orchestrator;
     @NonFinal @NotNull Integer defaultLogsRetentionDays;
     // envLogsRetentionDays is used to override default retention days for service
     // logs in db
@@ -47,8 +50,6 @@ public class ApplicationConfig {
   public static class S3Config {
     @NonFinal String region;
     @NonFinal String bucket;
-    // roleArn is used for cross account access
-    @NonFinal @Optional String roleArn;
     // endpointOverride is used for localstack
     @NonFinal @Optional String endpointOverride;
   }
@@ -61,13 +62,55 @@ public class ApplicationConfig {
 
   @Data
   public static class KafkaConfig {
-    @NonFinal @NotNull String kafkaBrokersHost;
+    // Feature flag for new partition scaling system
+    @NonFinal @Optional Boolean enablePartitionScaling = true;
 
+    // Kafka type selection
+    @NonFinal @Optional KafkaType kafkaType = KafkaType.EC2;
+
+    // Custom setter to handle string-to-enum conversion from config
+    public void setKafkaType(Object kafkaType) {
+      if (kafkaType == null) {
+        this.kafkaType = KafkaType.EC2;
+      } else if (kafkaType instanceof KafkaType) {
+        this.kafkaType = (KafkaType) kafkaType;
+      } else {
+        this.kafkaType = KafkaType.fromValue(kafkaType.toString());
+      }
+    }
+
+    // Common connection settings
+    @NonFinal @NotNull String kafkaBrokersHost;
+    @NonFinal @Optional Integer kafkaBrokerPort = ApplicationConstants.KAFKA_BROKER_PORT;
+
+    // Scaling thresholds
+    @NonFinal @Optional Integer defaultPartitions = 3;
+    @NonFinal @Optional Long partitionRatePerSecond = 1000L;
+
+    // MSK-specific fields
+    @NonFinal @Optional String mskClusterArn;
+    @NonFinal @Optional String mskRegion;
+
+    // Confluent-specific fields
+    @NonFinal @Optional String confluentApiKey;
+    @NonFinal @Optional String confluentApiSecret;
+    @NonFinal @Optional String confluentRestEndpoint;
+
+    // SSL/TLS configuration (common)
+    @NonFinal @Optional String sslTruststoreLocation;
+    @NonFinal @Optional String sslTruststorePassword;
+    @NonFinal @Optional String sslKeystoreLocation;
+    @NonFinal @Optional String sslKeystorePassword;
+
+    // Legacy (deprecated, for migration)
     @NonFinal @Optional
     Integer maxProducerRatePerPartition =
         ApplicationConstants.KAFKA_MAX_PRODUCER_RATE_PER_PARTITION;
+  }
 
-    @NonFinal @Optional Integer kafkaBrokerPort = ApplicationConstants.KAFKA_BROKER_PORT;
+  @Data
+  public static class Orchestrator {
+    @NonFinal @Optional String url;
   }
 
   @Data
@@ -95,6 +138,48 @@ public class ApplicationConfig {
     @NonFinal @Optional String awsSecretAccessKey;
     @NonFinal @Optional String awsSessionToken;
     @NonFinal @Optional String awsRegion;
+    @NonFinal @NotNull Integer executorCoresPerMachine;
+    @NonFinal @NotNull Integer perCoreLogsProcess;
+    @NonFinal @NotNull Integer minWorkerCount;
+    @NonFinal @NotNull Integer maxWorkerCount;
+    @NonFinal @NotNull @Valid SparkClusterConfig cluster;
+  }
+
+  @Data
+  public static class SparkClusterConfig {
+    @NonFinal @Optional String clusterType;
+    @NonFinal @Optional ApplicationConfig.AsgConfig asg;
+    @NonFinal @Optional ApplicationConfig.KubernetesConfig kubernetes;
+  }
+
+  @Data
+  public static class AsgConfig {
+    @NonFinal @Optional AsgAwsConfig aws;
+  }
+
+  @Data
+  public static class AsgAwsConfig {
+    @NonFinal @Optional String region;
+    @NonFinal @Optional String name;
+    @NonFinal @Optional String endpointOverride;
+  }
+
+  @Data
+  public static class KubernetesConfig {
+    @NonFinal @Optional String namespace;
+    @NonFinal @Optional String deploymentName;
+  }
+
+  @Data
+  @Builder
+  public static class VMConfig {
+    @NonFinal @Optional EC2Config aws;
+  }
+
+  @Data
+  @Builder
+  public static class EC2Config {
+    @NonFinal String region;
   }
 
   @Data

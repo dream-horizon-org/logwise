@@ -1,0 +1,39 @@
+{{- if .Values.components.grafana.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: {{ include "logwise.namespace" . }}
+  labels:
+    app: grafana
+data:
+  athena.yml: |
+    apiVersion: 1
+
+    datasources:
+      - name: Athena
+        type: grafana-athena-datasource
+        uid: asadsadf
+        access: proxy
+        isDefault: false
+        editable: true
+        jsonData:
+          authType: default
+          defaultRegion: {{ .Values.aws.region }}
+          catalog: {{ .Values.aws.athenaCatalog }}
+          database: ${ATHENA_DATABASE}
+          workgroup: ${ATHENA_WORKGROUP}
+          outputLocation: ${S3_ATHENA_OUTPUT}
+  infinity.yml: |
+    apiVersion: 1
+
+    datasources:
+      - name: Infinity
+        type: yesoreyeram-infinity-datasource
+        uid: wakask
+        access: proxy
+        isDefault: false
+        editable: true
+        jsonData:
+          allowed_hosts: []
+{{- end }}
