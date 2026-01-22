@@ -366,7 +366,7 @@ services:
     environment:
       - ATHENA_DATABASE=${ATHENA_DATABASE}
     volumes:
-      - ../grafana/provisioning:/etc/grafana/provisioning
+      - ../../grafana/provisioning:/etc/grafana/provisioning
     entrypoint: ["sh", "-c"]
     command: >
       "if [ -n \"$$ATHENA_DATABASE\" ]; then
@@ -411,7 +411,7 @@ services:
       - S3_ATHENA_OUTPUT=${S3_ATHENA_OUTPUT}
     volumes:
       - grafana_data:/var/lib/grafana
-      - ../grafana/provisioning:/etc/grafana/provisioning
+      - ../../grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       mysql:
         condition: service_healthy
