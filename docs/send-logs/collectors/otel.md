@@ -66,6 +66,51 @@ Key points:
 
 Replace `<VECTOR_HOST>` with the hostname or IP where Vector is reachable.
 
+### Multiline log support
+
+If your logs span multiple lines, add the `multiline` configuration section to your receiver. This ensures that multi-line log entries are properly grouped together before parsing.
+
+Add the following to your receiver configuration (before the `operators` section):
+
+```yaml
+receivers:
+  filelog/healthcheck:
+    include: 
+      - /var/log/healthcheck/*.log
+    start_at: end
+    include_file_path: true
+    include_file_name_resolved: true
+
+    multiline:
+      line_start_pattern: '<PATTERN>'
+
+    operators:
+      - type: regex_parser
+        id: parser-healthcheck
+        regex: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (?P<message>.*)$'
+```
+
+The `line_start_pattern` should match the beginning of each log entry. Adjust the pattern to match your log format.
+
+**Example:** If your logs start with a timestamp like `2024-01-15 10:30:45`, use:
+
+```yaml
+multiline:
+  line_start_pattern: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+```
+
+This pattern will correctly group multi-line log entries. For example, a log entry like:
+
+```
+2024-01-15 10:30:45 - Error occurred
+  Stack trace:
+    at com.example.Class.method(Class.java:123)
+    at com.example.Other.method(Other.java:456)
+2024-01-15 10:30:46 - Next log entry
+```
+
+Will be grouped into two separate log entries, with the first entry containing all lines from the timestamp until the next timestamp.
+
 For a more complete OTEL Collector installation and configuration walkthrough, also see the [OpenTelemetry – EC2 guide](/send-logs/collectors/otel/ec2/opentelemetry).
 
 ---
